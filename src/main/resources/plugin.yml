@@ -1,0 +1,16 @@
+name: ExplorationCore
+version: 1.0.1
+main: dev.explorationcore.ExplorationCorePlugin
+api-version: '1.21'
+description: Persistent ledger of player exploration discoveries.
+commands:
+  explorationcore:
+    description: Internal discovery ledger
+    usage: /<command> <status|record>
+permissions:
+  explorationcore.record:
+    description: Record one discovery into the ledger. Not granted to operators.
+    default: false
+  explorationcore.status:
+    description: Show ExplorationCore database status.
+    default: op

@@ -1,0 +1,10 @@
+# Stored with every discovery. A blank value refuses new records.
+# Changing this later leaves existing rows on their original name.
+server-name: Lowothra
+
+database:
+  # Relative paths are resolved inside plugins/ExplorationCore/.
+  file: exploration.db
+
+# Logs each recorded discovery and each ignored duplicate.
+debug: false
