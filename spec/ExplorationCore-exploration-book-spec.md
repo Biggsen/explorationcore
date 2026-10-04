@@ -11,12 +11,16 @@ the scoreboard.
 Keep the first implementation small. It is a read-only progress summary,
 not a full exploration browser.
 
-## Data Sources
+The work is three phases. Phase 1 produces the totals file. Phase 2
+puts that file on the server. Phase 3 adds the command. Phase 1 can be
+built on its own.
+
+## Sources
 
 The book combines two sources, and both of them belong to
 ExplorationCore.
 
-### Player progress
+### What the player has discovered
 
 Read directly from the existing ExplorationCore SQLite database:
 
@@ -25,202 +29,231 @@ Read directly from the existing ExplorationCore SQLite database:
 Use the player's UUID to calculate discovery counts.
 
 The `discoveries` table is the source of what the player has
-discovered. When a ledger count disagrees with AdvancedAchievements,
-the TAB scoreboard, or an EXPMETRIC state message, the book shows the
-ledger. ExplorationCore does not read those plugins while building the
-book.
+discovered. When a ledger count disagrees with an achievement counter
+or a scoreboard line, the book shows the ledger. ExplorationCore does
+not read those plugins while building the book.
+
+Structure rows already store `structure_type`. That column and the
+record command that writes it are specified in
+`ExplorationCore-v1-spec.md` section 30. This book does not change
+recording.
 
 Do not introduce additional counters or duplicate player progress into
 configuration.
 
-### World totals
+### What exists
 
 How many entities exist is not something the ledger can know.
-Undiscovered sites have no rows. Those totals live in ExplorationCore
-configuration, as its own copy of the catalogue figures. Opening the
-book does not ask Region Forge, TAB, or AdvancedAchievements for them.
+Undiscovered sites have no rows. Those totals live in a file
+ExplorationCore owns:
 
-Example concept:
+`plugins/ExplorationCore/totals.yml`
+
+The file is separate from `config.yml`. ExplorationCore does not ship
+a server's real numbers inside the plugin jar. The export that writes
+`totals.yml` is phase 1. Opening the book does not read another
+plugin's data folder, a world region file, or an achievement counter.
+
+## Phases
+
+### Phase 1 — Export `totals.yml`
+
+Produce `totals.yml` from the imported world meta the export already
+holds. One file covers both worlds.
+
+The export counts entries whose `discover.method` is `on_enter`.
+Entries with any other discover method are absent from the totals.
+Entries whose `kind` is `system` or `water` are absent. The plugin
+never interprets `discover.method`. That rule belongs to the export.
+
+Overworld totals:
+
+- `regions.total` is the count of `kind: region`
+- `villages.total` is the count of `kind: village`
+- `hearts.total` is the count of `kind: heart`
+- `nerves.total` is the count of `kind: nerve`
+
+Overworld structures are grouped by `structureType`. Each group that
+has at least one counted structure becomes one map entry. The map key
+is the `structureType` string stored on discovery rows, such as
+`ocean_ruin`, `shipwreck`, or `trail_ruins`. `name` is that group's
+label, such as `Ocean Ruins`. `total` is the count of counted
+structures with that `structureType`.
+
+Do not write the achievement counter name. It is not a field in this
+file.
+
+Nether totals:
+
+- `regions.total` is the count of `kind: region`
+- `hearts.total` is the count of `kind: heart`
+
+The nether section has no villages, nerves, or structures.
+
+Example shape. The numbers here illustrate the file. They are not the
+figures to write. The export counts those figures.
 
 ``` yaml
-exploration:
-  overworld:
-    regions:
-      total: 544
-    villages:
-      total: 56
-    hearts:
-      total: 30
-    nerves:
-      total: 30
-
-    structures:
-      ancient_city:
-        name: "Ancient Cities"
-        total: 12
-      buried_treasure:
-        name: "Buried Treasures"
-        total: 53
-      desert_well:
-        name: "Desert Wells"
-        total: 1
-      jungle_temple:
-        name: "Jungle Temples"
-        total: 11
-      ocean_ruin:
-        name: "Ocean Ruins"
-        total: 169
-      pillager_outpost:
-        name: "Pillager Outposts"
-        total: 8
-      shipwreck:
-        name: "Shipwrecks"
-        total: 126
-      trail_ruins:
-        name: "Trail Ruins"
-        total: 19
-
-  nether:
-    regions:
-      total: 18
-    hearts:
+overworld:
+  regions:
+    total: 544
+  villages:
+    total: 56
+  hearts:
+    total: 30
+  nerves:
+    total: 30
+  structures:
+    ancient_city:
+      name: "Ancient Cities"
+      total: 12
+    buried_treasure:
+      name: "Buried Treasures"
+      total: 53
+    desert_well:
+      name: "Desert Wells"
+      total: 1
+    jungle_temple:
+      name: "Jungle Temples"
+      total: 11
+    ocean_ruin:
+      name: "Ocean Ruins"
+      total: 169
+    pillager_outpost:
+      name: "Pillager Outposts"
       total: 8
+    shipwreck:
+      name: "Shipwrecks"
+      total: 126
+    trail_ruins:
+      name: "Trail Ruins"
+      total: 19
+
+nether:
+  regions:
+    total: 18
+  hearts:
+    total: 8
 ```
 
-The actual Lowothra values should be verified rather than assumed from
-this example.
+A structure key is included only when its counted total is at least
+one. The key set is whatever the imported meta contains, not a fixed
+list in this spec. Every `total` is an integer of zero or more. Every
+`name` is a non-blank string. A file that breaks those rules is
+malformed.
 
-Later, MCSM may generate this configuration from the Region Forge
-catalogues. That is outside the current implementation.
+### Phase 2 — Put the file on the server
 
-## Command
+Copy the exported `totals.yml` into the ExplorationCore data folder:
 
-Add:
+`plugins/ExplorationCore/totals.yml`
+
+This phase is delivery. It does not change the plugin. `/exploration`
+cannot open a book until this file is present and well formed.
+
+### Phase 3 — `/exploration`
+
+Add the command. This phase is last. It depends on phase 2.
 
 `/exploration`
 
-Player-only command.
+Player-only command, separate from `/explorationcore`.
 
-When executed, ExplorationCore should:
+Permission `explorationcore.exploration`, default true. A player can
+run it without being an operator.
+
+The console, and any non-player sender, receives a short refusal and
+the book does not open.
+
+When a player runs it, ExplorationCore should:
 
 1.  Identify the player's UUID.
-2.  Query their discoveries.
-3.  Aggregate the required counts.
-4.  Combine those counts with the configured totals.
-5.  Generate a written book.
-6.  Open the book directly for the player.
+2.  Load `totals.yml` from the plugin data folder.
+3.  Query that player's discoveries.
+4.  Aggregate the required counts.
+5.  Combine those counts with the totals.
+6.  Generate a written book.
+7.  Open the book directly for the player.
 
-The book should be virtual. Do not add an item to the player's
-inventory.
+Load and validate `totals.yml` when the command runs. Do not validate
+it during plugin enable. A missing or malformed file must not affect
+discovery recording or prevent the plugin from enabling.
 
-## Book Content
+The book is virtual. Do not add an item to the player's inventory.
 
-The initial book should contain approximately the same information
-currently presented through the exploration scoreboards.
+Page 1 uses the online player's current name and the configured
+`server-name`. It does not use a `player_name` stored on an older
+discovery row.
 
-### Page 1 - Overworld
+#### Page 1 — Overworld
 
--   Server/world heading
+-   Server name and overworld heading
 -   Player name
 -   Regions discovered / total
 -   Villages discovered / total
 -   Hearts discovered / total
 -   Nerves discovered / total
--   Optional overall progress
 
-### Page 2+ - Structures
+There is no overall progress line.
 
-Show the existing structure categories:
+#### Following pages — Structures
 
--   Ancient Cities
--   Buried Treasures
--   Desert Wells
--   Jungle Temples
--   Ocean Ruins
--   Pillager Outposts
--   Shipwrecks
--   Trail Ruins
--   Structures total if useful
+One line per entry under `overworld.structures`, in the order the
+file lists them.
 
-Split this across pages if required for Minecraft book readability.
+-   The entry's `name`
+-   Discovered / total
 
-### Final Page - Nether
+There is no structures total.
+
+Split these lines across pages only when a single written-book page
+cannot hold them.
+
+#### Final page — Nether
 
 -   Nether regions discovered / total
 -   Nether hearts discovered / total
--   Optional overall Nether progress
 
-## Structure Families
+There is no overall Nether progress line.
 
-`entity_type = structure` does not name the family. Two ocean ruins
-are two rows, and the family they share is the catalogue's
-`structureType`, such as `ocean_ruin`.
+#### Counting
 
-Store that value on the discovery row as `structure_type` when the
-discovery is recorded. The generator already knows it. The record
-command must start accepting it. This is the schema change that lets
-the ledger be the source of family progress. A config map from
-`entity_id` to family, or a guess from the id prefix or the display
-name, would leave the grouping outside the database.
+Progress is the number of matching discovery rows for that player
+UUID. Include rows stored under an earlier `server` value. One
+database file belongs to one server.
 
-The book counts rows whose `structure_type` equals the config key
-under `structures`. The config key supplies the label and the total.
-It does not decide which rows belong to the family.
+-   Overworld regions: `world=overworld` and `entity_type=region`
+-   Villages: `world=overworld` and `entity_type=village`
+-   Hearts: `world=overworld` and `entity_type=heart`
+-   Nerves: `world=overworld` and `entity_type=nerve`
+-   A structure line: `world=overworld`, `entity_type=structure`, and
+    `structure_type` equal to that entry's key
+-   Nether regions: `world=nether` and `entity_type=region`
+-   Nether hearts: `world=nether` and `entity_type=heart`
 
-Regions, villages, hearts, and nerves leave `structure_type` empty.
-Their grouping is `entity_type`.
-
-Rows already stored have no family. Add the column as nullable and
-leave those rows unchanged. They remain in the table, they are omitted
-from family lines, and each omission is logged. The book still opens.
-A later backfill can write `structure_type` by joining `entity_id`
-to the catalogue. The book does not perform that join, and it does not
-borrow the AdvancedAchievements family counter to fill the gap. Until
-the backfill, a player who found structures before the column existed
-will see a lower family count than the scoreboard. That is the ledger
-telling the truth about what it knows.
-
-## Counting Rules
-
-Progress is the number of matching discovery rows.
-
-Examples:
-
--   Overworld regions: count rows where `world=overworld` and
-    `entity_type=region`
--   Villages: `world=overworld`, `entity_type=village`
--   Hearts: corresponding world + `entity_type=heart`
--   Nerves: corresponding world + `entity_type=nerve`
--   Nether regions: `world=nether`, `entity_type=region`
--   Ocean Ruins: `entity_type=structure` and
-    `structure_type=ocean_ruin`
-
-Count every matching row for that player UUID. Include rows stored
-under an earlier `server` value. One database file belongs to one
-server.
-
-A player with no discoveries still gets a book, with zero against each
-configured total.
+Every configured line is shown, including when the discovered count
+is zero.
 
 A discovered count may be higher than the configured total. Show both
-numbers as stored. Do not cap the discovered count at the total.
+numbers. Do not cap the discovered count at the total.
 
-## Error Handling
+A structure row with an empty `structure_type` is logged and left out
+of the structure lines. A `structure_type` that has no entry in
+`totals.yml` is logged and left out. Neither case stops the book from
+opening.
 
-`/exploration` should fail gracefully.
+A player with no discoveries still gets a book, with zero against
+each configured total.
 
-A missing or malformed exploration configuration, or a database read
-failure, must not affect discovery recording or other ExplorationCore
-functionality.
+#### When the book cannot open
 
-A structure row with an empty `structure_type`, or a family key that
-has no entry in the book configuration, is logged and left off the
-family pages. That does not stop the book from opening.
+`/exploration` fails on its own.
 
-Log useful diagnostics to console and give the player a short
-appropriate message if the book cannot be opened.
+A missing totals file, a malformed totals file, or a database read
+failure is logged. The player gets a short message. Discovery
+recording and the rest of ExplorationCore keep working.
 
-## Out of Scope
+## Out of scope
 
 Do not add yet:
 
@@ -231,40 +264,19 @@ Do not add yet:
 -   search
 -   pagination controls beyond normal Minecraft book pages
 -   physical journal items
--   Region Forge parsing
--   MCSM integration
--   automatic config generation
--   HTTP/API functionality
--   scoreboard replacement/removal
--   reading AdvancedAchievements, PlaceholderAPI, or TAB
--   backfilling `structure_type` on rows that predate the column
+-   reading another plugin's files
+-   reading world region files
+-   reading achievement counters or scoreboard placeholders
+-   changes to discovery recording
+-   scoreboard replacement or removal
+-   HTTP or API functionality
 
-## Recording `structure_type`
+## Design principle
 
-This amends the v1 record command. Commands already installed, with
-six arguments, keep working and store an empty family.
+**The database says what the player has discovered, including the
+`structure_type` stored on a structure row.**
 
-``` text
-explorationcore record <player> <world> <entity-type> <entity-id> <display-name> <difficulty> [structure-type]
-```
-
-The seventh argument is one token, the catalogue `structureType`.
-The plugin trims it and stores it in lowercase. `ceGenerator.ts`
-passes it for structure discoveries and omits it for every other type.
-A seventh token on any other entity type is rejected. A structure
-recorded with no `structure_type` is stored, and the missing type is
-logged. The plugin does not reject that row.
-
-The column is not part of the unique key. A later record of the same
-entity must not rewrite a family already stored. Filling an empty
-family on an existing row is the backfill, which is outside this book.
-
-## Design Principle
-
-**The database says what the player has discovered, including which
-structure family a structure was when it was recorded.**
-
-**The static configuration says what exists.**
+**`totals.yml` says what exists.**
 
 **When another plugin disagrees, the book follows the database.**
 
