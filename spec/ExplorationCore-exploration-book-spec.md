@@ -76,8 +76,11 @@ Overworld totals:
 Overworld structures are grouped by `structureType`. Each group that
 has at least one counted structure becomes one map entry. The map key
 is the `structureType` string stored on discovery rows, such as
-`ocean_ruin`, `shipwreck`, or `trail_ruins`. `name` is that group's
-label, such as `Ocean Ruins`. `total` is the count of counted
+`ocean_ruin`, `shipwreck`, or `trail_ruins`. That stored form is one
+token with no whitespace, trimmed and lowercased. The export writes
+keys in that form. The book compares a key to a row with exact string
+equality. `name` is that group's label, such as `Ocean Ruins`, and may
+contain spaces and capitals. `total` is the count of counted
 structures with that `structureType`.
 
 Do not write the achievement counter name. It is not a field in this
@@ -179,7 +182,8 @@ Load and validate `totals.yml` when the command runs. Do not validate
 it during plugin enable. A missing or malformed file must not affect
 discovery recording or prevent the plugin from enabling.
 
-The book is virtual. Do not add an item to the player's inventory.
+The book is virtual. Do not add an item to the player's inventory. Its
+title is `Exploration`. Its author is the configured `server-name`.
 
 Page 1 uses the online player's current name and the configured
 `server-name`. It does not use a `player_name` stored on an older
