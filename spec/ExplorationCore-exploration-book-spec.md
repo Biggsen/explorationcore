@@ -62,9 +62,11 @@ Produce `totals.yml` from the imported world meta the export already
 holds. One file covers both worlds.
 
 The export counts entries whose `discover.method` is `on_enter`.
-Entries with any other discover method are absent from the totals.
-Entries whose `kind` is `system` or `water` are absent. The plugin
-never interprets `discover.method`. That rule belongs to the export.
+The start region, whose method is `first_join`, is counted in that
+world's `regions.total`. Entries with any other discover method are
+absent from the totals. Entries whose `kind` is `system` or `water`
+are absent. The plugin never interprets `discover.method`. That rule
+belongs to the export.
 
 Overworld totals:
 
