@@ -1,0 +1,90 @@
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #241c14;
+  color: #f3eadb;
+  font-family: "Segoe UI", sans-serif;
+}
+
+header, footer, #controls, #warning {
+  padding: 12px 24px;
+}
+
+h1, h2 {
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+h1 {
+  font-size: 20px;
+}
+
+h2 {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#status, footer {
+  color: #cbbba4;
+  font-size: 14px;
+}
+
+#stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 8px 24px 0;
+}
+
+canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: transparent;
+  cursor: pointer;
+}
+
+aside {
+  width: 320px;
+  min-height: 180px;
+  padding: 16px;
+  background: #120e0b;
+  color: #e7d7bf;
+  font-family: Consolas, ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+aside ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+button {
+  background: #3a2e22;
+  color: #f3eadb;
+  border: 1px solid #8a7054;
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#warning {
+  min-height: 1.2em;
+  color: #e7b15a;
+}
+
+code {
+  font-family: Consolas, ui-monospace, monospace;
+}

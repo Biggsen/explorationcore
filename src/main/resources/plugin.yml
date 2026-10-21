@@ -1,5 +1,5 @@
 name: ExplorationCore
-version: 1.0.1
+version: 1.1.0
 main: dev.explorationcore.ExplorationCorePlugin
 api-version: '1.21'
 description: Persistent ledger of player exploration discoveries.
@@ -7,6 +7,10 @@ commands:
   explorationcore:
     description: Internal discovery ledger
     usage: /<command> <status|record>
+  exploration:
+    description: Open your exploration progress
+    usage: /<command>
+    permission: explorationcore.exploration
 permissions:
   explorationcore.record:
     description: Record one discovery into the ledger. Not granted to operators.
@@ -14,3 +18,6 @@ permissions:
   explorationcore.status:
     description: Show ExplorationCore database status.
     default: op
+  explorationcore.exploration:
+    description: Open the exploration progress book.
+    default: true

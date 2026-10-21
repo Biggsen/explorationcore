@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable {
     private static final String CREATE_TABLE = """
@@ -49,6 +51,13 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
             """;
 
     private static final String COUNT = "SELECT COUNT(*) FROM discoveries";
+
+    private static final String TALLIES = """
+            SELECT world, entity_type, structure_type, COUNT(*)
+            FROM discoveries
+            WHERE player_uuid = ?
+            GROUP BY world, entity_type, structure_type
+            """;
 
     private static final String FIND = """
             SELECT player_uuid, player_name, server, world, entity_type, entity_id,
@@ -111,6 +120,31 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
                     return InsertOutcome.DUPLICATE;
                 }
                 throw exception;
+            }
+        }
+    }
+
+    public List<PlayerTally> talliesFor(String playerUuid) throws SQLException {
+        synchronized (lock) {
+            ensureOpen();
+            try (PreparedStatement statement = connection.prepareStatement(TALLIES)) {
+                statement.setString(1, playerUuid);
+                try (ResultSet results = statement.executeQuery()) {
+                    List<PlayerTally> tallies = new ArrayList<>();
+                    while (results.next()) {
+                        String structureType = results.getString(3);
+                        if (structureType != null && structureType.isBlank()) {
+                            structureType = null;
+                        }
+                        tallies.add(new PlayerTally(
+                                results.getString(1),
+                                results.getString(2),
+                                structureType,
+                                results.getLong(4)
+                        ));
+                    }
+                    return tallies;
+                }
             }
         }
     }

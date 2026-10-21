@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Exploration book</title>
+  <link rel="stylesheet" href="preview.css">
+</head>
+<body>
+  <header>
+    <h1>Exploration book</h1>
+    <p id="status"></p>
+  </header>
+  <div id="stage">
+    <canvas id="book" width="768" height="768"></canvas>
+    <aside>
+      <h2>Server log</h2>
+      <ul id="notice-list"></ul>
+    </aside>
+  </div>
+  <div id="controls">
+    <button id="prev" type="button">Previous</button>
+    <span id="page-label"></span>
+    <button id="next" type="button">Next</button>
+  </div>
+  <p id="warning"></p>
+  <footer>
+    Run <code>gradlew bookPreview</code> after the book changes, then refresh.
+    Textures are copied from a Minecraft client jar with <code>-PminecraftJar=...</code>.
+  </footer>
+  <script src="book.js"></script>
+  <script src="preview.js"></script>
+</body>
+</html>

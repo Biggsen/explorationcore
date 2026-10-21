@@ -1,5 +1,6 @@
 package dev.explorationcore;
 
+import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
 import dev.explorationcore.db.DatabaseFiles;
 import dev.explorationcore.db.DiscoveryRepository;
@@ -53,6 +54,12 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             command.setExecutor(executor);
             command.setTabCompleter(executor);
         }
+        PluginCommand bookCommand = getCommand("exploration");
+        if (bookCommand == null) {
+            getLogger().severe("Command exploration is missing from plugin.yml");
+        } else {
+            bookCommand.setExecutor(new ExplorationBookCommand(this));
+        }
         getServer().getPluginManager().registerEvents(this, this);
 
         if (repository != null) {
@@ -81,11 +88,13 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
     @EventHandler
     public void hideCommandFromPlayers(PlayerCommandSendEvent event) {
-        if (event.getPlayer().hasPermission("explorationcore.status")
-                || event.getPlayer().hasPermission("explorationcore.record")) {
-            return;
+        if (!event.getPlayer().hasPermission("explorationcore.status")
+                && !event.getPlayer().hasPermission("explorationcore.record")) {
+            event.getCommands().remove("explorationcore");
         }
-        event.getCommands().remove("explorationcore");
+        if (!event.getPlayer().hasPermission("explorationcore.exploration")) {
+            event.getCommands().remove("exploration");
+        }
     }
 
     public String serverName() {

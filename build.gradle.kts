@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.explorationcore"
-version = "1.0.1"
+version = "1.1.0"
 
 // Lowothra's exact Paper build is not recorded. 1.21.11 is the newest Paper API
 // this machine's JDK 21 can compile. plugin.yml api-version stays 1.21 so any
@@ -18,8 +18,10 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     implementation("org.xerial:sqlite-jdbc:3.53.4.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
+    testImplementation("org.yaml:snakeyaml:2.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -59,4 +61,26 @@ tasks.shadowJar {
 
 tasks.named("assemble") {
     dependsOn(tasks.named("shadowJar"))
+}
+
+// Writes dev/book-preview/book.js from ExplorationBook.prepare. The browser
+// paints that file; it does not wrap lines itself.
+tasks.register<JavaExec>("bookPreview") {
+    group = "development"
+    description = "Write the exploration book preview."
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("dev.explorationcore.book.BookPreviewDump")
+    workingDir = layout.projectDirectory.asFile
+    dependsOn(tasks.named("testClasses"))
+    val previewDir = layout.projectDirectory.dir("dev/book-preview")
+    args(
+        previewDir.file("book.js").asFile.absolutePath,
+        previewDir.dir("assets").asFile.absolutePath
+    )
+    if (project.hasProperty("minecraftJar")) {
+        args(project.property("minecraftJar").toString())
+    }
+    if (project.hasProperty("player")) {
+        systemProperty("book.player", project.property("player").toString())
+    }
 }
