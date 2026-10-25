@@ -1,5 +1,9 @@
 # Release history
 
+## 1.2.0
+
+`%exploration_current_region%`, `%exploration_current_village%`, and `%exploration_current_structure%` are answered by ExplorationCore when PlaceholderAPI and WorldGuard are present. The location index is `plugins/ExplorationCore/location/index.yml`.
+
 ## 1.1.0
 
 `/exploration` opens a virtual book of the player's discovery progress against `plugins/ExplorationCore/totals.yml`. The file is read when the command runs. Recording is unchanged.

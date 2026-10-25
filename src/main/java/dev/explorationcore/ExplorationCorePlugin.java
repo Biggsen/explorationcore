@@ -4,6 +4,7 @@ import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
 import dev.explorationcore.db.DatabaseFiles;
 import dev.explorationcore.db.DiscoveryRepository;
+import dev.explorationcore.location.ExplorationLocationExpansion;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,6 +20,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
     private String serverName = "";
     private boolean debug;
     private DiscoveryRepository repository;
+    private ExplorationLocationExpansion locationExpansion;
 
     @Override
     public void onEnable() {
@@ -61,6 +63,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             bookCommand.setExecutor(new ExplorationBookCommand(this));
         }
         getServer().getPluginManager().registerEvents(this, this);
+        registerLocationExpansion();
 
         if (repository != null) {
             getLogger().info("SQLite database ready");
@@ -74,6 +77,12 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
     @Override
     public void onDisable() {
+        ExplorationLocationExpansion expansion = locationExpansion;
+        locationExpansion = null;
+        if (expansion != null) {
+            expansion.unregister();
+        }
+
         DiscoveryRepository openRepository = repository;
         repository = null;
         if (openRepository == null) {
@@ -107,5 +116,21 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
     public DiscoveryRepository repository() {
         return repository;
+    }
+
+    private void registerLocationExpansion() {
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            getLogger().info("PlaceholderAPI is absent. Location placeholders are unavailable.");
+            return;
+        }
+        ExplorationLocationExpansion expansion = new ExplorationLocationExpansion(
+                getDataFolder().toPath().resolve("location").resolve("index.yml")
+        );
+        if (expansion.register()) {
+            locationExpansion = expansion;
+            getLogger().info("Location placeholders registered");
+        } else {
+            getLogger().warning("Location placeholders were not registered. WorldGuard is required.");
+        }
     }
 }
