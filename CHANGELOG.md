@@ -1,10 +1,14 @@
 # Release history
 
+## 1.3.0-dev.2
+
+The database now keeps a versioned schema. Existing discovery rows are left as they are, including databases from 1.0.0 that are missing `structure_type`. Two empty tables, `reward_intents` and `milestone_grants`, are created for later reward and milestone work. Recording, `/exploration`, and the counters behave as before.
+
+Development builds use `1.3.0-dev.N`, then `1.3.0-rc.N`, then `1.3.0`. `1.2.0` remains the last stable release.
+
 ## 1.3.0-dev.1
 
 `%explorationcore_total_discovered%` and the other discovery counters are answered from `exploration.db`. A player with no matching rows gets `0`. A database failure leaves the placeholder empty. Counts can trail a new discovery by a few seconds. Location placeholders and `/exploration` are unchanged.
-
-Development builds use `1.3.0-dev.N`, then `1.3.0-rc.N`, then `1.3.0`. `1.2.0` remains the last stable release.
 
 ## 1.2.0
 

@@ -13,28 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable {
-    private static final String CREATE_TABLE = """
-            CREATE TABLE IF NOT EXISTS discoveries (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                player_uuid TEXT NOT NULL,
-                player_name TEXT NOT NULL,
-                server TEXT NOT NULL,
-                world TEXT NOT NULL,
-                entity_type TEXT NOT NULL,
-                entity_id TEXT NOT NULL,
-                display_name TEXT NOT NULL,
-                difficulty INTEGER NOT NULL,
-                discovered_at TEXT NOT NULL,
-                structure_type TEXT,
-                UNIQUE (
-                    player_uuid,
-                    world,
-                    entity_type,
-                    entity_id
-                )
-            )
-            """;
-
     private static final String INSERT = """
             INSERT INTO discoveries (
                 player_uuid,
@@ -87,10 +65,7 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
         String url = "jdbc:sqlite:" + absolute.toString().replace('\\', '/');
         Connection connection = DriverManager.getConnection(url);
         try {
-            try (Statement statement = connection.createStatement()) {
-                statement.executeUpdate(CREATE_TABLE);
-            }
-            ensureStructureTypeColumn(connection);
+            SchemaMigrator.migrate(connection);
             return new DiscoveryRepository(connection);
         } catch (SQLException exception) {
             connection.close();
@@ -204,27 +179,6 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
         if (connection.isClosed()) {
             throw new SQLException("SQLite database is closed");
         }
-    }
-
-    private static void ensureStructureTypeColumn(Connection connection) throws SQLException {
-        if (hasColumn(connection, "structure_type")) {
-            return;
-        }
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate("ALTER TABLE discoveries ADD COLUMN structure_type TEXT");
-        }
-    }
-
-    private static boolean hasColumn(Connection connection, String name) throws SQLException {
-        try (Statement statement = connection.createStatement();
-             ResultSet results = statement.executeQuery("PRAGMA table_info(discoveries)")) {
-            while (results.next()) {
-                if (name.equals(results.getString("name"))) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private static boolean isUniqueViolation(Throwable throwable) {
