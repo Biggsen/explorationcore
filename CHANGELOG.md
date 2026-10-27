@@ -1,5 +1,11 @@
 # Release history
 
+## 1.3.0-dev.1
+
+`%explorationcore_total_discovered%` and the other discovery counters are answered from `exploration.db`. A player with no matching rows gets `0`. A database failure leaves the placeholder empty. Counts can trail a new discovery by a few seconds. Location placeholders and `/exploration` are unchanged.
+
+Development builds use `1.3.0-dev.N`, then `1.3.0-rc.N`, then `1.3.0`. `1.2.0` remains the last stable release.
+
 ## 1.2.0
 
 `%exploration_current_region%`, `%exploration_current_village%`, and `%exploration_current_structure%` are answered by ExplorationCore when PlaceholderAPI and WorldGuard are present. The location index is `plugins/ExplorationCore/location/index.yml`.

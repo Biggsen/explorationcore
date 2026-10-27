@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.explorationcore"
-version = "1.2.0"
+version = "1.3.0-dev.1"
 
 // Lowothra's exact Paper build is not recorded. 1.21.11 is the newest Paper API
 // this machine's JDK 21 can compile. plugin.yml api-version stays 1.21 so any
@@ -37,6 +37,15 @@ java {
 tasks.withType<JavaCompile> {
     options.release.set(21)
     options.encoding = "UTF-8"
+}
+
+tasks.processResources {
+    val pluginVersion = project.version.toString()
+    inputs.property("version", pluginVersion)
+    filteringCharset = "UTF-8"
+    filesMatching("plugin.yml") {
+        expand(mapOf("version" to pluginVersion))
+    }
 }
 
 tasks.test {

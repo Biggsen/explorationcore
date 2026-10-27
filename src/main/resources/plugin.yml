@@ -1,5 +1,5 @@
 name: ExplorationCore
-version: 1.2.0
+version: "${version}"
 main: dev.explorationcore.ExplorationCorePlugin
 api-version: '1.21'
 softdepend: [PlaceholderAPI, WorldGuard]

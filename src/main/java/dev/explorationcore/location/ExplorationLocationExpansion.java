@@ -20,9 +20,11 @@ import java.util.List;
  */
 public final class ExplorationLocationExpansion extends PlaceholderExpansion {
     private final LocationIndexLoader loader;
+    private final String version;
 
-    public ExplorationLocationExpansion(Path indexFile) {
+    public ExplorationLocationExpansion(Path indexFile, String version) {
         this.loader = new LocationIndexLoader(indexFile);
+        this.version = version;
     }
 
     @Override
@@ -37,7 +39,7 @@ public final class ExplorationLocationExpansion extends PlaceholderExpansion {
 
     @Override
     public String getVersion() {
-        return "1.2.0";
+        return version;
     }
 
     @Override

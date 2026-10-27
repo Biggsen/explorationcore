@@ -2,6 +2,8 @@ package dev.explorationcore;
 
 import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
+import dev.explorationcore.counter.ExplorationCounterExpansion;
+import dev.explorationcore.counter.TallyCache;
 import dev.explorationcore.db.DatabaseFiles;
 import dev.explorationcore.db.DiscoveryRepository;
 import dev.explorationcore.location.ExplorationLocationExpansion;
@@ -20,7 +22,9 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
     private String serverName = "";
     private boolean debug;
     private DiscoveryRepository repository;
+    private final TallyCache tallyCache = new TallyCache();
     private ExplorationLocationExpansion locationExpansion;
+    private ExplorationCounterExpansion counterExpansion;
 
     @Override
     public void onEnable() {
@@ -63,7 +67,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             bookCommand.setExecutor(new ExplorationBookCommand(this));
         }
         getServer().getPluginManager().registerEvents(this, this);
-        registerLocationExpansion();
+        registerPlaceholders();
 
         if (repository != null) {
             getLogger().info("SQLite database ready");
@@ -81,6 +85,11 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
         locationExpansion = null;
         if (expansion != null) {
             expansion.unregister();
+        }
+        ExplorationCounterExpansion counters = counterExpansion;
+        counterExpansion = null;
+        if (counters != null) {
+            counters.unregister();
         }
 
         DiscoveryRepository openRepository = repository;
@@ -118,19 +127,40 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
         return repository;
     }
 
-    private void registerLocationExpansion() {
+    private void registerPlaceholders() {
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") == null) {
-            getLogger().info("PlaceholderAPI is absent. Location placeholders are unavailable.");
+            getLogger().info("PlaceholderAPI is absent. Placeholders are unavailable.");
             return;
         }
+        registerLocationExpansion();
+        registerCounterExpansion();
+    }
+
+    private void registerLocationExpansion() {
         ExplorationLocationExpansion expansion = new ExplorationLocationExpansion(
-                getDataFolder().toPath().resolve("location").resolve("index.yml")
+                getDataFolder().toPath().resolve("location").resolve("index.yml"),
+                getDescription().getVersion()
         );
         if (expansion.register()) {
             locationExpansion = expansion;
             getLogger().info("Location placeholders registered");
         } else {
             getLogger().warning("Location placeholders were not registered. WorldGuard is required.");
+        }
+    }
+
+    private void registerCounterExpansion() {
+        ExplorationCounterExpansion expansion = new ExplorationCounterExpansion(
+                getDescription().getVersion(),
+                getLogger(),
+                repository,
+                tallyCache
+        );
+        if (expansion.register()) {
+            counterExpansion = expansion;
+            getLogger().info("Discovery counters registered");
+        } else {
+            getLogger().warning("Discovery counters were not registered.");
         }
     }
 }
