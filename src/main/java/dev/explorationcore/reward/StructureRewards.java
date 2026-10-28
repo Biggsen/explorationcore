@@ -116,6 +116,13 @@ public final class StructureRewards {
         return OptionalInt.of(amount);
     }
 
+    public Optional<String> formatClaimblocks(String playerName, int amount) {
+        if (commandTemplate.isEmpty() || amount <= 0 || !singleToken(playerName)) {
+            return Optional.empty();
+        }
+        return Optional.of(commandTemplate.replace(PLAYER, playerName).replace(AMOUNT, Integer.toString(amount)));
+    }
+
     public Optional<String> claimblocksCommand(String structureType, String playerName) {
         if (!enabled || commandTemplate.isEmpty() || !singleToken(playerName)) {
             return Optional.empty();
@@ -143,7 +150,7 @@ public final class StructureRewards {
         return amount == null ? 0 : amount;
     }
 
-    String configuredCommand() {
+    public String configuredCommand() {
         return commandTemplate;
     }
 

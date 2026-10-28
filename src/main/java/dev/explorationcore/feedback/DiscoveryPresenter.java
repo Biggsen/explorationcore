@@ -11,13 +11,20 @@ import org.bukkit.entity.Player;
 import java.time.Duration;
 
 public final class DiscoveryPresenter {
+    private static final long FADE_IN_MILLIS = 500L;
+    private static final long STAY_MILLIS = 3500L;
+    private static final long FADE_OUT_MILLIS = 1000L;
     private static final Title.Times TIMES = Title.Times.times(
-            Duration.ofMillis(500),
-            Duration.ofMillis(3500),
-            Duration.ofMillis(1000)
+            Duration.ofMillis(FADE_IN_MILLIS),
+            Duration.ofMillis(STAY_MILLIS),
+            Duration.ofMillis(FADE_OUT_MILLIS)
     );
 
     private DiscoveryPresenter() {
+    }
+
+    public static long durationTicks() {
+        return (FADE_IN_MILLIS + STAY_MILLIS + FADE_OUT_MILLIS) / 50L;
     }
 
     public static void show(Player player, DiscoveryNotice notice) {

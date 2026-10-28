@@ -24,6 +24,9 @@ class StructureRewardsTest {
 
         assertFalse(rewards.enabled());
         assertEquals("acb {player} {amount}", rewards.configuredCommand());
+        assertEquals(Optional.of("acb Steve 100"), rewards.formatClaimblocks("Steve", 100));
+        assertEquals(Optional.empty(), rewards.formatClaimblocks("Steve Two", 100));
+        assertEquals(Optional.empty(), rewards.formatClaimblocks("Steve", 0));
         assertEquals(OptionalInt.empty(), rewards.xp("shipwreck"));
         assertEquals(OptionalInt.empty(), rewards.xp("ancient_city"));
         assertEquals(OptionalInt.empty(), rewards.claimblocks("shipwreck"));

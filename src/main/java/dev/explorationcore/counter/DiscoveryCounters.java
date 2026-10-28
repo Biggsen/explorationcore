@@ -2,6 +2,7 @@ package dev.explorationcore.counter;
 
 import dev.explorationcore.db.PlayerTally;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,45 @@ public final class DiscoveryCounters {
         return NAMES;
     }
 
+    public static List<String> affected(String world, String entityType, String structureType) {
+        List<String> names = new ArrayList<>();
+        switch (entityType == null ? "" : entityType) {
+            case "region" -> {
+                if ("overworld".equals(world)) {
+                    names.add("regions_discovered");
+                } else if ("nether".equals(world)) {
+                    names.add("nether_regions_discovered");
+                }
+            }
+            case "village" -> names.add("villages_discovered");
+            case "heart" -> {
+                if ("overworld".equals(world)) {
+                    names.add("hearts_discovered");
+                } else if ("nether".equals(world)) {
+                    names.add("nether_hearts_discovered");
+                }
+            }
+            case "nerve" -> {
+                if ("overworld".equals(world)) {
+                    names.add("nerves_discovered");
+                }
+            }
+            case "structure" -> {
+                names.add("structures_found");
+                String family = familyCounter(structureType);
+                if (family != null) {
+                    names.add(family);
+                }
+            }
+            default -> {
+            }
+        }
+        if (countsTowardTotal(world, entityType)) {
+            names.add("total_discovered");
+        }
+        return List.copyOf(names);
+    }
+
     public static long count(List<PlayerTally> tallies, String name) {
         if (!known(name)) {
             throw new IllegalArgumentException("unknown counter: " + name);
@@ -67,6 +107,27 @@ public final class DiscoveryCounters {
             case "nether_hearts_discovered" -> sum(tallies, "nether", "heart");
             case "structures_found" -> sumType(tallies, "structure");
             default -> sumStructure(tallies, FAMILIES.get(name));
+        };
+    }
+
+    private static String familyCounter(String structureType) {
+        if (structureType == null || structureType.isBlank()) {
+            return null;
+        }
+        for (Map.Entry<String, String> entry : FAMILIES.entrySet()) {
+            if (entry.getValue().equals(structureType)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    private static boolean countsTowardTotal(String world, String entityType) {
+        return switch (entityType == null ? "" : entityType) {
+            case "village" -> true;
+            case "region", "heart" -> "overworld".equals(world) || "nether".equals(world);
+            case "nerve" -> "overworld".equals(world);
+            default -> false;
         };
     }
 

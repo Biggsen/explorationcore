@@ -79,6 +79,29 @@ class DiscoveryNoticesTest {
     }
 
     @Test
+    void itemMessageUsesTheDisplayNameAndMarksStacks() {
+        assertEquals("You received your reward: Diamond", DiscoveryNotices.item(1, "Diamond"));
+        assertEquals("You received your reward: Diamond ×4", DiscoveryNotices.item(4, "Diamond"));
+        assertEquals("You received your reward: Netherite Scrap ×2", DiscoveryNotices.item(2, "Netherite Scrap"));
+        assertEquals(
+                "You received your reward: Bottle o' Enchanting ×3",
+                DiscoveryNotices.item(3, "Bottle o' Enchanting")
+        );
+    }
+
+    @Test
+    void milestoneNoticeUsesTheDisplayNameAndTheConfiguredMessage() {
+        DiscoveryNotice notice = DiscoveryNotices.milestone(
+                "Heart Wanderer",
+                "You discovered a Heart of a region!"
+        );
+
+        assertEquals("Heart Wanderer", notice.title());
+        assertEquals("You discovered a Heart of a region!", notice.subtitle());
+        assertEquals("You discovered a Heart of a region!", notice.chat());
+    }
+
+    @Test
     void claimblockMessageUsesTheGrantedAmount() {
         assertEquals("You received your reward: 10 claimblocks", DiscoveryNotices.claimblocks(10));
         assertEquals("You received your reward: 15 claimblocks", DiscoveryNotices.claimblocks(15));

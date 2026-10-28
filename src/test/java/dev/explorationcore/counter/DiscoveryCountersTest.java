@@ -73,6 +73,29 @@ class DiscoveryCountersTest {
     }
 
     @Test
+    void aDiscoveryMovesItsCategoryAndTotalWhenTheLedgerCountsIt() {
+        assertEquals(List.of("regions_discovered", "total_discovered"), DiscoveryCounters.affected("overworld", "region", null));
+        assertEquals(List.of("villages_discovered", "total_discovered"), DiscoveryCounters.affected("nether", "village", null));
+        assertEquals(List.of("hearts_discovered", "total_discovered"), DiscoveryCounters.affected("overworld", "heart", null));
+        assertEquals(List.of("nerves_discovered", "total_discovered"), DiscoveryCounters.affected("overworld", "nerve", null));
+        assertEquals(
+                List.of("nether_regions_discovered", "total_discovered"),
+                DiscoveryCounters.affected("nether", "region", null)
+        );
+        assertEquals(
+                List.of("nether_hearts_discovered", "total_discovered"),
+                DiscoveryCounters.affected("nether", "heart", null)
+        );
+        assertEquals(List.of(), DiscoveryCounters.affected("nether", "nerve", null));
+        assertEquals(
+                List.of("structures_found", "shipwrecks_found"),
+                DiscoveryCounters.affected("overworld", "structure", "shipwreck")
+        );
+        assertEquals(List.of("structures_found"), DiscoveryCounters.affected("nether", "structure", null));
+        assertEquals(List.of("structures_found"), DiscoveryCounters.affected("overworld", "structure", "custom_hut"));
+    }
+
+    @Test
     void unknownNameIsRejected() {
         assertFalse(DiscoveryCounters.known("votes"));
         assertFalse(DiscoveryCounters.known(null));

@@ -7,14 +7,22 @@ import dev.explorationcore.counter.TallyCache;
 import dev.explorationcore.db.DatabaseFiles;
 import dev.explorationcore.db.DiscoveryRepository;
 import dev.explorationcore.location.ExplorationLocationExpansion;
+import dev.explorationcore.milestone.Milestones;
 import dev.explorationcore.reward.StructureRewards;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -23,6 +31,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
     private String serverName = "";
     private boolean debug;
     private StructureRewards structureRewards = StructureRewards.none();
+    private Milestones milestones = Milestones.none();
     private DiscoveryRepository repository;
     private final TallyCache tallyCache = new TallyCache();
     private ExplorationLocationExpansion locationExpansion;
@@ -48,6 +57,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             structureRewards = StructureRewards.none();
             getLogger().log(Level.SEVERE, "rewards is malformed. Structure XP rewards are disabled.", exception);
         }
+        milestones = loadMilestones();
 
         Path databaseFile = DatabaseFiles.resolve(
                 getDataFolder().toPath(),
@@ -133,6 +143,38 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
     public StructureRewards structureRewards() {
         return structureRewards;
+    }
+
+    public Milestones milestones() {
+        return milestones;
+    }
+
+    private Milestones loadMilestones() {
+        File file = new File(getDataFolder(), "milestones.yml");
+        if (!file.exists()) {
+            try {
+                saveResource("milestones.yml", false);
+            } catch (IllegalArgumentException exception) {
+                getLogger().log(
+                        Level.SEVERE,
+                        "milestones.yml is missing from the plugin jar. Milestone rewards are disabled.",
+                        exception
+                );
+                return Milestones.none();
+            }
+        }
+        if (!file.exists()) {
+            getLogger().severe("milestones.yml is missing. Milestone rewards are disabled.");
+            return Milestones.none();
+        }
+        YamlConfiguration yaml = new YamlConfiguration();
+        try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+            yaml.load(reader);
+        } catch (IOException | InvalidConfigurationException exception) {
+            getLogger().log(Level.SEVERE, "milestones.yml is malformed. Milestone rewards are disabled.", exception);
+            return Milestones.none();
+        }
+        return Milestones.load(yaml, getLogger(), structureRewards.configuredCommand());
     }
 
     public DiscoveryRepository repository() {

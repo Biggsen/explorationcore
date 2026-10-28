@@ -1,0 +1,64 @@
+# Test thresholds for local play. A player who is already past a threshold is not paid again.
+# Claim blocks use rewards.claimblocks-command from config.yml.
+milestones:
+  villages_discovered:
+    - id: villages_discovered_1
+      threshold: 1
+      display-name: Village Wanderer
+      message: You discovered a village!
+      rewards:
+        xp: 50
+        items:
+          - diamond 1
+
+  regions_discovered:
+    - id: regions_discovered_1
+      threshold: 1
+      display-name: Region Wanderer
+      message: You discovered a region!
+      rewards:
+        xp: 50
+        items:
+          - diamond 1
+
+  hearts_discovered:
+    - id: hearts_discovered_1
+      threshold: 1
+      display-name: Heart Wanderer
+      message: You discovered a Heart of a region!
+      rewards:
+        xp: 100
+        items:
+          - diamond 4
+          - netherite_scrap 2
+          - compass 1
+
+  nerves_discovered:
+    - id: nerves_discovered_1
+      threshold: 1
+      display-name: Nerve Wanderer
+      message: You discovered a Nerve of a region!
+      rewards:
+        xp: 200
+        items:
+          - compass 1
+          - diamond 4
+          - netherite_scrap 2
+          - torch 32
+
+  total_discovered:
+    - id: total_discovered_10
+      threshold: 4
+      display-name: Wanderer
+      message: 10% of Charidh explored!
+      promotion:
+        command: "lp user {player} promote explorer"
+      broadcast: "§6{player}§7 has become a §6WANDERER§7!"
+
+  structures_found:
+    - id: structures_found_5
+      threshold: 5
+      display-name: Structure Wanderer I
+      message: You found 5 structures!
+      rewards:
+        claimblocks: 100

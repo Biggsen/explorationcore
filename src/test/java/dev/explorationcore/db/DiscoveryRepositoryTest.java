@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.Base64;
@@ -17,8 +18,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DiscoveryRepositoryTest {
     private static final String PLAYER_UUID = "12345678-1234-1234-1234-123456789abc";
@@ -165,6 +168,66 @@ class DiscoveryRepositoryTest {
             );
             assertEquals(1L, repository.count());
         }
+    }
+
+    @Test
+    void claimMilestoneInsertsOnceAndLeavesAnExistingRow() throws Exception {
+        Path database = tempDir.resolve("grants.db");
+        try (DiscoveryRepository repository = DiscoveryRepository.open(database)) {
+            assertTrue(repository.claimMilestone(PLAYER_UUID, "hearts_discovered_1", "2026-10-28T17:00:00Z"));
+            assertFalse(repository.claimMilestone(PLAYER_UUID, "hearts_discovered_1", "2026-10-28T18:00:00Z"));
+            assertTrue(repository.claimMilestone(PLAYER_UUID, "total_discovered_10", "2026-10-28T17:00:01Z"));
+        }
+
+        try (Connection connection = connect(database);
+             Statement statement = connection.createStatement();
+             ResultSet results = statement.executeQuery("""
+                     SELECT milestone_id, status, achieved_at, rule_version
+                     FROM milestone_grants
+                     ORDER BY milestone_id
+                     """)) {
+            assertTrue(results.next());
+            assertEquals("hearts_discovered_1", results.getString("milestone_id"));
+            assertEquals("earned", results.getString("status"));
+            assertEquals("2026-10-28T17:00:00Z", results.getString("achieved_at"));
+            assertEquals("1", results.getString("rule_version"));
+            assertTrue(results.next());
+            assertEquals("total_discovered_10", results.getString("milestone_id"));
+            assertEquals("earned", results.getString("status"));
+            assertFalse(results.next());
+        }
+
+        try (Connection connection = connect(database);
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO milestone_grants (
+                        player_uuid, milestone_id, status, achieved_at, rule_version
+                    ) VALUES (
+                        '12345678-1234-1234-1234-123456789abc', 'structures_found_5',
+                        'historical', '2026-09-26T17:31:42Z', 'rules-1'
+                    )
+                    """);
+        }
+        try (DiscoveryRepository repository = DiscoveryRepository.open(database)) {
+            assertFalse(repository.claimMilestone(PLAYER_UUID, "structures_found_5", "2026-10-28T19:00:00Z"));
+        }
+        try (Connection connection = connect(database);
+             Statement statement = connection.createStatement();
+             ResultSet results = statement.executeQuery("""
+                     SELECT status, achieved_at, rule_version
+                     FROM milestone_grants
+                     WHERE milestone_id = 'structures_found_5'
+                     """)) {
+            assertTrue(results.next());
+            assertEquals("historical", results.getString("status"));
+            assertEquals("2026-09-26T17:31:42Z", results.getString("achieved_at"));
+            assertEquals("rules-1", results.getString("rule_version"));
+        }
+    }
+
+    private static Connection connect(Path database) throws Exception {
+        String url = "jdbc:sqlite:" + database.toAbsolutePath().toString().replace('\\', '/');
+        return DriverManager.getConnection(url);
     }
 
     private static String[] command(String world, String type, String displayName, String difficulty) {

@@ -30,6 +30,12 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
 
     private static final String COUNT = "SELECT COUNT(*) FROM discoveries";
 
+    private static final String CLAIM_MILESTONE = """
+            INSERT INTO milestone_grants (
+                player_uuid, milestone_id, status, achieved_at, rule_version
+            ) VALUES (?, ?, 'earned', ?, '1')
+            """;
+
     private static final String TALLIES = """
             SELECT world, entity_type, structure_type, COUNT(*)
             FROM discoveries
@@ -120,6 +126,24 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
                     }
                     return tallies;
                 }
+            }
+        }
+    }
+
+    public boolean claimMilestone(String playerUuid, String milestoneId, String achievedAt) throws SQLException {
+        synchronized (lock) {
+            ensureOpen();
+            try (PreparedStatement statement = connection.prepareStatement(CLAIM_MILESTONE)) {
+                statement.setString(1, playerUuid);
+                statement.setString(2, milestoneId);
+                statement.setString(3, achievedAt);
+                statement.executeUpdate();
+                return true;
+            } catch (SQLException exception) {
+                if (isUniqueViolation(exception)) {
+                    return false;
+                }
+                throw exception;
             }
         }
     }

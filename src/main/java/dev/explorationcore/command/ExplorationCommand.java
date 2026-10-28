@@ -1,14 +1,21 @@
 package dev.explorationcore.command;
 
 import dev.explorationcore.ExplorationCorePlugin;
+import dev.explorationcore.db.DiscoveryRepository;
+import dev.explorationcore.db.PlayerTally;
 import dev.explorationcore.feedback.DiscoveryNotice;
 import dev.explorationcore.feedback.DiscoveryNotices;
 import dev.explorationcore.feedback.DiscoveryPresenter;
+import dev.explorationcore.milestone.Milestone;
+import dev.explorationcore.milestone.MilestoneEvaluator;
 import dev.explorationcore.record.AttemptResult;
 import dev.explorationcore.record.OnlinePlayer;
 import dev.explorationcore.record.RecordAttempt;
+import dev.explorationcore.record.Timestamps;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -16,14 +23,18 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.RemoteConsoleCommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public final class ExplorationCommand implements CommandExecutor, TabCompleter {
@@ -120,7 +131,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
                 if (plugin.debug()) {
                     plugin.getLogger().info(recorded.logLine());
                 }
-                DiscoveryNotices.notice(recorded).ifPresent(notice -> showDiscovery(recorded, notice));
+                showDiscovery(recorded, DiscoveryNotices.notice(recorded).orElse(null));
             }
             case AttemptResult.Duplicate duplicate -> {
                 if (plugin.debug()) {
@@ -152,21 +163,362 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
             plugin.getLogger().warning(
                     "Discovery recorded but player left before feedback: " + discoveryContext(recorded)
             );
+        } else {
+            if (notice != null) {
+                try {
+                    DiscoveryPresenter.show(player, notice);
+                } catch (RuntimeException exception) {
+                    plugin.getLogger().log(
+                            Level.SEVERE,
+                            "Discovery presentation failed: " + discoveryContext(recorded),
+                            exception
+                    );
+                }
+            }
+            if ("structure".equals(recorded.entityType()) && recorded.structureType() != null) {
+                grantExperience(player, recorded);
+                grantClaimblocks(player, recorded);
+            }
+        }
+        grantMilestones(recorded, player);
+    }
+
+    private void grantMilestones(AttemptResult.Recorded recorded, Player player) {
+        if (plugin.milestones().isEmpty()) {
             return;
         }
+        DiscoveryRepository repository = plugin.repository();
+        if (repository == null) {
+            plugin.getLogger().severe(
+                    "Milestone check failed because the database is closed: " + discoveryContext(recorded)
+            );
+            return;
+        }
+        List<PlayerTally> tallies;
         try {
-            DiscoveryPresenter.show(player, notice);
-        } catch (RuntimeException exception) {
+            tallies = repository.talliesFor(recorded.playerUuid().toString());
+        } catch (SQLException exception) {
             plugin.getLogger().log(
                     Level.SEVERE,
-                    "Discovery presentation failed: " + discoveryContext(recorded),
+                    "Milestone check failed: " + discoveryContext(recorded),
                     exception
             );
+            return;
         }
-        if ("structure".equals(recorded.entityType()) && recorded.structureType() != null) {
-            grantExperience(player, recorded);
-            grantClaimblocks(player, recorded);
+        List<Milestone> crossed = MilestoneEvaluator.crossed(
+                plugin.milestones(),
+                recorded.world(),
+                recorded.entityType(),
+                recorded.structureType(),
+                tallies
+        );
+        int shown = 0;
+        for (int index = 0; index < crossed.size(); index++) {
+            if (player == null || !player.isOnline()) {
+                for (int rest = index; rest < crossed.size(); rest++) {
+                    plugin.getLogger().severe(
+                            "Milestone not granted because the player was offline and needs manual recovery: player="
+                                    + recorded.playerUuid()
+                                    + " name=" + recorded.playerName()
+                                    + " " + crossed.get(rest).recoveryText()
+                    );
+                }
+                return;
+            }
+            Milestone milestone = crossed.get(index);
+            boolean claimed;
+            try {
+                claimed = repository.claimMilestone(
+                        recorded.playerUuid().toString(),
+                        milestone.id(),
+                        Timestamps.format(Instant.now())
+                );
+            } catch (SQLException exception) {
+                plugin.getLogger().log(
+                        Level.SEVERE,
+                        "Milestone grant failed and needs manual recovery: player="
+                                + recorded.playerUuid()
+                                + " name=" + player.getName()
+                                + " " + milestone.recoveryText(),
+                        exception
+                );
+                for (int rest = index + 1; rest < crossed.size(); rest++) {
+                    plugin.getLogger().severe(
+                            "Milestone not granted because an earlier grant failed and needs manual recovery: player="
+                                    + recorded.playerUuid()
+                                    + " name=" + player.getName()
+                                    + " " + crossed.get(rest).recoveryText()
+                    );
+                }
+                return;
+            }
+            if (!claimed) {
+                if (plugin.debug()) {
+                    plugin.getLogger().info(
+                            "Milestone already granted: player=" + recorded.playerUuid()
+                                    + " milestone=" + milestone.id()
+                    );
+                }
+                continue;
+            }
+            List<String> confirmations = deliverMilestone(player, recorded, milestone);
+            shown++;
+            scheduleMilestone(
+                    recorded.playerUuid(),
+                    player.getName(),
+                    milestone,
+                    confirmations,
+                    DiscoveryPresenter.durationTicks() * shown
+            );
         }
+    }
+
+    private List<String> deliverMilestone(
+            Player player,
+            AttemptResult.Recorded recorded,
+            Milestone milestone
+    ) {
+        List<String> confirmations = new ArrayList<>();
+        if (milestone.xp() > 0) {
+            String reward = "xp amount=" + milestone.xp();
+            if (!player.isOnline()) {
+                logRewardFailed(recorded, player.getName(), milestone, reward + " reason=player offline", null);
+            } else {
+                try {
+                    player.giveExp(milestone.xp(), false);
+                    confirmations.add(DiscoveryNotices.experience(milestone.xp()));
+                } catch (RuntimeException exception) {
+                    logRewardFailed(recorded, player.getName(), milestone, reward, exception);
+                }
+            }
+        }
+        for (Milestone.ItemReward item : milestone.items()) {
+            String reward = "item " + item.name() + " amount=" + item.amount();
+            if (!player.isOnline()) {
+                logRewardFailed(recorded, player.getName(), milestone, reward + " reason=player offline", null);
+            } else {
+                try {
+                    giveItem(player, item.material(), item.amount());
+                    confirmations.add(DiscoveryNotices.item(item.amount(), item.label()));
+                } catch (RuntimeException exception) {
+                    logRewardFailed(recorded, player.getName(), milestone, reward, exception);
+                }
+            }
+        }
+        if (milestone.claimblocks() > 0) {
+            deliverClaimblocks(player, recorded, milestone, confirmations);
+        }
+        if (milestone.promotionCommand() != null) {
+            deliverPromotion(player, recorded, milestone);
+        }
+        return confirmations;
+    }
+
+    private void deliverClaimblocks(
+            Player player,
+            AttemptResult.Recorded recorded,
+            Milestone milestone,
+            List<String> confirmations
+    ) {
+        String reward = "claimblocks amount=" + milestone.claimblocks();
+        if (!player.isOnline()) {
+            logRewardFailed(recorded, recorded.playerName(), milestone, reward + " reason=player offline", null);
+            return;
+        }
+        if (!singleToken(player.getName())) {
+            logRewardFailed(recorded, player.getName(), milestone, reward + " command unavailable", null);
+            return;
+        }
+        Optional<String> command = plugin.structureRewards().formatClaimblocks(
+                player.getName(),
+                milestone.claimblocks()
+        );
+        if (command.isEmpty()) {
+            logRewardFailed(recorded, player.getName(), milestone, reward + " command unavailable", null);
+            return;
+        }
+        if (dispatch(player, recorded, milestone, command.get(), reward)) {
+            confirmations.add(DiscoveryNotices.claimblocks(milestone.claimblocks()));
+        }
+    }
+
+    private void deliverPromotion(Player player, AttemptResult.Recorded recorded, Milestone milestone) {
+        if (!player.isOnline()) {
+            logRewardFailed(
+                    recorded,
+                    recorded.playerName(),
+                    milestone,
+                    "promotion command=\"" + milestone.promotionCommand() + "\" reason=player offline",
+                    null
+            );
+            return;
+        }
+        if (!singleToken(player.getName())) {
+            logRewardFailed(
+                    recorded,
+                    player.getName(),
+                    milestone,
+                    "promotion command=\"" + milestone.promotionCommand() + "\" command unavailable",
+                    null
+            );
+            return;
+        }
+        String command = milestone.promotionCommand().replace("{player}", player.getName());
+        dispatch(player, recorded, milestone, command, "promotion");
+    }
+
+    private boolean dispatch(
+            Player player,
+            AttemptResult.Recorded recorded,
+            Milestone milestone,
+            String command,
+            String reward
+    ) {
+        if (!player.isOnline()) {
+            logRewardFailed(recorded, player.getName(), milestone, reward + " reason=player offline", null);
+            return false;
+        }
+        boolean accepted;
+        try {
+            accepted = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        } catch (RuntimeException exception) {
+            logRewardFailed(recorded, player.getName(), milestone, reward + " command=\"" + command + "\"", exception);
+            return false;
+        }
+        if (!accepted) {
+            logRewardFailed(
+                    recorded,
+                    player.getName(),
+                    milestone,
+                    reward + " command=\"" + command + "\"",
+                    null
+            );
+            return false;
+        }
+        return true;
+    }
+
+    private void giveItem(Player player, Material material, int amount) {
+        int maxStack = Math.max(1, material.getMaxStackSize());
+        List<ItemStack> stacks = new ArrayList<>();
+        int remaining = amount;
+        while (remaining > 0) {
+            int size = Math.min(maxStack, remaining);
+            stacks.add(new ItemStack(material, size));
+            remaining -= size;
+        }
+        Map<Integer, ItemStack> leftover = player.getInventory().addItem(stacks.toArray(ItemStack[]::new));
+        for (ItemStack stack : leftover.values()) {
+            if (stack != null && stack.getAmount() > 0) {
+                player.getWorld().dropItemNaturally(player.getLocation(), stack);
+            }
+        }
+    }
+
+    private void scheduleMilestone(
+            UUID playerUuid,
+            String playerName,
+            Milestone milestone,
+            List<String> confirmations,
+            long delayTicks
+    ) {
+        DiscoveryNotice notice = DiscoveryNotices.milestone(milestone.displayName(), milestone.message());
+        List<String> lines = List.copyOf(confirmations);
+        String broadcast = milestone.broadcast();
+        String milestoneId = milestone.id();
+        Bukkit.getScheduler().runTaskLater(
+                plugin,
+                () -> showMilestone(playerUuid, playerName, milestoneId, notice, lines, broadcast),
+                delayTicks
+        );
+    }
+
+    private void showMilestone(
+            UUID playerUuid,
+            String playerName,
+            String milestoneId,
+            DiscoveryNotice notice,
+            List<String> confirmations,
+            String broadcast
+    ) {
+        Player player = Bukkit.getPlayer(playerUuid);
+        if (player != null && player.isOnline()) {
+            try {
+                DiscoveryPresenter.show(player, notice);
+            } catch (RuntimeException exception) {
+                plugin.getLogger().log(
+                        Level.SEVERE,
+                        "Milestone notice failed: player=" + playerUuid + " milestone=" + milestoneId,
+                        exception
+                );
+            }
+            for (String line : confirmations) {
+                try {
+                    player.sendMessage(Component.text(line));
+                } catch (RuntimeException exception) {
+                    plugin.getLogger().log(
+                            Level.SEVERE,
+                            "Milestone confirmation failed: player=" + playerUuid
+                                    + " milestone=" + milestoneId
+                                    + " message=" + line,
+                            exception
+                    );
+                }
+            }
+        } else {
+            plugin.getLogger().warning(
+                    "Milestone notice skipped because the player left: player=" + playerUuid
+                            + " milestone=" + milestoneId
+            );
+        }
+        if (broadcast == null) {
+            return;
+        }
+        Component announcement = LegacyComponentSerializer.legacySection().deserialize(
+                broadcast.replace("{player}", playerName)
+        );
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            try {
+                viewer.sendMessage(announcement);
+            } catch (RuntimeException exception) {
+                plugin.getLogger().log(
+                        Level.SEVERE,
+                        "Milestone broadcast failed: milestone=" + milestoneId + " player=" + viewer.getName(),
+                        exception
+                );
+            }
+        }
+    }
+
+    private void logRewardFailed(
+            AttemptResult.Recorded recorded,
+            String name,
+            Milestone milestone,
+            String reward,
+            Exception exception
+    ) {
+        String message = "Milestone reward failed and needs manual recovery: player="
+                + recorded.playerUuid()
+                + " name=" + name
+                + " milestone=" + milestone.id()
+                + " reward=" + reward;
+        if (exception == null) {
+            plugin.getLogger().severe(message);
+        } else {
+            plugin.getLogger().log(Level.SEVERE, message, exception);
+        }
+    }
+
+    private static boolean singleToken(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        for (int index = 0; index < value.length(); index++) {
+            if (Character.isWhitespace(value.charAt(index))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void grantExperience(Player player, AttemptResult.Recorded recorded) {

@@ -1,5 +1,13 @@
 # Release history
 
+## 1.3.0-dev.6.1
+
+Milestone item rewards now use a readable name. `netherite_scrap` is announced as Netherite Scrap, one item is the name alone, and a larger stack is marked with × and the amount. A structured item entry can override that name in the chat line. The item given to the player is unchanged.
+
+## 1.3.0-dev.6
+
+A new discovery can now cross a milestone in `milestones.yml`. The milestone title waits until the discovery title has finished, then shows the configured message and only the rewards that were actually delivered. Experience, items, claim blocks, a promotion command, and a coloured broadcast are the rewards this build pays. The claim is stored in `milestone_grants` before payment, and only while the player is still online. A player who has already passed a threshold is not paid. A bad milestones file disables milestone rewards and leaves recording alone. `/exploration` is unchanged.
+
 ## 1.3.0-dev.5.1
 
 A heart says you discovered the Heart of that region, and a nerve says you discovered the Nerve of that region. The chat line matches. Other discovery wording is unchanged from 1.3.0-dev.5.

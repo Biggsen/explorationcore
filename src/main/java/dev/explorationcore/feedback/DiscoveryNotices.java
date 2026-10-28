@@ -58,6 +58,17 @@ public final class DiscoveryNotices {
         return "You received your reward: " + amount + " claimblocks";
     }
 
+    public static String item(int amount, String name) {
+        if (amount == 1) {
+            return "You received your reward: " + name;
+        }
+        return "You received your reward: " + name + " ×" + amount;
+    }
+
+    public static DiscoveryNotice milestone(String displayName, String message) {
+        return new DiscoveryNotice(displayName, message, message);
+    }
+
     private static String family(String structureType) {
         StringBuilder title = new StringBuilder();
         for (String word : structureType.split("_")) {
