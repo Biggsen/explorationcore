@@ -8,3 +8,43 @@ database:
 
 # Logs each recorded discovery and each ignored duplicate.
 debug: false
+
+# Experience for a structure the moment it is first recorded.
+# Turn this on to pay the xp amounts. Claim blocks are listed for later and are not granted.
+rewards:
+  enabled: false
+
+  structures:
+    ancient_city:
+      xp: 500
+      claimblocks: 50
+    buried_treasure:
+      xp: 130
+      claimblocks: 15
+    desert_pyramid:
+      xp: 100
+      claimblocks: 12
+    desert_well:
+      xp: 110
+      claimblocks: 13
+    igloo:
+      xp: 180
+      claimblocks: 22
+    jungle_temple:
+      xp: 150
+      claimblocks: 18
+    ocean_ruin:
+      xp: 80
+      claimblocks: 10
+    pillager_outpost:
+      xp: 80
+      claimblocks: 10
+    ruined_portal:
+      xp: 80
+      claimblocks: 10
+    shipwreck:
+      xp: 80
+      claimblocks: 10
+    trail_ruins:
+      xp: 200
+      claimblocks: 25

@@ -1,14 +1,18 @@
 package dev.explorationcore.record;
 
+import java.util.UUID;
+
 public sealed interface AttemptResult {
     record Rejected(String reason) implements AttemptResult {
     }
 
     record Recorded(
+            UUID playerUuid,
             String playerName,
             String world,
             String entityType,
             String entityId,
+            String displayName,
             String structureType
     ) implements AttemptResult {
         public String logLine() {

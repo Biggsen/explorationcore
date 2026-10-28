@@ -104,7 +104,15 @@ public final class RecordAttempt {
             );
             InsertOutcome outcome = store.insert(discovery);
             return switch (outcome) {
-                case INSERTED -> new AttemptResult.Recorded(player, world, entityType, entityId, structureType);
+                case INSERTED -> new AttemptResult.Recorded(
+                        online.uuid(),
+                        player,
+                        world,
+                        entityType,
+                        entityId,
+                        displayName,
+                        structureType
+                );
                 case DUPLICATE -> new AttemptResult.Duplicate(player, world, entityType, entityId);
             };
         } catch (Exception exception) {

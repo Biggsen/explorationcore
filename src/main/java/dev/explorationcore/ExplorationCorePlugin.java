@@ -7,6 +7,7 @@ import dev.explorationcore.counter.TallyCache;
 import dev.explorationcore.db.DatabaseFiles;
 import dev.explorationcore.db.DiscoveryRepository;
 import dev.explorationcore.location.ExplorationLocationExpansion;
+import dev.explorationcore.reward.StructureRewards;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,6 +22,7 @@ import java.util.logging.Level;
 public final class ExplorationCorePlugin extends JavaPlugin implements Listener {
     private String serverName = "";
     private boolean debug;
+    private StructureRewards structureRewards = StructureRewards.none();
     private DiscoveryRepository repository;
     private final TallyCache tallyCache = new TallyCache();
     private ExplorationLocationExpansion locationExpansion;
@@ -40,6 +42,12 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             serverName = configuredName.trim();
         }
         debug = getConfig().getBoolean("debug", false);
+        try {
+            structureRewards = StructureRewards.load(getConfig(), getLogger());
+        } catch (RuntimeException exception) {
+            structureRewards = StructureRewards.none();
+            getLogger().log(Level.SEVERE, "rewards is malformed. Structure XP rewards are disabled.", exception);
+        }
 
         Path databaseFile = DatabaseFiles.resolve(
                 getDataFolder().toPath(),
@@ -121,6 +129,10 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
     public boolean debug() {
         return debug;
+    }
+
+    public StructureRewards structureRewards() {
+        return structureRewards;
     }
 
     public DiscoveryRepository repository() {

@@ -1,10 +1,14 @@
 # Release history
 
+## 1.3.0-dev.3
+
+A newly recorded structure shows a title, subtitle, chat line, challenge sound, and a short particle burst. With `rewards.enabled` on, that discovery also grants the configured experience points. Rewards stay off unless the config says otherwise. Claim blocks are listed and not granted. A repeat of the same structure does nothing. `/exploration`, the counters, and older discovery rows are unchanged.
+
+Development builds use `1.3.0-dev.N`, then `1.3.0-rc.N`, then `1.3.0`. `1.2.0` remains the last stable release.
+
 ## 1.3.0-dev.2
 
 The database now keeps a versioned schema. Existing discovery rows are left as they are, including databases from 1.0.0 that are missing `structure_type`. Two empty tables, `reward_intents` and `milestone_grants`, are created for later reward and milestone work. Recording, `/exploration`, and the counters behave as before.
-
-Development builds use `1.3.0-dev.N`, then `1.3.0-rc.N`, then `1.3.0`. `1.2.0` remains the last stable release.
 
 ## 1.3.0-dev.1
 

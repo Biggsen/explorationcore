@@ -1,6 +1,8 @@
 package dev.explorationcore.command;
 
 import dev.explorationcore.ExplorationCorePlugin;
+import dev.explorationcore.feedback.DiscoveryPresenter;
+import dev.explorationcore.feedback.StructureNotices;
 import dev.explorationcore.record.AttemptResult;
 import dev.explorationcore.record.OnlinePlayer;
 import dev.explorationcore.record.RecordAttempt;
@@ -20,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.logging.Level;
 
 public final class ExplorationCommand implements CommandExecutor, TabCompleter {
@@ -116,6 +119,9 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
                 if (plugin.debug()) {
                     plugin.getLogger().info(recorded.logLine());
                 }
+                if ("structure".equals(recorded.entityType()) && recorded.structureType() != null) {
+                    showStructureDiscovery(recorded);
+                }
             }
             case AttemptResult.Duplicate duplicate -> {
                 if (plugin.debug()) {
@@ -131,6 +137,70 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(Component.text("Persistence failed. See the server log."));
             }
         }
+    }
+
+    private void showStructureDiscovery(AttemptResult.Recorded recorded) {
+        if (Bukkit.isPrimaryThread()) {
+            deliverStructureDiscovery(recorded);
+            return;
+        }
+        Bukkit.getScheduler().runTask(plugin, () -> deliverStructureDiscovery(recorded));
+    }
+
+    private void deliverStructureDiscovery(AttemptResult.Recorded recorded) {
+        Player player = Bukkit.getPlayer(recorded.playerUuid());
+        if (player == null) {
+            plugin.getLogger().warning(
+                    "Structure recorded but player left before feedback: " + structureContext(recorded)
+            );
+            return;
+        }
+        try {
+            DiscoveryPresenter.show(player, StructureNotices.found(recorded.structureType(), recorded.displayName()));
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(
+                    Level.SEVERE,
+                    "Structure discovery presentation failed: " + structureContext(recorded),
+                    exception
+            );
+        }
+        OptionalInt xp = plugin.structureRewards().xp(recorded.structureType());
+        if (xp.isEmpty()) {
+            return;
+        }
+        int amount = xp.getAsInt();
+        if (!player.isOnline()) {
+            plugin.getLogger().severe(
+                    "XP grant failed: " + structureContext(recorded) + " xp=" + amount + " player left"
+            );
+            return;
+        }
+        try {
+            player.giveExp(amount, false);
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(
+                    Level.SEVERE,
+                    "XP grant failed: " + structureContext(recorded) + " xp=" + amount,
+                    exception
+            );
+            return;
+        }
+        try {
+            player.sendMessage(Component.text(StructureNotices.experience(amount)));
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(
+                    Level.SEVERE,
+                    "XP message failed: " + structureContext(recorded) + " xp=" + amount,
+                    exception
+            );
+        }
+    }
+
+    private static String structureContext(AttemptResult.Recorded recorded) {
+        return "player=" + recorded.playerUuid()
+                + " world=" + recorded.world()
+                + " structure_type=" + recorded.structureType()
+                + " entity_id=" + recorded.entityId();
     }
 
     private static boolean canRecord(CommandSender sender) {

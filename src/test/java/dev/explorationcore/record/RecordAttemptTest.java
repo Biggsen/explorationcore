@@ -37,6 +37,8 @@ class RecordAttemptTest {
 
         AttemptResult.Recorded recorded = assertInstanceOf(AttemptResult.Recorded.class, result);
         assertEquals("Recorded verzion -> overworld/region/sakonotur", recorded.logLine());
+        assertEquals(VERZION.uuid(), recorded.playerUuid());
+        assertEquals("Sakonotur", recorded.displayName());
         StoredDiscovery row = store.row;
         assertEquals("12345678-1234-1234-1234-123456789abc", row.playerUuid());
         assertEquals("verzion", row.playerName());
@@ -62,6 +64,7 @@ class RecordAttemptTest {
         );
         AttemptResult.Recorded recorded = assertInstanceOf(AttemptResult.Recorded.class, result);
         assertEquals("ocean_ruin", recorded.structureType());
+        assertEquals("Ocean Ruin", recorded.displayName());
         assertEquals("ocean_ruin", typed.row.structureType());
 
         CapturingStore untyped = new CapturingStore();
