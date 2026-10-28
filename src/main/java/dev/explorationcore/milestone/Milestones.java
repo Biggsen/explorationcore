@@ -5,11 +5,13 @@ import dev.explorationcore.milestone.Milestone.ItemReward;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.potion.PotionType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -21,7 +23,9 @@ public final class Milestones {
     );
     private static final Set<String> REWARD_FIELDS = Set.of("xp", "items", "claimblocks");
     private static final Set<String> PROMOTION_FIELDS = Set.of("command");
-    private static final Set<String> ITEM_FIELDS = Set.of("material", "amount", "name");
+    private static final Set<String> ITEM_FIELDS = Set.of(
+            "material", "amount", "name", "enchantments", "potion-type"
+    );
 
     private final Map<String, List<Milestone>> byCounter;
 
@@ -241,7 +245,109 @@ public final class Milestones {
             displayName = text(map.get("name"), where + ".name");
         }
         Material material = itemMaterial(text(map.get("material"), where + ".material"), where);
-        return new ItemReward(material, amount, displayName);
+        boolean enchanted = map.containsKey("enchantments");
+        boolean potion = map.containsKey("potion-type");
+        if (enchanted && potion) {
+            throw new IllegalArgumentException(where + " combines enchantments and potion-type.");
+        }
+        List<ItemReward.StoredEnchant> enchantments = List.of();
+        PotionType potionType = null;
+        if (enchanted) {
+            if (material != Material.ENCHANTED_BOOK) {
+                throw new IllegalArgumentException(where + ".enchantments is not valid for this item.");
+            }
+            enchantments = enchantments(map.get("enchantments"), where + ".enchantments");
+        }
+        if (potionMaterial(material)) {
+            if (!potion) {
+                throw new IllegalArgumentException(where + ".potion-type is missing or malformed.");
+            }
+            potionType = potionType(map.get("potion-type"), where + ".potion-type");
+        } else if (potion) {
+            throw new IllegalArgumentException(where + ".potion-type is not valid for this item.");
+        }
+        return new ItemReward(material, amount, displayName, enchantments, potionType);
+    }
+
+    private static boolean potionMaterial(Material material) {
+        return material == Material.POTION
+                || material == Material.SPLASH_POTION
+                || material == Material.LINGERING_POTION;
+    }
+
+    private static List<ItemReward.StoredEnchant> enchantments(Object raw, String where) {
+        if (!(raw instanceof Map<?, ?> map) || map.isEmpty()) {
+            throw new IllegalArgumentException(where + " is malformed.");
+        }
+        List<ItemReward.StoredEnchant> enchantments = new ArrayList<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (!(entry.getKey() instanceof String key)) {
+                throw new IllegalArgumentException(where + " is malformed.");
+            }
+            String id = enchantmentId(key, where);
+            int level = positiveInt(entry.getValue(), where + "." + id);
+            enchantments.add(new ItemReward.StoredEnchant(id, level));
+        }
+        if (!registryReady()) {
+            throw new IllegalArgumentException(where + " needs the server registry.");
+        }
+        resolveEnchantments(enchantments, where);
+        return List.copyOf(enchantments);
+    }
+
+    private static void resolveEnchantments(List<ItemReward.StoredEnchant> enchantments, String where) {
+        EnchantmentBooks.check(enchantments, where);
+    }
+
+    private static String enchantmentId(String raw, String where) {
+        String token = raw.trim().toLowerCase(Locale.ROOT);
+        if (token.startsWith("minecraft:")) {
+            token = token.substring("minecraft:".length());
+        }
+        if (token.isEmpty() || token.indexOf(':') >= 0 || !enchantmentToken(token)) {
+            throw new IllegalArgumentException(where + " is malformed.");
+        }
+        return token;
+    }
+
+    private static boolean enchantmentToken(String token) {
+        for (int index = 0; index < token.length(); index++) {
+            char character = token.charAt(index);
+            boolean ok = (character >= 'a' && character <= 'z')
+                    || (character >= '0' && character <= '9')
+                    || character == '_'
+                    || character == '.'
+                    || character == '-'
+                    || character == '/';
+            if (!ok) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static PotionType potionType(Object raw, String where) {
+        String token = text(raw, where).toLowerCase(Locale.ROOT).replace('-', '_');
+        if (token.startsWith("minecraft:")) {
+            token = token.substring("minecraft:".length());
+        }
+        if (token.isEmpty() || token.indexOf(':') >= 0) {
+            throw new IllegalArgumentException(where + " is not a potion.");
+        }
+        try {
+            return PotionType.valueOf(token.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(where + " is not a potion.");
+        }
+    }
+
+    private static boolean registryReady() {
+        try {
+            Class<?> type = Class.forName("io.papermc.paper.registry.RegistryAccess");
+            return type.getMethod("registryAccess").invoke(null) != null;
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            return false;
+        }
     }
 
     private static Material itemMaterial(String token, String where) {

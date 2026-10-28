@@ -1,0 +1,6 @@
+name: MilestoneItemProbe
+version: "1.0"
+main: dev.explorationcore.milestone.MilestoneItemProbe
+api-version: "1.21"
+depend: [ExplorationCore]
+description: Boots the registry and checks milestone item metadata.

@@ -1,9 +1,12 @@
 package dev.explorationcore.milestone;
 
+import dev.explorationcore.feedback.DiscoveryNotices;
 import dev.explorationcore.milestone.Milestone.ItemReward;
+import dev.explorationcore.milestone.Milestone.ItemReward.StoredEnchant;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.potion.PotionType;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -288,6 +291,196 @@ class MilestonesTest {
                       rewards:
                         claimblocks: 100
                 """, "").isEmpty());
+    }
+
+    @Test
+    void potionsKeepTheirTypeAndDeriveTheConfirmation() {
+        Milestones milestones = load("""
+                milestones:
+                  hearts_discovered:
+                    - id: hearts_potions
+                      threshold: 1
+                      display-name: Heart Wanderer
+                      message: Hearts.
+                      rewards:
+                        items:
+                          - material: potion
+                            amount: 2
+                            potion-type: strong_healing
+                          - material: splash_potion
+                            amount: 1
+                            potion-type: long_swiftness
+                          - material: lingering_potion
+                            amount: 1
+                            potion-type: minecraft:regeneration
+                          - material: potion
+                            amount: 1
+                            potion-type: healing
+                            name: Bottle o' Healing
+                          - potion 2
+                """);
+
+        List<ItemReward> items = milestones.of("hearts_discovered").get(0).items();
+        assertEquals(
+                new ItemReward(Material.POTION, 2, null, List.of(), PotionType.STRONG_HEALING),
+                items.get(0)
+        );
+        assertEquals("Potion of Healing II", items.get(0).label());
+        assertEquals("2 potion[strong_healing]", items.get(0).recoveryToken());
+        assertEquals(
+                new ItemReward(Material.SPLASH_POTION, 1, null, List.of(), PotionType.LONG_SWIFTNESS),
+                items.get(1)
+        );
+        assertEquals("Splash Potion of Swiftness (extended)", items.get(1).label());
+        assertEquals(
+                new ItemReward(Material.LINGERING_POTION, 1, null, List.of(), PotionType.REGENERATION),
+                items.get(2)
+        );
+        assertEquals("Lingering Potion of Regeneration", items.get(2).label());
+        assertEquals("Bottle o' Healing", items.get(3).label());
+        assertEquals(PotionType.HEALING, items.get(3).potionType());
+        assertEquals(Material.POTION, items.get(4).material());
+        assertEquals(2, items.get(4).amount());
+        assertNull(items.get(4).potionType());
+        assertEquals("Potion", items.get(4).label());
+        assertEquals(
+                "You received your reward: Potion of Healing II ×2",
+                DiscoveryNotices.item(items.get(0).amount(), items.get(0).label())
+        );
+        assertEquals(
+                "milestone=hearts_potions items=2 potion[strong_healing],1 splash_potion[long_swiftness],"
+                        + "1 lingering_potion[regeneration],1 potion[healing],2 potion",
+                milestones.of("hearts_discovered").get(0).recoveryText()
+        );
+    }
+
+    @Test
+    void invalidPotionsAndMisplacedKeysDisableMilestones() {
+        assertTrue(itemMilestone("speed").isEmpty());
+        assertTrue(itemMilestone("long_healing").isEmpty());
+        assertTrue(itemMilestone("").isEmpty());
+        assertTrue(load(itemYaml("""
+                - material: diamond
+                  amount: 1
+                  potion-type: healing
+                """)).isEmpty());
+        assertTrue(load(itemYaml("""
+                - material: potion
+                  amount: 1
+                """)).isEmpty());
+        assertTrue(load(itemYaml("""
+                - material: diamond
+                  amount: 1
+                  enchantments:
+                    efficiency: 4
+                """)).isEmpty());
+        assertTrue(load(itemYaml("""
+                - material: enchanted_book
+                  amount: 1
+                  enchantments: {}
+                """)).isEmpty());
+        assertTrue(load(itemYaml("""
+                - material: enchanted_book
+                  amount: 1
+                  enchantments:
+                    efficiency: 0
+                """)).isEmpty());
+        assertTrue(load(itemYaml("""
+                - material: enchanted_book
+                  amount: 1
+                  enchantments:
+                    "eff iciency": 1
+                """)).isEmpty());
+        assertTrue(load(itemYaml("""
+                - material: enchanted_book
+                  amount: 1
+                  enchantments:
+                    efficiency: 4
+                  potion-type: healing
+                """)).isEmpty());
+    }
+
+    @Test
+    void plainBooksStillLoadAndEnchantedBooksWaitForTheRegistry() {
+        Milestones plain = load(itemYaml("""
+                - material: enchanted_book
+                  amount: 1
+                  name: Plain Book
+                """));
+        ItemReward book = plain.of("hearts_discovered").get(0).items().get(0);
+        assertEquals(Material.ENCHANTED_BOOK, book.material());
+        assertTrue(book.enchantments().isEmpty());
+        assertEquals("Plain Book", book.label());
+
+        assertTrue(load(itemYaml("""
+                - material: enchanted_book
+                  amount: 1
+                  enchantments:
+                    efficiency: 4
+                    unbreaking: 3
+                """)).isEmpty());
+    }
+
+    @Test
+    void bookLabelsComeFromTheConfiguredEnchantments() {
+        ItemReward book = new ItemReward(
+                Material.ENCHANTED_BOOK,
+                1,
+                null,
+                List.of(new StoredEnchant("efficiency", 4), new StoredEnchant("unbreaking", 3)),
+                null
+        );
+        assertEquals("Enchanted Book (Efficiency IV, Unbreaking III)", book.label());
+        assertEquals("1 enchanted_book[efficiency=4+unbreaking=3]", book.recoveryToken());
+        assertEquals(
+                "You received your reward: Enchanted Book (Efficiency IV, Unbreaking III)",
+                DiscoveryNotices.item(1, book.label())
+        );
+
+        ItemReward named = new ItemReward(
+                Material.ENCHANTED_BOOK,
+                1,
+                "Gift Book",
+                List.of(new StoredEnchant("efficiency", 1)),
+                null
+        );
+        assertEquals("Gift Book", named.label());
+        assertEquals("Enchanted Book (Mending I)", new ItemReward(
+                Material.ENCHANTED_BOOK,
+                1,
+                null,
+                List.of(new StoredEnchant("mending", 1)),
+                null
+        ).label());
+    }
+
+    private static Milestones itemMilestone(String potionType) {
+        return load(itemYaml("""
+                - material: potion
+                  amount: 1
+                  potion-type: %s
+                """.formatted(potionType)));
+    }
+
+    private static String itemYaml(String items) {
+        return """
+                milestones:
+                  hearts_discovered:
+                    - id: hearts_items
+                      threshold: 1
+                      display-name: Heart Wanderer
+                      message: Hearts.
+                      rewards:
+                        items:
+                """ + indent(items);
+    }
+
+    private static String indent(String yaml) {
+        StringBuilder builder = new StringBuilder();
+        for (String line : yaml.split("\\R", -1)) {
+            builder.append("          ").append(line).append('\n');
+        }
+        return builder.toString();
     }
 
     private static Milestones loadResource(String name) throws IOException {

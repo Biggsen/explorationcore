@@ -15,7 +15,6 @@ import dev.explorationcore.record.Timestamps;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -293,12 +292,12 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
             }
         }
         for (Milestone.ItemReward item : milestone.items()) {
-            String reward = "item " + item.name() + " amount=" + item.amount();
+            String reward = "item " + item.name() + item.detail() + " amount=" + item.amount();
             if (!player.isOnline()) {
                 logRewardFailed(recorded, player.getName(), milestone, reward + " reason=player offline", null);
             } else {
                 try {
-                    giveItem(player, item.material(), item.amount());
+                    giveItem(player, item);
                     confirmations.add(DiscoveryNotices.item(item.amount(), item.label()));
                 } catch (RuntimeException exception) {
                     logRewardFailed(recorded, player.getName(), milestone, reward, exception);
@@ -398,15 +397,8 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private void giveItem(Player player, Material material, int amount) {
-        int maxStack = Math.max(1, material.getMaxStackSize());
-        List<ItemStack> stacks = new ArrayList<>();
-        int remaining = amount;
-        while (remaining > 0) {
-            int size = Math.min(maxStack, remaining);
-            stacks.add(new ItemStack(material, size));
-            remaining -= size;
-        }
+    private void giveItem(Player player, Milestone.ItemReward item) {
+        List<ItemStack> stacks = item.stacks();
         Map<Integer, ItemStack> leftover = player.getInventory().addItem(stacks.toArray(ItemStack[]::new));
         for (ItemStack stack : leftover.values()) {
             if (stack != null && stack.getAmount() > 0) {

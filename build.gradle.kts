@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.explorationcore"
-version = "1.3.0-dev.6.1"
+version = "1.3.0-dev.6.2"
 
 // Lowothra's exact Paper build is not recorded. 1.21.11 is the newest Paper API
 // this machine's JDK 21 can compile. plugin.yml api-version stays 1.21 so any
@@ -48,8 +48,26 @@ tasks.processResources {
     }
 }
 
+tasks.register<Jar>("milestoneProbeJar") {
+    group = "verification"
+    description = "Package the server-backed milestone item probe."
+    archiveFileName.set("milestone-item-probe.jar")
+    destinationDirectory.set(layout.buildDirectory.dir("probe"))
+    dependsOn(tasks.named("testClasses"))
+    from(sourceSets.test.get().output) {
+        include("dev/explorationcore/milestone/MilestoneItemProbe.class")
+        include("dev/explorationcore/milestone/MilestoneItemProbe$*.class")
+    }
+    from("src/test/resources") {
+        include("probe-plugin.yml")
+        rename("probe-plugin.yml", "plugin.yml")
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
+    dependsOn(tasks.shadowJar)
+    dependsOn(tasks.named("milestoneProbeJar"))
 }
 
 tasks.jar {
