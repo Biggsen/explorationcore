@@ -28,4 +28,10 @@ class StructureNoticesTest {
         assertEquals("You received 80 experience!", StructureNotices.experience(80));
         assertEquals("You received 500 experience!", StructureNotices.experience(500));
     }
+
+    @Test
+    void claimblockMessageUsesTheGrantedAmount() {
+        assertEquals("You received your reward: 10 claimblocks", StructureNotices.claimblocks(10));
+        assertEquals("You received your reward: 15 claimblocks", StructureNotices.claimblocks(15));
+    }
 }

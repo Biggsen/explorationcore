@@ -9,10 +9,12 @@ database:
 # Logs each recorded discovery and each ignored duplicate.
 debug: false
 
-# Experience for a structure the moment it is first recorded.
-# Turn this on to pay the xp amounts. Claim blocks are listed for later and are not granted.
+# Experience and claim blocks for a structure the moment it is first recorded.
+# Turn this on to pay the xp amounts and run claimblocks-command.
+# {player} and {amount} are filled in when the command is dispatched.
 rewards:
   enabled: false
+  claimblocks-command: "acb {player} {amount}"
 
   structures:
     ancient_city:

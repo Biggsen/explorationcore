@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.0-dev.4
+
+A newly recorded structure still shows the discovery presentation. With `rewards.enabled` on, it grants the configured experience points and dispatches `claimblocks-command` for the configured claimblock amount. The shipped command is `acb {player} {amount}`. A console acceptance is announced as claimblocks received. A repeat of the same structure does nothing. `/exploration`, the counters, and older discovery rows are unchanged.
+
 ## 1.3.0-dev.3
 
 A newly recorded structure shows a title, subtitle, chat line, challenge sound, and a short particle burst. With `rewards.enabled` on, that discovery also grants the configured experience points. Rewards stay off unless the config says otherwise. Claim blocks are listed and not granted. A repeat of the same structure does nothing. `/exploration`, the counters, and older discovery rows are unchanged.

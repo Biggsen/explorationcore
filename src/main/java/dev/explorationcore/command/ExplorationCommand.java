@@ -164,6 +164,11 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
                     exception
             );
         }
+        grantExperience(player, recorded);
+        grantClaimblocks(player, recorded);
+    }
+
+    private void grantExperience(Player player, AttemptResult.Recorded recorded) {
         OptionalInt xp = plugin.structureRewards().xp(recorded.structureType());
         if (xp.isEmpty()) {
             return;
@@ -191,6 +196,52 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
             plugin.getLogger().log(
                     Level.SEVERE,
                     "XP message failed: " + structureContext(recorded) + " xp=" + amount,
+                    exception
+            );
+        }
+    }
+
+    private void grantClaimblocks(Player player, AttemptResult.Recorded recorded) {
+        OptionalInt claimblocks = plugin.structureRewards().claimblocks(recorded.structureType());
+        if (claimblocks.isEmpty()) {
+            return;
+        }
+        int amount = claimblocks.getAsInt();
+        Optional<String> command = plugin.structureRewards().claimblocksCommand(
+                recorded.structureType(),
+                player.getName()
+        );
+        if (command.isEmpty()) {
+            plugin.getLogger().severe(
+                    "Claimblock grant failed: " + structureContext(recorded)
+                            + " claimblocks=" + amount
+                            + " command unavailable"
+            );
+            return;
+        }
+        boolean accepted;
+        try {
+            accepted = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.get());
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(
+                    Level.SEVERE,
+                    "Claimblock grant failed: " + structureContext(recorded) + " claimblocks=" + amount,
+                    exception
+            );
+            return;
+        }
+        if (!accepted) {
+            plugin.getLogger().severe(
+                    "Claimblock grant failed: " + structureContext(recorded) + " claimblocks=" + amount
+            );
+            return;
+        }
+        try {
+            player.sendMessage(Component.text(StructureNotices.claimblocks(amount)));
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(
+                    Level.SEVERE,
+                    "Claimblock message failed: " + structureContext(recorded) + " claimblocks=" + amount,
                     exception
             );
         }

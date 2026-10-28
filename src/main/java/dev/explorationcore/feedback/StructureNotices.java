@@ -16,6 +16,10 @@ public final class StructureNotices {
         return "You received " + amount + " experience!";
     }
 
+    public static String claimblocks(int amount) {
+        return "You received your reward: " + amount + " claimblocks";
+    }
+
     private static String family(String structureType) {
         StringBuilder title = new StringBuilder();
         for (String word : structureType.split("_")) {
