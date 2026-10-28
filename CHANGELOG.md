@@ -1,5 +1,13 @@
 # Release history
 
+## 1.3.0-dev.5.1
+
+A heart says you discovered the Heart of that region, and a nerve says you discovered the Nerve of that region. The chat line matches. Other discovery wording is unchanged from 1.3.0-dev.5.
+
+## 1.3.0-dev.5
+
+A newly recorded region, village, heart, or nerve shows a title, subtitle, chat line, challenge sound, and particle burst. Nether regions and Nether hearts use their own titles. A repeat of the same discovery does nothing. Structure wording, experience, and claimblocks stay as they were in 1.3.0-dev.4. Turning `rewards.enabled` off does not hide the new presentation.
+
 ## 1.3.0-dev.4
 
 A newly recorded structure still shows the discovery presentation. With `rewards.enabled` on, it grants the configured experience points and dispatches `claimblocks-command` for the configured claimblock amount. The shipped command is `acb {player} {amount}`. A console acceptance is announced as claimblocks received. A repeat of the same structure does nothing. `/exploration`, the counters, and older discovery rows are unchanged.

@@ -1,8 +1,9 @@
 package dev.explorationcore.command;
 
 import dev.explorationcore.ExplorationCorePlugin;
+import dev.explorationcore.feedback.DiscoveryNotice;
+import dev.explorationcore.feedback.DiscoveryNotices;
 import dev.explorationcore.feedback.DiscoveryPresenter;
-import dev.explorationcore.feedback.StructureNotices;
 import dev.explorationcore.record.AttemptResult;
 import dev.explorationcore.record.OnlinePlayer;
 import dev.explorationcore.record.RecordAttempt;
@@ -119,9 +120,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
                 if (plugin.debug()) {
                     plugin.getLogger().info(recorded.logLine());
                 }
-                if ("structure".equals(recorded.entityType()) && recorded.structureType() != null) {
-                    showStructureDiscovery(recorded);
-                }
+                DiscoveryNotices.notice(recorded).ifPresent(notice -> showDiscovery(recorded, notice));
             }
             case AttemptResult.Duplicate duplicate -> {
                 if (plugin.debug()) {
@@ -139,33 +138,35 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void showStructureDiscovery(AttemptResult.Recorded recorded) {
+    private void showDiscovery(AttemptResult.Recorded recorded, DiscoveryNotice notice) {
         if (Bukkit.isPrimaryThread()) {
-            deliverStructureDiscovery(recorded);
+            deliverDiscovery(recorded, notice);
             return;
         }
-        Bukkit.getScheduler().runTask(plugin, () -> deliverStructureDiscovery(recorded));
+        Bukkit.getScheduler().runTask(plugin, () -> deliverDiscovery(recorded, notice));
     }
 
-    private void deliverStructureDiscovery(AttemptResult.Recorded recorded) {
+    private void deliverDiscovery(AttemptResult.Recorded recorded, DiscoveryNotice notice) {
         Player player = Bukkit.getPlayer(recorded.playerUuid());
         if (player == null) {
             plugin.getLogger().warning(
-                    "Structure recorded but player left before feedback: " + structureContext(recorded)
+                    "Discovery recorded but player left before feedback: " + discoveryContext(recorded)
             );
             return;
         }
         try {
-            DiscoveryPresenter.show(player, StructureNotices.found(recorded.structureType(), recorded.displayName()));
+            DiscoveryPresenter.show(player, notice);
         } catch (RuntimeException exception) {
             plugin.getLogger().log(
                     Level.SEVERE,
-                    "Structure discovery presentation failed: " + structureContext(recorded),
+                    "Discovery presentation failed: " + discoveryContext(recorded),
                     exception
             );
         }
-        grantExperience(player, recorded);
-        grantClaimblocks(player, recorded);
+        if ("structure".equals(recorded.entityType()) && recorded.structureType() != null) {
+            grantExperience(player, recorded);
+            grantClaimblocks(player, recorded);
+        }
     }
 
     private void grantExperience(Player player, AttemptResult.Recorded recorded) {
@@ -176,7 +177,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         int amount = xp.getAsInt();
         if (!player.isOnline()) {
             plugin.getLogger().severe(
-                    "XP grant failed: " + structureContext(recorded) + " xp=" + amount + " player left"
+                    "XP grant failed: " + discoveryContext(recorded) + " xp=" + amount + " player left"
             );
             return;
         }
@@ -185,17 +186,17 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         } catch (RuntimeException exception) {
             plugin.getLogger().log(
                     Level.SEVERE,
-                    "XP grant failed: " + structureContext(recorded) + " xp=" + amount,
+                    "XP grant failed: " + discoveryContext(recorded) + " xp=" + amount,
                     exception
             );
             return;
         }
         try {
-            player.sendMessage(Component.text(StructureNotices.experience(amount)));
+            player.sendMessage(Component.text(DiscoveryNotices.experience(amount)));
         } catch (RuntimeException exception) {
             plugin.getLogger().log(
                     Level.SEVERE,
-                    "XP message failed: " + structureContext(recorded) + " xp=" + amount,
+                    "XP message failed: " + discoveryContext(recorded) + " xp=" + amount,
                     exception
             );
         }
@@ -213,7 +214,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         );
         if (command.isEmpty()) {
             plugin.getLogger().severe(
-                    "Claimblock grant failed: " + structureContext(recorded)
+                    "Claimblock grant failed: " + discoveryContext(recorded)
                             + " claimblocks=" + amount
                             + " command unavailable"
             );
@@ -225,31 +226,32 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         } catch (RuntimeException exception) {
             plugin.getLogger().log(
                     Level.SEVERE,
-                    "Claimblock grant failed: " + structureContext(recorded) + " claimblocks=" + amount,
+                    "Claimblock grant failed: " + discoveryContext(recorded) + " claimblocks=" + amount,
                     exception
             );
             return;
         }
         if (!accepted) {
             plugin.getLogger().severe(
-                    "Claimblock grant failed: " + structureContext(recorded) + " claimblocks=" + amount
+                    "Claimblock grant failed: " + discoveryContext(recorded) + " claimblocks=" + amount
             );
             return;
         }
         try {
-            player.sendMessage(Component.text(StructureNotices.claimblocks(amount)));
+            player.sendMessage(Component.text(DiscoveryNotices.claimblocks(amount)));
         } catch (RuntimeException exception) {
             plugin.getLogger().log(
                     Level.SEVERE,
-                    "Claimblock message failed: " + structureContext(recorded) + " claimblocks=" + amount,
+                    "Claimblock message failed: " + discoveryContext(recorded) + " claimblocks=" + amount,
                     exception
             );
         }
     }
 
-    private static String structureContext(AttemptResult.Recorded recorded) {
+    private static String discoveryContext(AttemptResult.Recorded recorded) {
         return "player=" + recorded.playerUuid()
                 + " world=" + recorded.world()
+                + " entity_type=" + recorded.entityType()
                 + " structure_type=" + recorded.structureType()
                 + " entity_id=" + recorded.entityId();
     }
