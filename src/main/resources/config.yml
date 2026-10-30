@@ -50,3 +50,18 @@ rewards:
     trail_ruins:
       xp: 200
       claimblocks: 25
+
+# A crate for a region, village, heart, or nerve the moment it is first recorded.
+# Turn this on to run command. {player} and {crate} are filled in when it is dispatched.
+# CrazyCrates presents the reward.
+discovery-crates:
+  enabled: false
+  command: "cc give virtual {crate} 1 {player}"
+
+  rewards:
+    overworld_region: RegionCrate
+    nether_region: RegionCrate
+    overworld_village: VillageCrate
+    overworld_heart: HeartCrate
+    nether_heart: HeartCrate
+    overworld_nerve: NerveCrate

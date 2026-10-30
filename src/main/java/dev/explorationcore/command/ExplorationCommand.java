@@ -12,6 +12,8 @@ import dev.explorationcore.record.AttemptResult;
 import dev.explorationcore.record.OnlinePlayer;
 import dev.explorationcore.record.RecordAttempt;
 import dev.explorationcore.record.Timestamps;
+import dev.explorationcore.reward.CrateGrant;
+import dev.explorationcore.reward.DiscoveryCrates;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -178,6 +180,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
                 grantExperience(player, recorded);
                 grantClaimblocks(player, recorded);
             }
+            grantDiscoveryCrate(player, recorded);
         }
         grantMilestones(recorded, player);
     }
@@ -511,6 +514,53 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
             }
         }
         return true;
+    }
+
+    private void grantDiscoveryCrate(Player player, AttemptResult.Recorded recorded) {
+        DiscoveryCrates crates = plugin.discoveryCrates();
+        Optional<String> crate = crates.crate(recorded.world(), recorded.entityType());
+        if (crate.isEmpty()) {
+            return;
+        }
+        String crateName = crate.get();
+        Optional<String> command = crates.command(recorded.world(), recorded.entityType(), player.getName());
+        if (command.isEmpty()) {
+            plugin.getLogger().severe(
+                    "Crate grant failed: " + discoveryContext(recorded)
+                            + " crate=" + crateName
+                            + " command unavailable"
+            );
+            return;
+        }
+        boolean dispatched;
+        try {
+            dispatched = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.get());
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(
+                    Level.SEVERE,
+                    "Crate grant failed: " + discoveryContext(recorded) + " crate=" + crateName,
+                    exception
+            );
+            return;
+        }
+        CrateGrant grant = CrateGrant.fromDispatch(dispatched);
+        if (!grant.accepted()) {
+            plugin.getLogger().severe(
+                    "Crate grant failed: " + discoveryContext(recorded) + " crate=" + crateName
+            );
+            return;
+        }
+        grant.playerMessage().ifPresent(message -> {
+            try {
+                player.sendMessage(Component.text(message));
+            } catch (RuntimeException exception) {
+                plugin.getLogger().log(
+                        Level.SEVERE,
+                        "Crate message failed: " + discoveryContext(recorded) + " crate=" + crateName,
+                        exception
+                );
+            }
+        });
     }
 
     private void grantExperience(Player player, AttemptResult.Recorded recorded) {

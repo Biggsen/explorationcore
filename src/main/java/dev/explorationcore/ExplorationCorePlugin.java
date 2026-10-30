@@ -8,6 +8,7 @@ import dev.explorationcore.db.DatabaseFiles;
 import dev.explorationcore.db.DiscoveryRepository;
 import dev.explorationcore.location.ExplorationLocationExpansion;
 import dev.explorationcore.milestone.Milestones;
+import dev.explorationcore.reward.DiscoveryCrates;
 import dev.explorationcore.reward.StructureRewards;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -31,6 +32,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
     private String serverName = "";
     private boolean debug;
     private StructureRewards structureRewards = StructureRewards.none();
+    private DiscoveryCrates discoveryCrates = DiscoveryCrates.none();
     private Milestones milestones = Milestones.none();
     private DiscoveryRepository repository;
     private final TallyCache tallyCache = new TallyCache();
@@ -56,6 +58,16 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
         } catch (RuntimeException exception) {
             structureRewards = StructureRewards.none();
             getLogger().log(Level.SEVERE, "rewards is malformed. Structure XP rewards are disabled.", exception);
+        }
+        try {
+            discoveryCrates = DiscoveryCrates.load(getConfig(), getLogger());
+        } catch (RuntimeException exception) {
+            discoveryCrates = DiscoveryCrates.none();
+            getLogger().log(
+                    Level.SEVERE,
+                    "discovery-crates is malformed. Discovery crate rewards are disabled.",
+                    exception
+            );
         }
         milestones = loadMilestones();
 
@@ -143,6 +155,10 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
     public StructureRewards structureRewards() {
         return structureRewards;
+    }
+
+    public DiscoveryCrates discoveryCrates() {
+        return discoveryCrates;
     }
 
     public Milestones milestones() {
