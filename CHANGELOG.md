@@ -1,5 +1,11 @@
 # Release history
 
+## 1.3.0-dev.7
+
+A newly recorded region, village, heart, or nerve can grant a CrazyCrates crate. With `discovery-crates.enabled` on, the configured command runs while the player is still online. The shipped command is `cc give virtual {crate} 1 {player}`. The world and the discovery kind pick the crate. A failed dispatch is logged. The player is not told. A repeat of the same discovery does nothing.
+
+A newly recorded overworld region can grant a LuckPerms book permission. With `region-books.enabled` on, the configured command runs for the name stored on the discovery, including after the player has disconnected. Nether regions, and every other discovery kind, are left alone. A failed dispatch is logged for manual recovery. The player is not told. A repeat of the same region does nothing.
+
 ## 1.3.0-dev.6.1
 
 Milestone item rewards now use a readable name. `netherite_scrap` is announced as Netherite Scrap, one item is the name alone, and a larger stack is marked with × and the amount. A structured item entry can override that name in the chat line. The item given to the player is unchanged.

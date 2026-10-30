@@ -9,6 +9,7 @@ import dev.explorationcore.db.DiscoveryRepository;
 import dev.explorationcore.location.ExplorationLocationExpansion;
 import dev.explorationcore.milestone.Milestones;
 import dev.explorationcore.reward.DiscoveryCrates;
+import dev.explorationcore.reward.RegionBooks;
 import dev.explorationcore.reward.StructureRewards;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -33,6 +34,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
     private boolean debug;
     private StructureRewards structureRewards = StructureRewards.none();
     private DiscoveryCrates discoveryCrates = DiscoveryCrates.none();
+    private RegionBooks regionBooks = RegionBooks.none();
     private Milestones milestones = Milestones.none();
     private DiscoveryRepository repository;
     private final TallyCache tallyCache = new TallyCache();
@@ -66,6 +68,16 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             getLogger().log(
                     Level.SEVERE,
                     "discovery-crates is malformed. Discovery crate rewards are disabled.",
+                    exception
+            );
+        }
+        try {
+            regionBooks = RegionBooks.load(getConfig(), getLogger());
+        } catch (RuntimeException exception) {
+            regionBooks = RegionBooks.none();
+            getLogger().log(
+                    Level.SEVERE,
+                    "region-books is malformed. Region book permissions are disabled.",
                     exception
             );
         }
@@ -159,6 +171,10 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
     public DiscoveryCrates discoveryCrates() {
         return discoveryCrates;
+    }
+
+    public RegionBooks regionBooks() {
+        return regionBooks;
     }
 
     public Milestones milestones() {

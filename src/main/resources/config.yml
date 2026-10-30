@@ -65,3 +65,11 @@ discovery-crates:
     overworld_heart: HeartCrate
     nether_heart: HeartCrate
     overworld_nerve: NerveCrate
+
+# LuckPerms permission for an overworld region the moment it is first recorded.
+# Turn this on to run command. {player} and {region} are filled in when it is dispatched.
+# {player} is the name stored on the discovery. {region} is the region id, lowercased.
+# The player is not notified.
+region-books:
+  enabled: false
+  command: "lp user {player} permission set bookgui.book.{region} true"

@@ -14,6 +14,7 @@ import dev.explorationcore.record.RecordAttempt;
 import dev.explorationcore.record.Timestamps;
 import dev.explorationcore.reward.CrateGrant;
 import dev.explorationcore.reward.DiscoveryCrates;
+import dev.explorationcore.reward.RegionBooks;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -159,6 +160,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
     }
 
     private void deliverDiscovery(AttemptResult.Recorded recorded, DiscoveryNotice notice) {
+        grantRegionBook(recorded);
         Player player = Bukkit.getPlayer(recorded.playerUuid());
         if (player == null) {
             plugin.getLogger().warning(
@@ -514,6 +516,40 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
             }
         }
         return true;
+    }
+
+    private void grantRegionBook(AttemptResult.Recorded recorded) {
+        RegionBooks books = plugin.regionBooks();
+        Optional<String> command = books.command(
+                recorded.world(),
+                recorded.entityType(),
+                recorded.entityId(),
+                recorded.playerName()
+        );
+        if (command.isEmpty()) {
+            return;
+        }
+        String line = command.get();
+        boolean accepted;
+        try {
+            accepted = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line);
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(
+                    Level.SEVERE,
+                    "Book permission failed: " + discoveryContext(recorded)
+                            + " name=" + recorded.playerName()
+                            + " command=\"" + line + "\"",
+                    exception
+            );
+            return;
+        }
+        if (!accepted) {
+            plugin.getLogger().severe(
+                    "Book permission failed: " + discoveryContext(recorded)
+                            + " name=" + recorded.playerName()
+                            + " command=\"" + line + "\""
+            );
+        }
     }
 
     private void grantDiscoveryCrate(Player player, AttemptResult.Recorded recorded) {
