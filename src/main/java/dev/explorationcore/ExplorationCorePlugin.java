@@ -31,6 +31,7 @@ import java.util.logging.Level;
 
 public final class ExplorationCorePlugin extends JavaPlugin implements Listener {
     private String serverName = "";
+    private String messagePrefix = "§6⌖ §r";
     private boolean debug;
     private StructureRewards structureRewards = StructureRewards.none();
     private DiscoveryCrates discoveryCrates = DiscoveryCrates.none();
@@ -55,6 +56,12 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             serverName = configuredName.trim();
         }
         debug = getConfig().getBoolean("debug", false);
+        String configuredPrefix = getConfig().getString("messages.prefix", "§6⌖ §r");
+        if (configuredPrefix == null) {
+            messagePrefix = "§6⌖ §r";
+        } else {
+            messagePrefix = configuredPrefix.trim();
+        }
         try {
             structureRewards = StructureRewards.load(getConfig(), getLogger());
         } catch (RuntimeException exception) {
@@ -163,6 +170,10 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
     public boolean debug() {
         return debug;
+    }
+
+    public String messagePrefix() {
+        return messagePrefix;
     }
 
     public StructureRewards structureRewards() {

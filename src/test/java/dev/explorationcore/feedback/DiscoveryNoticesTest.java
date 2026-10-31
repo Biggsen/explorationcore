@@ -160,7 +160,8 @@ class DiscoveryNoticesTest {
                 entityType,
                 "id",
                 displayName,
-                structureType
+                structureType,
+                false
         );
     }
 }

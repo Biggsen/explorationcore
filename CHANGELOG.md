@@ -1,5 +1,13 @@
 # Release history
 
+## 1.3.0-dev.7.2
+
+Player-facing exploration chat notices start with a gold compass. The mark is `messages.prefix`. Leave that value blank to turn it off. Titles, subtitles, command replies, and milestone broadcasts stay as they were.
+
+## 1.3.0-dev.7.1
+
+A record command can end with `nocrate`. The discovery is still written. Only the crate grant for that discovery is skipped, including its chat line. Book permissions, the discovery title, structure experience, claim blocks, and milestones are unchanged. A repeat of the same discovery does nothing. `discovery-crates.enabled` still turns crate grants off for every discovery.
+
 ## 1.3.0-dev.7
 
 A newly recorded region, village, heart, or nerve can grant a CrazyCrates crate. With `discovery-crates.enabled` on, the configured command runs while the player is still online. The shipped command is `cc give virtual {crate} 1 {player}`. The world and the discovery kind pick the crate. A failed dispatch is logged. The player is not told. A repeat of the same discovery does nothing.

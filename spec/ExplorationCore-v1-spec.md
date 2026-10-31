@@ -394,12 +394,20 @@ discovery.
 Command:
 
 ``` text
-explorationcore record <player> <world> <entity-type> <entity-id> <display-name> <difficulty>
+explorationcore record <player> <world> <entity-type> <entity-id> <display-name> <difficulty> [nocrate]
 ```
 
-Every argument is one token. `<display-name>` is the display name
-encoded as UTF-8 base64url (RFC 4648 section 5) with the padding `=`
-characters removed. The plugin restores padding if needed, decodes the
+Every argument is one token. An optional trailing `nocrate` may follow
+those arguments, including the structure type from section 30. The
+comparison trims the token and ignores case. The token is not stored.
+On a new discovery it skips the crate grant and the crate chat line.
+The book permission, the discovery presentation, structure experience,
+claim blocks, and milestones still run. `nocrate` is not a structure
+type. A structure family of that name is rejected and nothing is
+written.
+
+`<display-name>` is the display name encoded as UTF-8 base64url
+(RFC 4648 section 5) with the padding `=` characters removed. The plugin restores padding if needed, decodes the
 token as UTF-8, and stores that text. The generator and the plugin both
 use this encoding.
 
@@ -445,6 +453,8 @@ an exception or interrupt the ConditionalEvents action sequence.
 -   `<entity-id>` is a non-empty token and contains no whitespace.
 -   `<display-name>` decodes as base64url into a non-blank string.
 -   `<difficulty>` is an integer from 0 through 5 inclusive.
+-   A trailing `nocrate` is the crate opt-out. It is not a seventh
+    field, and it is not a structure type.
 
 ------------------------------------------------------------------------
 
@@ -1218,7 +1228,9 @@ Structure discoveries gain one trailing token, the catalogue
 `structureType`. The plugin stores it on the row and does not use it
 as part of the unique key. A repeat of the same discovery must not
 rewrite a family already stored. Regions, villages, hearts, and nerves
-omit the argument.
+omit the argument. The crate opt-out `nocrate` may follow the structure
+type, or follow the six original arguments. It is not the structure
+type.
 
 The column is nullable. Adding it must not require deleting
 `exploration.db`. Rows written before the column existed stay

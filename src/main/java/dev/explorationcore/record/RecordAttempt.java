@@ -5,10 +5,12 @@ import dev.explorationcore.db.InsertOutcome;
 import dev.explorationcore.db.StoredDiscovery;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
 
 public final class RecordAttempt {
+    private static final String NO_CRATE = "nocrate";
     private static final Set<String> ENTITY_TYPES = Set.of(
             "region",
             "village",
@@ -32,9 +34,14 @@ public final class RecordAttempt {
         String entityType = argument(args, 2);
         String entityId = argument(args, 3);
         try {
+            boolean skipCrate = false;
+            if (args != null && args.length > 0 && isNoCrate(args[args.length - 1])) {
+                skipCrate = true;
+                args = Arrays.copyOf(args, args.length - 1);
+            }
             if (args.length != 6 && args.length != 7) {
                 return new AttemptResult.Rejected(
-                        "expected 6 or 7 arguments: <player> <world> <entity-type> <entity-id> <display-name> <difficulty> [structure-type]"
+                        "expected 6 or 7 arguments: <player> <world> <entity-type> <entity-id> <display-name> <difficulty> [structure-type] [nocrate]"
                 );
             }
             if (serverName == null || serverName.isBlank()) {
@@ -85,6 +92,9 @@ public final class RecordAttempt {
                     return new AttemptResult.Rejected("structure_type is only recorded for structures");
                 }
                 structureType = rawStructureType.trim().toLowerCase(Locale.ROOT);
+                if (NO_CRATE.equals(structureType)) {
+                    return new AttemptResult.Rejected("nocrate is not a structure type");
+                }
             }
             player = online.name();
             if (store == null) {
@@ -111,7 +121,8 @@ public final class RecordAttempt {
                         entityType,
                         entityId,
                         displayName,
-                        structureType
+                        structureType,
+                        skipCrate
                 );
                 case DUPLICATE -> new AttemptResult.Duplicate(player, world, entityType, entityId);
             };
@@ -125,6 +136,10 @@ public final class RecordAttempt {
             return "";
         }
         return args[index];
+    }
+
+    private static boolean isNoCrate(String token) {
+        return token != null && NO_CRATE.equals(token.trim().toLowerCase(Locale.ROOT));
     }
 
     private static boolean containsWhitespace(String value) {

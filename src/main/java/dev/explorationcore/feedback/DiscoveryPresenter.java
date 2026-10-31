@@ -27,13 +27,13 @@ public final class DiscoveryPresenter {
         return (FADE_IN_MILLIS + STAY_MILLIS + FADE_OUT_MILLIS) / 50L;
     }
 
-    public static void show(Player player, DiscoveryNotice notice) {
+    public static void show(Player player, DiscoveryNotice notice, String prefix) {
         player.showTitle(Title.title(
                 Component.text(notice.title()),
                 Component.text(notice.subtitle()),
                 TIMES
         ));
-        player.sendMessage(Component.text(notice.chat()));
+        player.sendMessage(NoticeChat.line(prefix, notice.chat()));
         player.playSound(
                 player.getLocation(),
                 Sound.UI_TOAST_CHALLENGE_COMPLETE,

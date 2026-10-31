@@ -65,7 +65,8 @@ class RegionBooksTest {
                 "region",
                 "auronia",
                 "Auronia",
-                null
+                null,
+                false
         );
 
         assertEquals(

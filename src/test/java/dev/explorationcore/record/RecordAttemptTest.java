@@ -12,8 +12,10 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RecordAttemptTest {
     private static final Instant WHEN = Instant.parse("2026-09-26T17:31:42Z");
@@ -36,6 +38,7 @@ class RecordAttemptTest {
         );
 
         AttemptResult.Recorded recorded = assertInstanceOf(AttemptResult.Recorded.class, result);
+        assertFalse(recorded.skipCrate());
         assertEquals("Recorded verzion -> overworld/region/sakonotur", recorded.logLine());
         assertEquals(VERZION.uuid(), recorded.playerUuid());
         assertEquals("Sakonotur", recorded.displayName());
@@ -120,7 +123,7 @@ class RecordAttemptTest {
         assertRejected("player is not online: verzion", args("overworld", "region", "sakonotur", "Sakonotur", "2"), name -> Optional.empty(), store);
         assertRejected("server-name is missing or blank", args("overworld", "region", "sakonotur", "Sakonotur", "2"), ONLINE, store, "  ");
         assertRejected(
-                "expected 6 or 7 arguments: <player> <world> <entity-type> <entity-id> <display-name> <difficulty> [structure-type]",
+                "expected 6 or 7 arguments: <player> <world> <entity-type> <entity-id> <display-name> <difficulty> [structure-type] [nocrate]",
                 new String[]{"verzion", "overworld", "region", "sakonotur", DisplayNameCodecTest.encode("Sakonotur")},
                 store
         );
@@ -137,6 +140,86 @@ class RecordAttemptTest {
         assertRejected(
                 "structure_type must be a non-empty token without whitespace",
                 withStructureType(args("overworld", "structure", "ocean_ruin_37", "Ocean Ruin", "0"), " "),
+                store
+        );
+        assertEquals(0, calls.get());
+    }
+
+    @Test
+    void skipsTheCrateWhenTheCommandEndsWithNoCrate() {
+        CapturingStore store = new CapturingStore();
+        AttemptResult result = RecordAttempt.attempt(
+                "Lowothra",
+                withToken(args("overworld", "region", "sakonotur", "Sakonotur", "2"), "nocrate"),
+                ONLINE,
+                store,
+                WHEN
+        );
+
+        AttemptResult.Recorded recorded = assertInstanceOf(AttemptResult.Recorded.class, result);
+        assertTrue(recorded.skipCrate());
+        assertNull(recorded.structureType());
+        StoredDiscovery row = store.row;
+        assertEquals("sakonotur", row.entityId());
+        assertEquals("Sakonotur", row.displayName());
+        assertEquals("overworld", row.world());
+        assertEquals("region", row.entityType());
+        assertNull(row.structureType());
+    }
+
+    @Test
+    void keepsTheStructureFamilyWhenNoCrateFollowsIt() {
+        CapturingStore store = new CapturingStore();
+        AttemptResult result = RecordAttempt.attempt(
+                "Lowothra",
+                withToken(
+                        withStructureType(args("overworld", "structure", "ocean_ruin_37", "Ocean Ruin", "0"), "Ocean_Ruin"),
+                        "nocrate"
+                ),
+                ONLINE,
+                store,
+                WHEN
+        );
+
+        AttemptResult.Recorded recorded = assertInstanceOf(AttemptResult.Recorded.class, result);
+        assertTrue(recorded.skipCrate());
+        assertEquals("ocean_ruin", recorded.structureType());
+        assertEquals("ocean_ruin", store.row.structureType());
+        assertEquals("ocean_ruin_37", store.row.entityId());
+    }
+
+    @Test
+    void acceptsNoCrateInAnyCase() {
+        AttemptResult result = RecordAttempt.attempt(
+                "Lowothra",
+                withToken(args("overworld", "region", "sakonotur", "Sakonotur", "2"), " NOCRATE "),
+                ONLINE,
+                discovery -> InsertOutcome.INSERTED,
+                WHEN
+        );
+
+        AttemptResult.Recorded recorded = assertInstanceOf(AttemptResult.Recorded.class, result);
+        assertTrue(recorded.skipCrate());
+    }
+
+    @Test
+    void rejectsNoCrateUnlessItIsATrailingOptOut() {
+        AtomicInteger calls = new AtomicInteger();
+        DiscoveryStore store = discovery -> {
+            calls.incrementAndGet();
+            return InsertOutcome.INSERTED;
+        };
+        assertRejected(
+                "nocrate is not a structure type",
+                withToken(
+                        withStructureType(args("overworld", "structure", "ocean_ruin_37", "Ocean Ruin", "0"), "nocrate"),
+                        "nocrate"
+                ),
+                store
+        );
+        assertRejected(
+                "expected 6 or 7 arguments: <player> <world> <entity-type> <entity-id> <display-name> <difficulty> [structure-type] [nocrate]",
+                withToken(withToken(args("overworld", "region", "sakonotur", "Sakonotur", "2"), "nocrate"), "extra"),
                 store
         );
         assertEquals(0, calls.get());
@@ -211,6 +294,13 @@ class RecordAttemptTest {
 
     private static String[] args(String world, String type, String id, String displayName, String difficulty) {
         return new String[]{"verzion", world, type, id, DisplayNameCodecTest.encode(displayName), difficulty};
+    }
+
+    private static String[] withToken(String[] args, String token) {
+        String[] withToken = new String[args.length + 1];
+        System.arraycopy(args, 0, withToken, 0, args.length);
+        withToken[args.length] = token;
+        return withToken;
     }
 
     private static String[] withStructureType(String[] args, String structureType) {

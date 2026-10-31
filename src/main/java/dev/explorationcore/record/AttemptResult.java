@@ -13,7 +13,8 @@ public sealed interface AttemptResult {
             String entityType,
             String entityId,
             String displayName,
-            String structureType
+            String structureType,
+            boolean skipCrate
     ) implements AttemptResult {
         public String logLine() {
             return "Recorded " + playerName + " -> " + world + "/" + entityType + "/" + entityId;

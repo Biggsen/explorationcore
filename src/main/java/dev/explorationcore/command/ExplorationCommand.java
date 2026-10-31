@@ -6,6 +6,7 @@ import dev.explorationcore.db.PlayerTally;
 import dev.explorationcore.feedback.DiscoveryNotice;
 import dev.explorationcore.feedback.DiscoveryNotices;
 import dev.explorationcore.feedback.DiscoveryPresenter;
+import dev.explorationcore.feedback.NoticeChat;
 import dev.explorationcore.milestone.Milestone;
 import dev.explorationcore.milestone.MilestoneEvaluator;
 import dev.explorationcore.record.AttemptResult;
@@ -169,7 +170,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         } else {
             if (notice != null) {
                 try {
-                    DiscoveryPresenter.show(player, notice);
+                    DiscoveryPresenter.show(player, notice, plugin.messagePrefix());
                 } catch (RuntimeException exception) {
                     plugin.getLogger().log(
                             Level.SEVERE,
@@ -182,7 +183,13 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
                 grantExperience(player, recorded);
                 grantClaimblocks(player, recorded);
             }
-            grantDiscoveryCrate(player, recorded);
+            if (recorded.skipCrate()) {
+                if (plugin.debug()) {
+                    plugin.getLogger().info("Crate grant skipped: " + discoveryContext(recorded));
+                }
+            } else {
+                grantDiscoveryCrate(player, recorded);
+            }
         }
         grantMilestones(recorded, player);
     }
@@ -441,7 +448,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         Player player = Bukkit.getPlayer(playerUuid);
         if (player != null && player.isOnline()) {
             try {
-                DiscoveryPresenter.show(player, notice);
+                DiscoveryPresenter.show(player, notice, plugin.messagePrefix());
             } catch (RuntimeException exception) {
                 plugin.getLogger().log(
                         Level.SEVERE,
@@ -451,7 +458,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
             }
             for (String line : confirmations) {
                 try {
-                    player.sendMessage(Component.text(line));
+                    player.sendMessage(NoticeChat.line(plugin.messagePrefix(), line));
                 } catch (RuntimeException exception) {
                     plugin.getLogger().log(
                             Level.SEVERE,
@@ -588,7 +595,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         }
         grant.playerMessage().ifPresent(message -> {
             try {
-                player.sendMessage(Component.text(message));
+                player.sendMessage(NoticeChat.line(plugin.messagePrefix(), message));
             } catch (RuntimeException exception) {
                 plugin.getLogger().log(
                         Level.SEVERE,
@@ -622,7 +629,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
             return;
         }
         try {
-            player.sendMessage(Component.text(DiscoveryNotices.experience(amount)));
+            player.sendMessage(NoticeChat.line(plugin.messagePrefix(), DiscoveryNotices.experience(amount)));
         } catch (RuntimeException exception) {
             plugin.getLogger().log(
                     Level.SEVERE,
@@ -668,7 +675,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
             return;
         }
         try {
-            player.sendMessage(Component.text(DiscoveryNotices.claimblocks(amount)));
+            player.sendMessage(NoticeChat.line(plugin.messagePrefix(), DiscoveryNotices.claimblocks(amount)));
         } catch (RuntimeException exception) {
             plugin.getLogger().log(
                     Level.SEVERE,
