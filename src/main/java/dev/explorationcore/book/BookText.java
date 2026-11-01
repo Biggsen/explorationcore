@@ -114,6 +114,135 @@ final class BookText {
         return pages;
     }
 
+    // Header on the first page, and on later pages when repeatHeader is set.
+    // The footer link is the last line, with one blank line above it. Further blank
+    // lines keep it on the bottom line when the names do not fill the page. A name
+    // that does not fit moves intact onto the next page.
+    static List<List<BookLine>> paginateNamed(
+            String header,
+            List<String> names,
+            String footer,
+            int footerPage,
+            boolean repeatHeader
+    ) {
+        if (names.isEmpty()) {
+            return List.of();
+        }
+        List<List<BookLine>> pages = new ArrayList<>();
+        List<String> current = new ArrayList<>();
+        boolean firstPage = true;
+        int index = 0;
+        while (index < names.size()) {
+            String name = names.get(index);
+            boolean headerOnPage = firstPage || repeatHeader;
+            if (!current.isEmpty() && !fits(header, plus(current, name), headerOnPage, footer)) {
+                pages.add(finish(header, current, headerOnPage, footer, footerPage));
+                current = new ArrayList<>();
+                firstPage = false;
+                continue;
+            }
+            current.add(name);
+            index++;
+        }
+        pages.add(finish(header, current, firstPage || repeatHeader, footer, footerPage));
+        return pages;
+    }
+
+    private static List<String> plus(List<String> names, String name) {
+        List<String> copy = new ArrayList<>(names);
+        copy.add(name);
+        return copy;
+    }
+
+    private static boolean fits(String header, List<String> names, boolean headerShown, String footer) {
+        int visual = 0;
+        int characters = 0;
+        int lines = 0;
+        if (headerShown) {
+            visual += visualLines(header);
+            characters += header.length();
+            lines++;
+            String divider = rule();
+            visual += visualLines(divider);
+            characters += divider.length();
+            if (lines > 0) {
+                characters++;
+            }
+            lines++;
+        }
+        for (String name : names) {
+            visual += visualLines(name);
+            characters += name.length();
+            if (lines > 0) {
+                characters++;
+            }
+            lines++;
+        }
+        visual += 1;
+        if (lines > 0) {
+            characters++;
+        }
+        lines++;
+        visual += visualLines(footer);
+        characters += footer.length();
+        if (lines > 0) {
+            characters++;
+        }
+        return visual <= LINES_PER_PAGE && characters <= MAX_PAGE_CHARACTERS;
+    }
+
+    private static List<BookLine> finish(
+            String header,
+            List<String> names,
+            boolean headerShown,
+            String footer,
+            int footerPage
+    ) {
+        List<BookLine> lines = new ArrayList<>();
+        if (headerShown) {
+            lines.add(BookLine.of(header));
+            lines.add(BookLine.of(rule()));
+        }
+        for (String name : names) {
+            lines.add(BookLine.of(name));
+        }
+        int used = 0;
+        for (BookLine line : lines) {
+            used += visualLines(line.text());
+        }
+        int blanks = LINES_PER_PAGE - used - visualLines(footer);
+        while (blanks > 0 && pageCharacters(lines, blanks, footer) > MAX_PAGE_CHARACTERS) {
+            blanks--;
+        }
+        for (int index = 0; index < Math.max(0, blanks); index++) {
+            lines.add(BookLine.of(""));
+        }
+        lines.add(BookLine.link(footer, footerPage));
+        return List.copyOf(lines);
+    }
+
+    private static int pageCharacters(List<BookLine> lines, int blanks, String footer) {
+        int characters = 0;
+        int count = 0;
+        for (BookLine line : lines) {
+            if (count > 0) {
+                characters++;
+            }
+            characters += line.text().length();
+            count++;
+        }
+        for (int index = 0; index < blanks; index++) {
+            if (count > 0) {
+                characters++;
+            }
+            count++;
+        }
+        if (count > 0) {
+            characters++;
+        }
+        return characters + footer.length();
+    }
+
     private static List<String> wrapSegment(String text, boolean bold) {
         if (text.isEmpty()) {
             return List.of("");

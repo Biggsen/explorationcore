@@ -113,7 +113,9 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
         if (bookCommand == null) {
             getLogger().severe("Command exploration is missing from plugin.yml");
         } else {
-            bookCommand.setExecutor(new ExplorationBookCommand(this));
+            ExplorationBookCommand bookExecutor = new ExplorationBookCommand(this);
+            bookCommand.setExecutor(bookExecutor);
+            bookCommand.setTabCompleter(bookExecutor);
         }
         getServer().getPluginManager().registerEvents(this, this);
         registerPlaceholders();

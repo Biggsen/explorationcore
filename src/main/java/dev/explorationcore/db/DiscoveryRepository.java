@@ -43,6 +43,12 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
             GROUP BY world, entity_type, structure_type
             """;
 
+    private static final String DISCOVERIES = """
+            SELECT world, entity_type, structure_type, entity_id, display_name
+            FROM discoveries
+            WHERE player_uuid = ?
+            """;
+
     private static final String FIND = """
             SELECT player_uuid, player_name, server, world, entity_type, entity_id,
                    display_name, difficulty, discovered_at, structure_type
@@ -113,18 +119,36 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
                 try (ResultSet results = statement.executeQuery()) {
                     List<PlayerTally> tallies = new ArrayList<>();
                     while (results.next()) {
-                        String structureType = results.getString(3);
-                        if (structureType != null && structureType.isBlank()) {
-                            structureType = null;
-                        }
                         tallies.add(new PlayerTally(
                                 results.getString(1),
                                 results.getString(2),
-                                structureType,
+                                blankToNull(results.getString(3)),
                                 results.getLong(4)
                         ));
                     }
                     return tallies;
+                }
+            }
+        }
+    }
+
+    public List<DiscoveryEntry> discoveriesFor(String playerUuid) throws SQLException {
+        synchronized (lock) {
+            ensureOpen();
+            try (PreparedStatement statement = connection.prepareStatement(DISCOVERIES)) {
+                statement.setString(1, playerUuid);
+                try (ResultSet results = statement.executeQuery()) {
+                    List<DiscoveryEntry> entries = new ArrayList<>();
+                    while (results.next()) {
+                        entries.add(new DiscoveryEntry(
+                                results.getString(1),
+                                results.getString(2),
+                                blankToNull(results.getString(3)),
+                                results.getString(4),
+                                results.getString(5)
+                        ));
+                    }
+                    return entries;
                 }
             }
         }
@@ -197,6 +221,13 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
                 connection.close();
             }
         }
+    }
+
+    private static String blankToNull(String value) {
+        if (value != null && value.isBlank()) {
+            return null;
+        }
+        return value;
     }
 
     private void ensureOpen() throws SQLException {

@@ -22,3 +22,6 @@ permissions:
   explorationcore.exploration:
     description: Open the exploration progress book.
     default: true
+  explorationcore.bookpreview:
+    description: Open a sample exploration journal without exploring.
+    default: op

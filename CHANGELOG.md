@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.0-dev.8
+
+`/exploration` opens a written book of places already discovered. The summary still shows the counts. A category with finds can be opened, and each list can return to the summary. Empty categories stay as a count. Structure finds are grouped by the families in `totals.yml`. Names are alphabetical. The book stops at 100 pages.
+
 ## 1.3.0-dev.7.2
 
 Player-facing exploration chat notices start with a gold compass. The mark is `messages.prefix`. Leave that value blank to turn it off. Titles, subtitles, command replies, and milestone broadcasts stay as they were.

@@ -4,24 +4,29 @@ import dev.explorationcore.ExplorationCorePlugin;
 import dev.explorationcore.book.BookPages;
 import dev.explorationcore.book.ExplorationBook;
 import dev.explorationcore.book.ExplorationTotals;
+import dev.explorationcore.book.JournalFixtures;
 import dev.explorationcore.book.PreparedBook;
 import dev.explorationcore.book.TotalsException;
 import dev.explorationcore.book.TotalsFile;
+import dev.explorationcore.db.DiscoveryEntry;
 import dev.explorationcore.db.DiscoveryRepository;
-import dev.explorationcore.db.PlayerTally;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Level;
 
-public final class ExplorationBookCommand implements CommandExecutor {
+public final class ExplorationBookCommand implements CommandExecutor, TabCompleter {
     private static final String PERMISSION = "explorationcore.exploration";
+    private static final String PREVIEW_PERMISSION = "explorationcore.bookpreview";
     private static final String UNAVAILABLE = "Exploration book is unavailable.";
 
     private final ExplorationCorePlugin plugin;
@@ -36,6 +41,10 @@ public final class ExplorationBookCommand implements CommandExecutor {
             sender.sendMessage(Component.text("Only a player can open the exploration book."));
             return true;
         }
+        if (args.length > 0 && args[0].equalsIgnoreCase("preview")) {
+            preview(player, args);
+            return true;
+        }
         if (!player.hasPermission(PERMISSION)) {
             player.sendMessage(Component.text("You do not have permission to use this command."));
             return true;
@@ -47,6 +56,37 @@ public final class ExplorationBookCommand implements CommandExecutor {
             player.sendMessage(Component.text(UNAVAILABLE));
         }
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!sender.hasPermission(PREVIEW_PERMISSION)) {
+            return List.of();
+        }
+        if (args.length == 1) {
+            return startingWith(List.of("preview"), args[0]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("preview")) {
+            return startingWith(JournalFixtures.SCENARIOS, args[1]);
+        }
+        return List.of();
+    }
+
+    private void preview(Player player, String[] args) {
+        if (!player.hasPermission(PREVIEW_PERMISSION)) {
+            player.sendMessage(Component.text("You do not have permission to use this command."));
+            return;
+        }
+        if (args.length != 2 || JournalFixtures.scenario(args[1]) == null) {
+            player.sendMessage(Component.text("Unknown preview. Use empty, partial, or long."));
+            return;
+        }
+        try {
+            show(player, JournalFixtures.book(plugin.serverName(), args[1]));
+        } catch (Exception exception) {
+            plugin.getLogger().log(Level.SEVERE, "Exploration book preview failed for " + player.getName(), exception);
+            player.sendMessage(Component.text(UNAVAILABLE));
+        }
     }
 
     private void open(Player player) throws Exception {
@@ -65,8 +105,11 @@ public final class ExplorationBookCommand implements CommandExecutor {
             player.sendMessage(Component.text(UNAVAILABLE));
             return;
         }
-        List<PlayerTally> tallies = repository.talliesFor(player.getUniqueId().toString());
-        PreparedBook book = ExplorationBook.prepare(plugin.serverName(), totals, tallies);
+        List<DiscoveryEntry> discoveries = repository.discoveriesFor(player.getUniqueId().toString());
+        show(player, ExplorationBook.prepare(plugin.serverName(), totals, discoveries));
+    }
+
+    private void show(Player player, PreparedBook book) {
         for (String notice : book.notices()) {
             plugin.getLogger().warning("Exploration book for " + player.getName() + ": " + notice);
         }
@@ -75,5 +118,16 @@ public final class ExplorationBookCommand implements CommandExecutor {
                 Component.text(plugin.serverName()),
                 BookPages.components(book)
         ));
+    }
+
+    private static List<String> startingWith(List<String> options, String typed) {
+        String prefix = typed.toLowerCase(Locale.ROOT);
+        List<String> matches = new ArrayList<>();
+        for (String option : options) {
+            if (option.toLowerCase(Locale.ROOT).startsWith(prefix)) {
+                matches.add(option);
+            }
+        }
+        return matches;
     }
 }

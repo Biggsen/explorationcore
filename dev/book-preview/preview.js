@@ -73,6 +73,15 @@
       turn(1);
       return;
     }
+    var target = linkAt(point.x, point.y);
+    if (target) {
+      var nextIndex = target - 1;
+      if (nextIndex >= 0 && nextIndex < book.pages.length && nextIndex !== pageIndex) {
+        pageIndex = nextIndex;
+        paint();
+      }
+      return;
+    }
     turn(point.x >= book.imageWidth / 2 ? 1 : -1);
   });
 
@@ -169,11 +178,14 @@
   function drawLine(line, x, y) {
     var style = lineStyle(line);
     var text = style.text;
-    var glyphs = fontFor(style.color);
+    var linkChars = style.page ? linkedLength(text) : 0;
+    var seen = 0;
     var pen = x;
     for (var index = 0; index < text.length; ) {
       var codePoint = text.codePointAt(index);
       var advance = glyphAdvance(codePoint, style.bold);
+      var color = seen < linkChars ? linkColor() : style.color;
+      var glyphs = fontFor(color);
       if (glyphs && codePoint <= 255) {
         blitGlyph(glyphs, codePoint, pen, y);
         if (style.bold) {
@@ -181,25 +193,57 @@
         }
       } else if (codePoint !== 32) {
         var width = Math.max(advanceOf(codePoint) - 1, 1);
-        ctx.fillStyle = style.color;
+        ctx.fillStyle = color;
         ctx.fillRect(pen * scale, (y + 1) * scale, width * scale, 7 * scale);
         if (style.bold) {
           ctx.fillRect((pen + 1) * scale, (y + 1) * scale, width * scale, 7 * scale);
         }
       }
       pen += advance;
+      seen += codePoint > 0xffff ? 2 : 1;
       index += codePoint > 0xffff ? 2 : 1;
     }
   }
 
+  function linkColor() {
+    return book.linkColor ? "#" + book.linkColor : "#365B83";
+  }
+
+  function linkedLength(text) {
+    var split = text.indexOf(": ");
+    return split < 0 ? text.length : split;
+  }
+
+  function linkAt(x, y) {
+    var lines = book.pages[pageIndex];
+    var index = Math.floor((y - book.textY) / book.lineHeight);
+    if (index < 0 || index >= lines.length) {
+      return null;
+    }
+    var line = lines[index];
+    if (!line || !line.page) {
+      return null;
+    }
+    if (x < book.textX || x >= book.textX + linkSpan(line.text)) {
+      return null;
+    }
+    return line.page;
+  }
+
+  function linkSpan(text) {
+    var split = text.indexOf(": ");
+    return measure(split < 0 ? text : text.substring(0, split));
+  }
+
   function lineStyle(line) {
     if (typeof line === "string") {
-      return { text: line, bold: false, color: "#000000" };
+      return { text: line, bold: false, color: "#000000", page: null };
     }
     return {
       text: line.text,
       bold: !!line.bold,
-      color: line.color ? "#" + line.color : "#000000"
+      color: line.color ? "#" + line.color : "#000000",
+      page: line.page || null
     };
   }
 

@@ -1,6 +1,6 @@
 package dev.explorationcore.book;
 
-import dev.explorationcore.db.PlayerTally;
+import dev.explorationcore.db.DiscoveryEntry;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,8 +55,15 @@ final class BookPreviewDump {
         Path jar = args.length >= 3 ? Path.of(args[2]) : findClientJar();
         extractTextures(jar, assetsDir);
         String serverName = serverName();
-        String playerName = System.getProperty("book.player", "vanism");
-        PreparedBook book = realBook(serverName, playerName);
+        String scenario = System.getProperty("book.scenario", "");
+        PreparedBook book;
+        if (!scenario.isBlank()) {
+            book = JournalFixtures.book(serverName, scenario);
+            System.out.println("Preview scenario " + scenario + " on " + serverName + ".");
+        } else {
+            String playerName = System.getProperty("book.player", "vanism");
+            book = realBook(serverName, playerName);
+        }
         Path parent = bookJs.toAbsolutePath().getParent();
         if (parent != null) {
             Files.createDirectories(parent);
@@ -78,11 +85,11 @@ final class BookPreviewDump {
         Path databaseFile = Path.of("dev/book-preview/data/exploration.db");
         ExplorationTotals totals = TotalsFile.load(totalsFile);
         PlayerRef player = player(databaseFile, requestedPlayer);
-        List<PlayerTally> tallies = tallies(databaseFile, player.uuid());
+        List<DiscoveryEntry> discoveries = discoveries(databaseFile, player.uuid());
         System.out.println("Book for " + player.name() + " on " + serverName
                 + ". Overworld regions " + totals.overworldRegions()
                 + ". Discoveries " + player.discoveries() + ".");
-        return ExplorationBook.prepare(serverName, totals, tallies);
+        return ExplorationBook.prepare(serverName, totals, discoveries);
     }
 
     private static String serverName() throws IOException {
@@ -137,30 +144,30 @@ final class BookPreviewDump {
         }
     }
 
-    private static List<PlayerTally> tallies(Path databaseFile, String playerUuid) throws Exception {
+    private static List<DiscoveryEntry> discoveries(Path databaseFile, String playerUuid) throws Exception {
         try (Connection connection = openReadOnly(databaseFile);
              PreparedStatement statement = connection.prepareStatement("""
-                     SELECT world, entity_type, structure_type, COUNT(*)
+                     SELECT world, entity_type, structure_type, entity_id, display_name
                      FROM discoveries
                      WHERE player_uuid = ?
-                     GROUP BY world, entity_type, structure_type
                      """)) {
             statement.setString(1, playerUuid);
             try (ResultSet results = statement.executeQuery()) {
-                List<PlayerTally> tallies = new ArrayList<>();
+                List<DiscoveryEntry> entries = new ArrayList<>();
                 while (results.next()) {
                     String structureType = results.getString(3);
                     if (structureType != null && structureType.isBlank()) {
                         structureType = null;
                     }
-                    tallies.add(new PlayerTally(
+                    entries.add(new DiscoveryEntry(
                             results.getString(1),
                             results.getString(2),
                             structureType,
-                            results.getLong(4)
+                            results.getString(4),
+                            results.getString(5)
                     ));
                 }
-                return tallies;
+                return entries;
             }
         }
     }
@@ -176,41 +183,7 @@ final class BookPreviewDump {
     }
 
     static PreparedBook sample() {
-        ExplorationTotals totals = new ExplorationTotals(
-                56,
-                56,
-                30,
-                30,
-                List.of(
-                        new StructureTotal("ancient_city", "Ancient Cities", 12),
-                        new StructureTotal("buried_treasure", "Buried Treasures", 53),
-                        new StructureTotal("desert_well", "Desert Wells", 1),
-                        new StructureTotal("jungle_temple", "Jungle Temples", 11),
-                        new StructureTotal("ocean_ruin", "Ocean Ruins", 169),
-                        new StructureTotal("pillager_outpost", "Pillager Outposts", 8),
-                        new StructureTotal("shipwreck", "Shipwrecks", 126),
-                        new StructureTotal("trail_ruins", "Trail Ruins", 19)
-                ),
-                18,
-                8
-        );
-        return ExplorationBook.prepare(
-                "Lowothra",
-                totals,
-                List.of(
-                        new PlayerTally("overworld", "region", null, 40),
-                        new PlayerTally("overworld", "village", null, 3),
-                        new PlayerTally("overworld", "heart", null, 2),
-                        new PlayerTally("overworld", "nerve", null, 1),
-                        new PlayerTally("overworld", "structure", "ancient_city", 1),
-                        new PlayerTally("overworld", "structure", "buried_treasure", 4),
-                        new PlayerTally("overworld", "structure", "ocean_ruin", 20),
-                        new PlayerTally("overworld", "structure", "shipwreck", 12),
-                        new PlayerTally("overworld", "structure", "mineshaft", 4),
-                        new PlayerTally("nether", "region", null, 2),
-                        new PlayerTally("nether", "heart", null, 1)
-                )
-        );
+        return JournalFixtures.book("Lowothra", "partial");
     }
 
     private static String render(PreparedBook book, String serverName) {
@@ -219,6 +192,7 @@ final class BookPreviewDump {
         stringField(out, "title", ExplorationBook.TITLE);
         stringField(out, "author", serverName);
         stringField(out, "pageIndicator", "Page %s of %s");
+        stringField(out, "linkColor", String.format("%06X", ExplorationBook.LINK_COLOR));
         numberField(out, "pageWidth", BookText.PAGE_WIDTH);
         numberField(out, "linesPerPage", BookText.LINES_PER_PAGE);
         numberField(out, "lineHeight", LINE_HEIGHT);
@@ -247,9 +221,17 @@ final class BookPreviewDump {
                 .append(", \"u\": 0, \"v\": 192 },\n");
         numberField(out, "buttonHoverU", 23);
         out.append("  \"pages\": [\n");
-        List<String> pages = book.pages();
+        List<List<BookLine>> pages = book.pages();
         for (int pageIndex = 0; pageIndex < pages.size(); pageIndex++) {
-            List<DisplayedLine> lines = BookText.layout(pages.get(pageIndex), pageIndex == 0);
+            List<BookLine> source = pages.get(pageIndex);
+            List<Painted> lines = new ArrayList<>();
+            for (int lineIndex = 0; lineIndex < source.size(); lineIndex++) {
+                BookLine line = source.get(lineIndex);
+                boolean bold = pageIndex == 0 && lineIndex == 0;
+                for (DisplayedLine displayed : BookText.layout(line.text(), bold)) {
+                    lines.add(new Painted(displayed.text(), displayed.bold(), line.page()));
+                }
+            }
             out.append("    [\n");
             for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
                 out.append("      ").append(jsonLine(lines.get(lineIndex)));
@@ -286,14 +268,21 @@ final class BookPreviewDump {
         out.append("  \"").append(name).append("\": ").append(value).append(",\n");
     }
 
-    private static String jsonLine(DisplayedLine line) {
+    private static String jsonLine(Painted line) {
         int color = line.bold() ? ExplorationBook.SERVER_NAME_COLOR : ExplorationBook.BODY_COLOR;
         StringBuilder out = new StringBuilder("{ \"text\": ").append(jsonString(line.text()));
         if (line.bold()) {
             out.append(", \"bold\": true");
         }
-        out.append(", \"color\": \"").append(String.format("%06X", color)).append("\" }");
+        out.append(", \"color\": \"").append(String.format("%06X", color)).append("\"");
+        if (line.page() != null) {
+            out.append(", \"page\": ").append(line.page());
+        }
+        out.append(" }");
         return out.toString();
+    }
+
+    private record Painted(String text, boolean bold, Integer page) {
     }
 
     private static String jsonString(String value) {
