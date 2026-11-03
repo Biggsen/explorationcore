@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.explorationcore"
-version = "1.3.0-dev.9"
+version = "1.3.0-dev.9.1"
 
 // Lowothra's exact Paper build is not recorded. 1.21.11 is the newest Paper API
 // this machine's JDK 21 can compile. plugin.yml api-version stays 1.21 so any

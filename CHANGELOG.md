@@ -1,5 +1,11 @@
 # Release history
 
+## 1.3.0-dev.9.1
+
+A newly recorded discovery plays an amethyst block chime at volume 0.8 and pitch 0.8, and a short end-rod shimmer around the chest. A repeat of the same discovery does nothing.
+
+Startup logs `Milestones loaded:` and the count of milestones that loaded.
+
 ## 1.3.0-dev.9
 
 Structure family counters come from `plugins/ExplorationCore/structure-counters.yml`. The eight main counters stay in the plugin. A missing file is filled from the jar. A bad file is named in the log and loads no families, and recording continues. A milestones file that names an unknown counter still turns milestone rewards off.
