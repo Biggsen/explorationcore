@@ -1,5 +1,13 @@
 # Release history
 
+## 1.3.0-dev.9.3
+
+A newly recorded discovery plays the beacon power-select sound at volume 1.0 and pitch 2.0. Fifteen end-rod particles appear 1.5 blocks above the feet, spread 0.4 blocks sideways and 0.3 blocks vertically, and drift upward. A repeat of the same discovery does nothing.
+
+## 1.3.0-dev.9.2
+
+A newly recorded discovery plays the amethyst block chime at volume 1.0 and pitch 1.0. Fifteen end-rod particles appear 1.5 blocks above the feet, spread 0.4 blocks sideways and 0.3 blocks vertically, and drift upward. A repeat of the same discovery does nothing.
+
 ## 1.3.0-dev.9.1
 
 A newly recorded discovery plays an amethyst block chime at volume 0.8 and pitch 0.8, and a short end-rod shimmer around the chest. A repeat of the same discovery does nothing.

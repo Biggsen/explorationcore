@@ -37,10 +37,10 @@ public final class DiscoveryPresenter {
         player.sendMessage(NoticeChat.line(prefix, notice.chat()));
         player.playSound(
                 player.getLocation(),
-                Sound.BLOCK_AMETHYST_BLOCK_CHIME,
+                Sound.BLOCK_BEACON_POWER_SELECT,
                 SoundCategory.PLAYERS,
-                0.8F,
-                0.8F
+                1.0F,
+                2.0F
         );
         shimmer(player);
     }
@@ -48,16 +48,12 @@ public final class DiscoveryPresenter {
     private static void shimmer(Player player) {
         Location feet = player.getLocation();
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        int count = random.nextInt(6, 11);
-        for (int i = 0; i < count; i++) {
-            double x = feet.getX() + offset(random);
-            double y = feet.getY() + 1.1 + offset(random);
-            double z = feet.getZ() + offset(random);
+        for (int i = 0; i < 15; i++) {
             player.spawnParticle(
                     Particle.END_ROD,
-                    x,
-                    y,
-                    z,
+                    feet.getX() + spread(random, 0.4),
+                    feet.getY() + 1.5 + spread(random, 0.3),
+                    feet.getZ() + spread(random, 0.4),
                     0,
                     (random.nextDouble() - 0.5) * 0.02,
                     0.03 + random.nextDouble() * 0.02,
@@ -67,7 +63,7 @@ public final class DiscoveryPresenter {
         }
     }
 
-    private static double offset(ThreadLocalRandom random) {
-        return (random.nextDouble() - 0.5) * 0.7;
+    private static double spread(ThreadLocalRandom random, double blocks) {
+        return (random.nextDouble() - 0.5) * 2.0 * blocks;
     }
 }
