@@ -37,7 +37,12 @@ public final class Milestones {
         return new Milestones(Map.of());
     }
 
-    public static Milestones load(Configuration configuration, Logger logger, String claimblocksCommand) {
+    public static Milestones load(
+            Configuration configuration,
+            Logger logger,
+            String claimblocksCommand,
+            DiscoveryCounters counters
+    ) {
         if (configuration == null || !configuration.contains("milestones")) {
             return fail(logger, "milestones.yml has no milestones section.");
         }
@@ -49,7 +54,7 @@ public final class Milestones {
         Set<String> ids = new HashSet<>();
         try {
             for (String counter : section.getKeys(false)) {
-                if (!DiscoveryCounters.known(counter)) {
+                if (!counters.known(counter)) {
                     throw new IllegalArgumentException("milestones." + counter + " is not a discovery counter.");
                 }
                 if (!section.isList(counter)) {
@@ -91,7 +96,7 @@ public final class Milestones {
             logger.info("No milestones configured.");
             return none();
         }
-        logger.info("Milestones loaded: " + loaded.summary());
+        logger.info("Milestones loaded: " + loaded.size());
         return loaded;
     }
 

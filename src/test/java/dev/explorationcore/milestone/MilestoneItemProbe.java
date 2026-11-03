@@ -1,5 +1,6 @@
 package dev.explorationcore.milestone;
 
+import dev.explorationcore.counter.DiscoveryCounters;
 import dev.explorationcore.milestone.Milestone.ItemReward;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -199,7 +200,12 @@ public final class MilestoneItemProbe extends JavaPlugin {
     private static Milestones load(String yaml) throws InvalidConfigurationException {
         YamlConfiguration configuration = new YamlConfiguration();
         configuration.loadFromString(yaml);
-        return Milestones.load(configuration, Logger.getLogger("milestone-item-probe"), "acb {player} {amount}");
+        return Milestones.load(
+                configuration,
+                Logger.getLogger("milestone-item-probe"),
+                "acb {player} {amount}",
+                DiscoveryCounters.builtin()
+        );
     }
 
     private static String trace(Throwable throwable) {

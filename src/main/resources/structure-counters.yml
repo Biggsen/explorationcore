@@ -1,0 +1,15 @@
+# Structure type, then the counter name used by milestones and placeholders.
+structures:
+  ancient_city: ancient_cities_found
+  buried_treasure: buried_treasures_found
+  desert_pyramid: desert_pyramids_found
+  desert_well: desert_wells_found
+  igloo: igloos_found
+  jungle_temple: jungle_temples_found
+  ocean_ruin: ocean_ruins_found
+  pillager_outpost: pillager_outposts_found
+  ruined_portal: ruined_portals_found
+  shipwreck: shipwrecks_found
+  trail_ruins: trail_ruins_found
+  swamp_hut: swamp_huts_found
+  woodland_mansion: woodland_mansions_found

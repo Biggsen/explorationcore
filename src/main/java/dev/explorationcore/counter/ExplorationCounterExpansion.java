@@ -15,17 +15,20 @@ public final class ExplorationCounterExpansion extends PlaceholderExpansion {
     private final Logger logger;
     private final DiscoveryRepository repository;
     private final TallyCache cache;
+    private final DiscoveryCounters counters;
 
     public ExplorationCounterExpansion(
             String version,
             Logger logger,
             DiscoveryRepository repository,
-            TallyCache cache
+            TallyCache cache,
+            DiscoveryCounters counters
     ) {
         this.version = version;
         this.logger = logger;
         this.repository = repository;
         this.cache = cache;
+        this.counters = counters;
     }
 
     @Override
@@ -54,6 +57,6 @@ public final class ExplorationCounterExpansion extends PlaceholderExpansion {
         if (player != null && player.getUniqueId() != null) {
             playerUuid = player.getUniqueId().toString();
         }
-        return CounterRequest.resolve(params, playerUuid, repository, cache, logger);
+        return CounterRequest.resolve(params, playerUuid, repository, cache, counters, logger);
     }
 }

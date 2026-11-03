@@ -12,14 +12,15 @@ public final class MilestoneEvaluator {
 
     public static List<Milestone> crossed(
             Milestones milestones,
+            DiscoveryCounters counters,
             String world,
             String entityType,
             String structureType,
             List<PlayerTally> tallies
     ) {
         List<Milestone> crossed = new ArrayList<>();
-        for (String counter : DiscoveryCounters.affected(world, entityType, structureType)) {
-            long updated = DiscoveryCounters.count(tallies, counter);
+        for (String counter : counters.affected(world, entityType, structureType)) {
+            long updated = counters.count(tallies, counter);
             long previous = updated - 1;
             for (Milestone milestone : milestones.of(counter)) {
                 if (previous < milestone.threshold() && updated >= milestone.threshold()) {

@@ -9,6 +9,7 @@ import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
 
 import java.time.Duration;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class DiscoveryPresenter {
     private static final long FADE_IN_MILLIS = 500L;
@@ -36,13 +37,37 @@ public final class DiscoveryPresenter {
         player.sendMessage(NoticeChat.line(prefix, notice.chat()));
         player.playSound(
                 player.getLocation(),
-                Sound.UI_TOAST_CHALLENGE_COMPLETE,
+                Sound.BLOCK_AMETHYST_BLOCK_CHIME,
                 SoundCategory.PLAYERS,
-                1.0F,
-                1.0F
+                0.8F,
+                0.8F
         );
-        Location at = player.getLocation();
-        at.add(0.0, 1.0, 0.0);
-        player.spawnParticle(Particle.TOTEM_OF_UNDYING, at, 30, 0.5, 0.5, 0.5, 0.1);
+        shimmer(player);
+    }
+
+    private static void shimmer(Player player) {
+        Location feet = player.getLocation();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        int count = random.nextInt(6, 11);
+        for (int i = 0; i < count; i++) {
+            double x = feet.getX() + offset(random);
+            double y = feet.getY() + 1.1 + offset(random);
+            double z = feet.getZ() + offset(random);
+            player.spawnParticle(
+                    Particle.END_ROD,
+                    x,
+                    y,
+                    z,
+                    0,
+                    (random.nextDouble() - 0.5) * 0.02,
+                    0.03 + random.nextDouble() * 0.02,
+                    (random.nextDouble() - 0.5) * 0.02,
+                    1.0
+            );
+        }
+    }
+
+    private static double offset(ThreadLocalRandom random) {
+        return (random.nextDouble() - 0.5) * 0.7;
     }
 }

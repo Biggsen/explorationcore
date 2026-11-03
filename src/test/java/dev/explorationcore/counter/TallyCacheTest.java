@@ -91,7 +91,7 @@ class TallyCacheTest {
     }
 
     private static long regions(List<PlayerTally> tallies) {
-        return DiscoveryCounters.count(tallies, "regions_discovered");
+        return DiscoveryCounters.builtin().count(tallies, "regions_discovered");
     }
 
     private static StoredDiscovery region(String id) {

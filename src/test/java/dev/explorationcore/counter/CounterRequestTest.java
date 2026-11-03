@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CounterRequestTest {
     private static final String PLAYER_UUID = "12345678-1234-1234-1234-123456789abc";
+    private static final DiscoveryCounters COUNTERS = DiscoveryCounters.builtin();
 
     @TempDir
     Path tempDir;
@@ -32,6 +33,7 @@ class CounterRequestTest {
                     null,
                     repository,
                     new TallyCache(),
+                    COUNTERS,
                     logger
             ));
             assertEquals("0", CounterRequest.resolve(
@@ -39,9 +41,10 @@ class CounterRequestTest {
                     PLAYER_UUID,
                     repository,
                     new TallyCache(),
+                    COUNTERS,
                     logger
             ));
-            assertNull(CounterRequest.resolve("votes", PLAYER_UUID, repository, new TallyCache(), logger));
+            assertNull(CounterRequest.resolve("votes", PLAYER_UUID, repository, new TallyCache(), COUNTERS, logger));
             assertTrue(records(logger).isEmpty());
         }
     }
@@ -67,6 +70,7 @@ class CounterRequestTest {
                     PLAYER_UUID,
                     repository,
                     new TallyCache(),
+                    COUNTERS,
                     logger
             ));
             assertEquals("1", CounterRequest.resolve(
@@ -74,6 +78,7 @@ class CounterRequestTest {
                     PLAYER_UUID,
                     repository,
                     new TallyCache(),
+                    COUNTERS,
                     logger
             ));
             assertTrue(records(logger).isEmpty());
@@ -88,6 +93,7 @@ class CounterRequestTest {
                 PLAYER_UUID,
                 null,
                 new TallyCache(),
+                COUNTERS,
                 logger
         ));
         LogRecord record = records(logger).get(0);
@@ -102,8 +108,8 @@ class CounterRequestTest {
         repository.close();
         TallyCache cache = new TallyCache();
 
-        assertEquals("", CounterRequest.resolve("regions_discovered", PLAYER_UUID, repository, cache, logger));
-        assertEquals("", CounterRequest.resolve("regions_discovered", PLAYER_UUID, repository, cache, logger));
+        assertEquals("", CounterRequest.resolve("regions_discovered", PLAYER_UUID, repository, cache, COUNTERS, logger));
+        assertEquals("", CounterRequest.resolve("regions_discovered", PLAYER_UUID, repository, cache, COUNTERS, logger));
 
         List<LogRecord> records = records(logger);
         assertEquals(2, records.size());

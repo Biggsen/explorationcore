@@ -12,6 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DiscoveryCountersTest {
+    private static final DiscoveryCounters COUNTERS = DiscoveryCounters.builtin();
+
     @Test
     void countsTypesWorldsAndStructureFamilies() {
         List<PlayerTally> tallies = List.of(
@@ -40,66 +42,66 @@ class DiscoveryCountersTest {
                 new PlayerTally("overworld", "structure", "woodland_mansion", 1)
         );
 
-        assertEquals(28, DiscoveryCounters.count(tallies, "total_discovered"));
-        assertEquals(2, DiscoveryCounters.count(tallies, "regions_discovered"));
-        assertEquals(4, DiscoveryCounters.count(tallies, "villages_discovered"));
-        assertEquals(4, DiscoveryCounters.count(tallies, "hearts_discovered"));
-        assertEquals(5, DiscoveryCounters.count(tallies, "nerves_discovered"));
-        assertEquals(6, DiscoveryCounters.count(tallies, "nether_regions_discovered"));
-        assertEquals(7, DiscoveryCounters.count(tallies, "nether_hearts_discovered"));
-        assertEquals(19, DiscoveryCounters.count(tallies, "structures_found"));
-        assertEquals(3, DiscoveryCounters.count(tallies, "ancient_cities_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "buried_treasures_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "desert_pyramids_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "desert_wells_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "igloos_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "jungle_temples_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "ocean_ruins_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "pillager_outposts_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "ruined_portals_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "shipwrecks_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "trail_ruins_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "swamp_huts_found"));
-        assertEquals(1, DiscoveryCounters.count(tallies, "woodland_mansions_found"));
+        assertEquals(28, COUNTERS.count(tallies, "total_discovered"));
+        assertEquals(2, COUNTERS.count(tallies, "regions_discovered"));
+        assertEquals(4, COUNTERS.count(tallies, "villages_discovered"));
+        assertEquals(4, COUNTERS.count(tallies, "hearts_discovered"));
+        assertEquals(5, COUNTERS.count(tallies, "nerves_discovered"));
+        assertEquals(6, COUNTERS.count(tallies, "nether_regions_discovered"));
+        assertEquals(7, COUNTERS.count(tallies, "nether_hearts_discovered"));
+        assertEquals(19, COUNTERS.count(tallies, "structures_found"));
+        assertEquals(3, COUNTERS.count(tallies, "ancient_cities_found"));
+        assertEquals(1, COUNTERS.count(tallies, "buried_treasures_found"));
+        assertEquals(1, COUNTERS.count(tallies, "desert_pyramids_found"));
+        assertEquals(1, COUNTERS.count(tallies, "desert_wells_found"));
+        assertEquals(1, COUNTERS.count(tallies, "igloos_found"));
+        assertEquals(1, COUNTERS.count(tallies, "jungle_temples_found"));
+        assertEquals(1, COUNTERS.count(tallies, "ocean_ruins_found"));
+        assertEquals(1, COUNTERS.count(tallies, "pillager_outposts_found"));
+        assertEquals(1, COUNTERS.count(tallies, "ruined_portals_found"));
+        assertEquals(1, COUNTERS.count(tallies, "shipwrecks_found"));
+        assertEquals(1, COUNTERS.count(tallies, "trail_ruins_found"));
+        assertEquals(1, COUNTERS.count(tallies, "swamp_huts_found"));
+        assertEquals(1, COUNTERS.count(tallies, "woodland_mansions_found"));
     }
 
     @Test
     void playerWithNoRowsIsZeroForEveryCounter() {
-        assertEquals(21, DiscoveryCounters.names().size());
-        for (String name : DiscoveryCounters.names()) {
-            assertTrue(DiscoveryCounters.known(name));
-            assertEquals(0, DiscoveryCounters.count(List.of(), name));
+        assertEquals(21, COUNTERS.names().size());
+        for (String name : COUNTERS.names()) {
+            assertTrue(COUNTERS.known(name));
+            assertEquals(0, COUNTERS.count(List.of(), name));
         }
     }
 
     @Test
     void aDiscoveryMovesItsCategoryAndTotalWhenTheLedgerCountsIt() {
-        assertEquals(List.of("regions_discovered", "total_discovered"), DiscoveryCounters.affected("overworld", "region", null));
-        assertEquals(List.of("villages_discovered", "total_discovered"), DiscoveryCounters.affected("nether", "village", null));
-        assertEquals(List.of("hearts_discovered", "total_discovered"), DiscoveryCounters.affected("overworld", "heart", null));
-        assertEquals(List.of("nerves_discovered", "total_discovered"), DiscoveryCounters.affected("overworld", "nerve", null));
+        assertEquals(List.of("regions_discovered", "total_discovered"), COUNTERS.affected("overworld", "region", null));
+        assertEquals(List.of("villages_discovered", "total_discovered"), COUNTERS.affected("nether", "village", null));
+        assertEquals(List.of("hearts_discovered", "total_discovered"), COUNTERS.affected("overworld", "heart", null));
+        assertEquals(List.of("nerves_discovered", "total_discovered"), COUNTERS.affected("overworld", "nerve", null));
         assertEquals(
                 List.of("nether_regions_discovered", "total_discovered"),
-                DiscoveryCounters.affected("nether", "region", null)
+                COUNTERS.affected("nether", "region", null)
         );
         assertEquals(
                 List.of("nether_hearts_discovered", "total_discovered"),
-                DiscoveryCounters.affected("nether", "heart", null)
+                COUNTERS.affected("nether", "heart", null)
         );
-        assertEquals(List.of(), DiscoveryCounters.affected("nether", "nerve", null));
+        assertEquals(List.of(), COUNTERS.affected("nether", "nerve", null));
         assertEquals(
                 List.of("structures_found", "shipwrecks_found"),
-                DiscoveryCounters.affected("overworld", "structure", "shipwreck")
+                COUNTERS.affected("overworld", "structure", "shipwreck")
         );
-        assertEquals(List.of("structures_found"), DiscoveryCounters.affected("nether", "structure", null));
-        assertEquals(List.of("structures_found"), DiscoveryCounters.affected("overworld", "structure", "custom_hut"));
+        assertEquals(List.of("structures_found"), COUNTERS.affected("nether", "structure", null));
+        assertEquals(List.of("structures_found"), COUNTERS.affected("overworld", "structure", "custom_hut"));
     }
 
     @Test
     void unknownNameIsRejected() {
-        assertFalse(DiscoveryCounters.known("votes"));
-        assertFalse(DiscoveryCounters.known(null));
-        assertThrows(IllegalArgumentException.class, () -> DiscoveryCounters.count(List.of(), "votes"));
+        assertFalse(COUNTERS.known("votes"));
+        assertFalse(COUNTERS.known(null));
+        assertThrows(IllegalArgumentException.class, () -> COUNTERS.count(List.of(), "votes"));
     }
 
     @Test
@@ -108,8 +110,8 @@ class DiscoveryCountersTest {
         tallies.add(new PlayerTally("overworld", "structure", null, 2));
         tallies.add(new PlayerTally("overworld", "structure", "", 3));
 
-        assertEquals(5, DiscoveryCounters.count(tallies, "structures_found"));
-        assertEquals(0, DiscoveryCounters.count(tallies, "ocean_ruins_found"));
-        assertEquals(0, DiscoveryCounters.count(tallies, "total_discovered"));
+        assertEquals(5, COUNTERS.count(tallies, "structures_found"));
+        assertEquals(0, COUNTERS.count(tallies, "ocean_ruins_found"));
+        assertEquals(0, COUNTERS.count(tallies, "total_discovered"));
     }
 }

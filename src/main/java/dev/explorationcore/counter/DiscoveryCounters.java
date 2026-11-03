@@ -1,12 +1,21 @@
 package dev.explorationcore.counter;
 
 import dev.explorationcore.db.PlayerTally;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class DiscoveryCounters {
     private static final Set<String> MAIN = Set.of(
@@ -20,7 +29,7 @@ public final class DiscoveryCounters {
             "structures_found"
     );
 
-    private static final Map<String, String> FAMILIES = Map.ofEntries(
+    private static final Map<String, String> BUILTIN = Map.ofEntries(
             Map.entry("ancient_cities_found", "ancient_city"),
             Map.entry("buried_treasures_found", "buried_treasure"),
             Map.entry("desert_pyramids_found", "desert_pyramid"),
@@ -36,59 +45,142 @@ public final class DiscoveryCounters {
             Map.entry("woodland_mansions_found", "woodland_mansion")
     );
 
-    private static final Set<String> NAMES = namesOf(MAIN, FAMILIES);
+    private final Map<String, String> families;
+    private final Map<String, String> countersByType;
+    private final Set<String> names;
+    private final boolean accepted;
 
-    private DiscoveryCounters() {
+    private DiscoveryCounters(Map<String, String> families, boolean accepted) {
+        this.families = Map.copyOf(families);
+        Map<String, String> byType = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : this.families.entrySet()) {
+            byType.put(entry.getValue(), entry.getKey());
+        }
+        this.countersByType = Map.copyOf(byType);
+        Set<String> known = new HashSet<>(MAIN);
+        known.addAll(this.families.keySet());
+        this.names = Set.copyOf(known);
+        this.accepted = accepted;
     }
 
-    public static boolean known(String name) {
-        return name != null && NAMES.contains(name);
+    public static DiscoveryCounters builtin() {
+        return new DiscoveryCounters(BUILTIN, true);
     }
 
-    public static Set<String> names() {
-        return NAMES;
+    public static DiscoveryCounters none() {
+        return new DiscoveryCounters(Map.of(), false);
     }
 
-    public static List<String> affected(String world, String entityType, String structureType) {
-        List<String> names = new ArrayList<>();
+    public static DiscoveryCounters load(Path file, Logger logger) {
+        if (!Files.isRegularFile(file)) {
+            return reject(logger, "structure-counters.yml is missing.");
+        }
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            return load(reader, logger);
+        } catch (IOException exception) {
+            return reject(logger, "structure-counters.yml could not be read.", exception);
+        }
+    }
+
+    public static DiscoveryCounters load(Reader reader, Logger logger) {
+        Object loaded;
+        try {
+            loaded = new Yaml().load(reader);
+        } catch (RuntimeException exception) {
+            return reject(logger, "structure-counters.yml is malformed.", exception);
+        }
+        if (!(loaded instanceof Map<?, ?> rawRoot)) {
+            return reject(logger, "structure-counters.yml has no structures section.");
+        }
+        if (!hasStringKey(rawRoot, "structures")) {
+            return reject(logger, "structure-counters.yml has no structures section.");
+        }
+        Object section = value(rawRoot, "structures");
+        if (!(section instanceof Map<?, ?> rawStructures)) {
+            return reject(logger, "structures is malformed.");
+        }
+        Map<String, String> families = new LinkedHashMap<>();
+        Set<String> seenCounters = new HashSet<>();
+        for (Map.Entry<?, ?> entry : rawStructures.entrySet()) {
+            if (!(entry.getKey() instanceof String type) || !token(type)) {
+                String shown = entry.getKey() == null ? "" : entry.getKey().toString();
+                return reject(logger, "structures." + shown + " is not a lowercase token.");
+            }
+            if (!(entry.getValue() instanceof String counter)) {
+                return reject(logger, "structures." + type + " counter must be text.");
+            }
+            if (!token(counter)) {
+                return reject(logger, "structures." + type + " counter " + counter + " is not a lowercase token.");
+            }
+            if (MAIN.contains(counter)) {
+                return reject(logger, "structures." + type + " counter " + counter + " is a main discovery counter.");
+            }
+            if (!seenCounters.add(counter)) {
+                return reject(logger, "structures." + type + " counter " + counter + " is duplicated.");
+            }
+            families.put(counter, type);
+        }
+        return new DiscoveryCounters(families, true);
+    }
+
+    public boolean accepted() {
+        return accepted;
+    }
+
+    public int familyCount() {
+        return families.size();
+    }
+
+    public boolean known(String name) {
+        return name != null && names.contains(name);
+    }
+
+    public Set<String> names() {
+        return names;
+    }
+
+    public List<String> affected(String world, String entityType, String structureType) {
+        List<String> affected = new ArrayList<>();
         switch (entityType == null ? "" : entityType) {
             case "region" -> {
                 if ("overworld".equals(world)) {
-                    names.add("regions_discovered");
+                    affected.add("regions_discovered");
                 } else if ("nether".equals(world)) {
-                    names.add("nether_regions_discovered");
+                    affected.add("nether_regions_discovered");
                 }
             }
-            case "village" -> names.add("villages_discovered");
+            case "village" -> affected.add("villages_discovered");
             case "heart" -> {
                 if ("overworld".equals(world)) {
-                    names.add("hearts_discovered");
+                    affected.add("hearts_discovered");
                 } else if ("nether".equals(world)) {
-                    names.add("nether_hearts_discovered");
+                    affected.add("nether_hearts_discovered");
                 }
             }
             case "nerve" -> {
                 if ("overworld".equals(world)) {
-                    names.add("nerves_discovered");
+                    affected.add("nerves_discovered");
                 }
             }
             case "structure" -> {
-                names.add("structures_found");
-                String family = familyCounter(structureType);
-                if (family != null) {
-                    names.add(family);
+                affected.add("structures_found");
+                if (structureType != null && !structureType.isBlank()) {
+                    String family = countersByType.get(structureType);
+                    if (family != null) {
+                        affected.add(family);
+                    }
                 }
             }
             default -> {
             }
         }
         if (countsTowardTotal(world, entityType)) {
-            names.add("total_discovered");
+            affected.add("total_discovered");
         }
-        return List.copyOf(names);
+        return List.copyOf(affected);
     }
 
-    public static long count(List<PlayerTally> tallies, String name) {
+    public long count(List<PlayerTally> tallies, String name) {
         if (!known(name)) {
             throw new IllegalArgumentException("unknown counter: " + name);
         }
@@ -106,20 +198,8 @@ public final class DiscoveryCounters {
             case "nether_regions_discovered" -> sum(tallies, "nether", "region");
             case "nether_hearts_discovered" -> sum(tallies, "nether", "heart");
             case "structures_found" -> sumType(tallies, "structure");
-            default -> sumStructure(tallies, FAMILIES.get(name));
+            default -> sumStructure(tallies, families.get(name));
         };
-    }
-
-    private static String familyCounter(String structureType) {
-        if (structureType == null || structureType.isBlank()) {
-            return null;
-        }
-        for (Map.Entry<String, String> entry : FAMILIES.entrySet()) {
-            if (entry.getValue().equals(structureType)) {
-                return entry.getKey();
-            }
-        }
-        return null;
     }
 
     private static boolean countsTowardTotal(String world, String entityType) {
@@ -131,10 +211,35 @@ public final class DiscoveryCounters {
         };
     }
 
-    private static Set<String> namesOf(Set<String> main, Map<String, String> families) {
-        Set<String> names = new HashSet<>(main);
-        names.addAll(families.keySet());
-        return Set.copyOf(names);
+    private static boolean token(String value) {
+        if (value.isEmpty()) {
+            return false;
+        }
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (!((character >= 'a' && character <= 'z') || (character >= '0' && character <= '9') || character == '_')) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean hasStringKey(Map<?, ?> map, String key) {
+        for (Object candidate : map.keySet()) {
+            if (key.equals(candidate)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Object value(Map<?, ?> map, String key) {
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (key.equals(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     private static long sum(List<PlayerTally> tallies, String world, String entityType) {
@@ -165,5 +270,15 @@ public final class DiscoveryCounters {
             }
         }
         return total;
+    }
+
+    private static DiscoveryCounters reject(Logger logger, String message) {
+        logger.severe(message);
+        return none();
+    }
+
+    private static DiscoveryCounters reject(Logger logger, String message, Exception exception) {
+        logger.log(Level.SEVERE, message, exception);
+        return none();
     }
 }

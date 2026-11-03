@@ -2,6 +2,7 @@ package dev.explorationcore;
 
 import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
+import dev.explorationcore.counter.DiscoveryCounters;
 import dev.explorationcore.counter.ExplorationCounterExpansion;
 import dev.explorationcore.counter.TallyCache;
 import dev.explorationcore.db.DatabaseFiles;
@@ -37,6 +38,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
     private DiscoveryCrates discoveryCrates = DiscoveryCrates.none();
     private RegionBooks regionBooks = RegionBooks.none();
     private Milestones milestones = Milestones.none();
+    private DiscoveryCounters counters = DiscoveryCounters.none();
     private DiscoveryRepository repository;
     private final TallyCache tallyCache = new TallyCache();
     private ExplorationLocationExpansion locationExpansion;
@@ -88,6 +90,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
                     exception
             );
         }
+        counters = loadStructureCounters();
         milestones = loadMilestones();
 
         Path databaseFile = DatabaseFiles.resolve(
@@ -194,6 +197,10 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
         return milestones;
     }
 
+    public DiscoveryCounters counters() {
+        return counters;
+    }
+
     private Milestones loadMilestones() {
         File file = new File(getDataFolder(), "milestones.yml");
         if (!file.exists()) {
@@ -219,7 +226,28 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             getLogger().log(Level.SEVERE, "milestones.yml is malformed. Milestone rewards are disabled.", exception);
             return Milestones.none();
         }
-        return Milestones.load(yaml, getLogger(), structureRewards.configuredCommand());
+        return Milestones.load(yaml, getLogger(), structureRewards.configuredCommand(), counters);
+    }
+
+    private DiscoveryCounters loadStructureCounters() {
+        File file = new File(getDataFolder(), "structure-counters.yml");
+        if (!file.exists()) {
+            try {
+                saveResource("structure-counters.yml", false);
+            } catch (IllegalArgumentException exception) {
+                getLogger().log(
+                        Level.SEVERE,
+                        "structure-counters.yml is missing from the plugin jar.",
+                        exception
+                );
+                return DiscoveryCounters.none();
+            }
+        }
+        DiscoveryCounters loaded = DiscoveryCounters.load(file.toPath(), getLogger());
+        if (loaded.accepted()) {
+            getLogger().info("Structure counters loaded: " + loaded.familyCount());
+        }
+        return loaded;
     }
 
     public DiscoveryRepository repository() {
@@ -253,7 +281,8 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
                 getDescription().getVersion(),
                 getLogger(),
                 repository,
-                tallyCache
+                tallyCache,
+                counters
         );
         if (expansion.register()) {
             counterExpansion = expansion;

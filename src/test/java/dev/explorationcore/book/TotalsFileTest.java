@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,6 +31,7 @@ class TotalsFileTest {
                   structures:
                     shipwreck:
                       name: "Shipwrecks"
+                      short: Wrecks
                       total: 126
                     ancient_city:
                       name: Ancient Cities
@@ -52,9 +54,13 @@ class TotalsFileTest {
         assertEquals(2, totals.structures().size());
         assertEquals("shipwreck", totals.structures().get(0).key());
         assertEquals("Shipwrecks", totals.structures().get(0).name());
+        assertEquals("Wrecks", totals.structures().get(0).shortLabel());
+        assertEquals("Wrecks", totals.structures().get(0).label());
         assertEquals(126, totals.structures().get(0).total());
         assertEquals("ancient_city", totals.structures().get(1).key());
         assertEquals("Ancient Cities", totals.structures().get(1).name());
+        assertNull(totals.structures().get(1).shortLabel());
+        assertEquals("Ancient Cities", totals.structures().get(1).label());
     }
 
     @Test
@@ -178,6 +184,27 @@ class TotalsFileTest {
                   hearts:
                     total: 0
                 """, "overworld.structures.ocean_ruin.total must be at least 1");
+        assertRejected("""
+                overworld:
+                  regions:
+                    total: 0
+                  villages:
+                    total: 0
+                  hearts:
+                    total: 0
+                  nerves:
+                    total: 0
+                  structures:
+                    ocean_ruin:
+                      name: Ocean Ruins
+                      short: " "
+                      total: 2
+                nether:
+                  regions:
+                    total: 0
+                  hearts:
+                    total: 0
+                """, "overworld.structures.ocean_ruin.short must be a non-blank string");
     }
 
     private void assertRejected(String yaml, String message) {

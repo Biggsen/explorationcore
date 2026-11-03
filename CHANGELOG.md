@@ -1,5 +1,11 @@
 # Release history
 
+## 1.3.0-dev.9
+
+Structure family counters come from `plugins/ExplorationCore/structure-counters.yml`. The eight main counters stay in the plugin. A missing file is filled from the jar. A bad file is named in the log and loads no families, and recording continues. A milestones file that names an unknown counter still turns milestone rewards off.
+
+`/exploration` uses `short` from `totals.yml` when a structure has one. That word is the summary line and the list title. Without it, the book uses `name`.
+
 ## 1.3.0-dev.8
 
 `/exploration` opens a written book of places already discovered. The summary still shows the counts. A category with finds can be opened, and each list can return to the summary. Empty categories stay as a count. Structure finds are grouped by the families in `totals.yml`. Names are alphabetical. The book stops at 100 pages.

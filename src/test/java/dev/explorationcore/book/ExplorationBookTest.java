@@ -94,7 +94,7 @@ class ExplorationBookTest {
     void lowothraStructureNamesFitOnOnePage() {
         List<StructureTotal> structures = List.of(
                 new StructureTotal("ancient_city", "Ancient Cities", 12),
-                new StructureTotal("buried_treasure", "Buried Treasures", 53),
+                new StructureTotal("buried_treasure", "Buried Treasures", "Treasures", 53),
                 new StructureTotal("desert_well", "Desert Wells", 1),
                 new StructureTotal("jungle_temple", "Jungle Temples", 11),
                 new StructureTotal("ocean_ruin", "Ocean Ruins", 169),
@@ -161,8 +161,9 @@ class ExplorationBookTest {
     @Test
     void shortenedStructureNamesKeepTheCountOnOneLine() {
         ExplorationTotals totals = new ExplorationTotals(1, 1, 1, 1, List.of(
-                new StructureTotal("buried_treasure", "Buried Treasures", 89),
-                new StructureTotal("woodland_mansion", "Woodland Mansions", 3)
+                new StructureTotal("buried_treasure", "Buried Treasures", "Treasures", 89),
+                new StructureTotal("woodland_mansion", "Woodland Mansions", "WL Mansions", 3),
+                new StructureTotal("desert_well", "Desert Wells", 1)
         ), 1, 1);
         PreparedBook book = ExplorationBook.prepare("Lowothra", totals, List.of());
 
@@ -170,7 +171,8 @@ class ExplorationBookTest {
                 "Structures (0%)",
                 "",
                 BookText.countedLine("Treasures", "0/89"),
-                BookText.countedLine("WL Mansions", "0/3")
+                BookText.countedLine("WL Mansions", "0/3"),
+                BookText.countedLine("Desert Wells", "0/1")
         ), text(book, 1));
         assertFalse(text(book, 1).contains("Buried"));
         assertFalse(text(book, 1).contains("Woodland"));

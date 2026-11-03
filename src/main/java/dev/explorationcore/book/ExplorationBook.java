@@ -51,7 +51,7 @@ public final class ExplorationBook {
             List<DiscoveryEntry> found = matchingStructure(rows, structure.key());
             structuresFound += found.size();
             structuresAvailable += structure.total();
-            String label = structureLabel(structure);
+            String label = structure.label();
             int sectionIndex = sections.size();
             sections.add(new Section(label, found));
             structureLines.add(counted(label, found.size(), structure.total(), sectionIndex));
@@ -310,14 +310,6 @@ public final class ExplorationBook {
 
     private static String noun(long count) {
         return count == 1 ? "discovery" : "discoveries";
-    }
-
-    private static String structureLabel(StructureTotal structure) {
-        return switch (structure.key()) {
-            case "buried_treasure" -> "Treasures";
-            case "woodland_mansion" -> "WL Mansions";
-            default -> structure.name();
-        };
     }
 
     private static String heading(String name, long discovered, int total) {

@@ -58,9 +58,20 @@ public final class TotalsFile {
             if (total < 1) {
                 throw new TotalsException(path + ".total must be at least 1");
             }
-            totals.add(new StructureTotal(key, name, total));
+            totals.add(new StructureTotal(key, name, readShort(body, path), total));
         }
         return totals;
+    }
+
+    private static String readShort(Map<String, Object> body, String path) throws TotalsException {
+        if (!body.containsKey("short")) {
+            return null;
+        }
+        Object value = body.get("short");
+        if (!(value instanceof String text) || text.isBlank()) {
+            throw new TotalsException(path + ".short must be a non-blank string");
+        }
+        return text;
     }
 
     private static int readTotal(Map<String, Object> parent, String path) throws TotalsException {

@@ -1,5 +1,6 @@
 package dev.explorationcore.milestone;
 
+import dev.explorationcore.counter.DiscoveryCounters;
 import dev.explorationcore.feedback.DiscoveryNotices;
 import dev.explorationcore.milestone.Milestone.ItemReward;
 import dev.explorationcore.milestone.Milestone.ItemReward.StoredEnchant;
@@ -503,7 +504,7 @@ class MilestonesTest {
         } catch (InvalidConfigurationException exception) {
             throw new AssertionError(exception);
         }
-        return Milestones.load(configuration, LOGGER, command);
+        return Milestones.load(configuration, LOGGER, command, DiscoveryCounters.builtin());
     }
 
     private static Logger quietLogger() {

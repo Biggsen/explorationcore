@@ -218,6 +218,7 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
         }
         List<Milestone> crossed = MilestoneEvaluator.crossed(
                 plugin.milestones(),
+                plugin.counters(),
                 recorded.world(),
                 recorded.entityType(),
                 recorded.structureType(),

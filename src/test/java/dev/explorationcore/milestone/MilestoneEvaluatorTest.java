@@ -1,5 +1,6 @@
 package dev.explorationcore.milestone;
 
+import dev.explorationcore.counter.DiscoveryCounters;
 import dev.explorationcore.db.PlayerTally;
 import org.junit.jupiter.api.Test;
 
@@ -17,10 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MilestoneEvaluatorTest {
     private static final Logger LOGGER = quietLogger();
+    private static final DiscoveryCounters COUNTERS = DiscoveryCounters.builtin();
 
     @Test
     void firstVillageCrossesOnlyTheVillageMilestone() throws IOException {
-        List<Milestone> crossed = MilestoneEvaluator.crossed(
+        List<Milestone> crossed = crossed(
                 shipped(),
                 "overworld",
                 "village",
@@ -33,7 +35,7 @@ class MilestoneEvaluatorTest {
 
     @Test
     void fourthCountingDiscoveryCrossesTheTotalMilestone() throws IOException {
-        List<Milestone> crossed = MilestoneEvaluator.crossed(
+        List<Milestone> crossed = crossed(
                 shipped(),
                 "overworld",
                 "heart",
@@ -49,7 +51,7 @@ class MilestoneEvaluatorTest {
 
     @Test
     void aHeartAlreadyPastItsThresholdDoesNotCrossAgain() throws IOException {
-        List<Milestone> crossed = MilestoneEvaluator.crossed(
+        List<Milestone> crossed = crossed(
                 shipped(),
                 "overworld",
                 "heart",
@@ -62,14 +64,14 @@ class MilestoneEvaluatorTest {
 
     @Test
     void fifthStructureCrossesStructuresFoundAndLeavesTotalAlone() throws IOException {
-        List<Milestone> fifth = MilestoneEvaluator.crossed(
+        List<Milestone> fifth = crossed(
                 shipped(),
                 "overworld",
                 "structure",
                 "shipwreck",
                 List.of(new PlayerTally("overworld", "structure", "shipwreck", 5))
         );
-        List<Milestone> sixth = MilestoneEvaluator.crossed(
+        List<Milestone> sixth = crossed(
                 shipped(),
                 "overworld",
                 "structure",
@@ -83,7 +85,7 @@ class MilestoneEvaluatorTest {
 
     @Test
     void netherNerveCrossesNothing() throws IOException {
-        List<Milestone> crossed = MilestoneEvaluator.crossed(
+        List<Milestone> crossed = crossed(
                 shipped(),
                 "nether",
                 "nerve",
@@ -96,7 +98,7 @@ class MilestoneEvaluatorTest {
 
     @Test
     void netherRegionCanCrossOnlyTheTotalMilestone() throws IOException {
-        List<Milestone> crossed = MilestoneEvaluator.crossed(
+        List<Milestone> crossed = crossed(
                 shipped(),
                 "nether",
                 "region",
@@ -130,14 +132,14 @@ class MilestoneEvaluatorTest {
                       message: Five shipwrecks.
                 """);
 
-        List<Milestone> first = MilestoneEvaluator.crossed(
+        List<Milestone> first = crossed(
                 milestones,
                 "overworld",
                 "structure",
                 "shipwreck",
                 List.of(new PlayerTally("overworld", "structure", "shipwreck", 1))
         );
-        List<Milestone> fifth = MilestoneEvaluator.crossed(
+        List<Milestone> fifth = crossed(
                 milestones,
                 "overworld",
                 "structure",
@@ -164,7 +166,7 @@ class MilestoneEvaluatorTest {
                       message: Second.
                 """);
 
-        List<Milestone> crossed = MilestoneEvaluator.crossed(
+        List<Milestone> crossed = crossed(
                 milestones,
                 "overworld",
                 "region",
@@ -173,6 +175,47 @@ class MilestoneEvaluatorTest {
         );
 
         assertEquals(List.of("regions_a", "regions_b"), ids(crossed));
+    }
+
+    @Test
+    void unknownStructureCountsTowardStructuresFoundOnly() {
+        List<PlayerTally> before = List.of(new PlayerTally("overworld", "village", null, 1));
+        List<PlayerTally> after = List.of(
+                new PlayerTally("overworld", "village", null, 1),
+                new PlayerTally("overworld", "structure", "custom_hut", 1)
+        );
+
+        assertEquals(0, COUNTERS.count(before, "structures_found"));
+        assertEquals(1, COUNTERS.count(after, "structures_found"));
+        for (String name : COUNTERS.names()) {
+            if (!"structures_found".equals(name)) {
+                assertEquals(COUNTERS.count(before, name), COUNTERS.count(after, name), name);
+            }
+        }
+
+        Milestones milestones = load("""
+                milestones:
+                  villages_discovered:
+                    - id: villages_discovered_1
+                      threshold: 1
+                      display-name: Village
+                      message: A village.
+                  structures_found:
+                    - id: structures_found_1
+                      threshold: 1
+                      display-name: Structure
+                      message: A structure.
+                  shipwrecks_found:
+                    - id: shipwrecks_found_1
+                      threshold: 1
+                      display-name: Shipwreck
+                      message: A shipwreck.
+                """);
+
+        assertEquals(
+                List.of("structures_found_1"),
+                ids(crossed(milestones, "overworld", "structure", "custom_hut", after))
+        );
     }
 
     private static List<String> ids(List<Milestone> milestones) {
@@ -195,7 +238,17 @@ class MilestoneEvaluatorTest {
         } catch (InvalidConfigurationException exception) {
             throw new AssertionError(exception);
         }
-        return Milestones.load(configuration, LOGGER, "acb {player} {amount}");
+        return Milestones.load(configuration, LOGGER, "acb {player} {amount}", COUNTERS);
+    }
+
+    private static List<Milestone> crossed(
+            Milestones milestones,
+            String world,
+            String entityType,
+            String structureType,
+            List<PlayerTally> tallies
+    ) {
+        return MilestoneEvaluator.crossed(milestones, COUNTERS, world, entityType, structureType, tallies);
     }
 
     private static Logger quietLogger() {

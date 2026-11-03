@@ -17,9 +17,10 @@ public final class CounterRequest {
             String playerUuid,
             DiscoveryRepository repository,
             TallyCache cache,
+            DiscoveryCounters counters,
             Logger logger
     ) {
-        if (!DiscoveryCounters.known(params)) {
+        if (!counters.known(params)) {
             return null;
         }
         if (playerUuid == null || playerUuid.isBlank()) {
@@ -31,7 +32,7 @@ public final class CounterRequest {
         }
         try {
             List<PlayerTally> tallies = cache.get(playerUuid, repository::talliesFor);
-            return Long.toString(DiscoveryCounters.count(tallies, params));
+            return Long.toString(counters.count(tallies, params));
         } catch (SQLException exception) {
             logger.log(Level.SEVERE, "Failed to count discoveries for " + playerUuid, exception);
             return "";
