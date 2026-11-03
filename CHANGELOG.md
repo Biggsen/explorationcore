@@ -1,5 +1,21 @@
 # Release history
 
+## 1.3.0
+
+3 November 2026. Stable release.
+
+`%explorationcore_total_discovered%` and the other discovery counters are answered from `exploration.db`. The database keeps a versioned schema. Existing discovery rows are left as they are.
+
+A newly recorded structure, region, village, heart, or nerve shows a title, subtitle, chat line, the beacon power-select sound, and an end-rod burst. A heart says you discovered the Heart of that region, and a nerve says you discovered the Nerve of that region. Nether regions and Nether hearts use their own titles. A repeat of the same discovery does nothing. Player-facing exploration chat starts with the mark in `messages.prefix`.
+
+With `rewards.enabled` on, a newly recorded structure grants the configured experience and claim blocks. A region, village, heart, or nerve can grant a CrazyCrates crate. A record command can end with `nocrate` to skip that one crate. An overworld region can grant a LuckPerms book permission for the stored name.
+
+A new discovery can cross a milestone in `milestones.yml`. The claim is stored before payment, and only while the player is still online. Experience, items, enchanted books, potions, claim blocks, a promotion command, and a coloured broadcast are the rewards this release pays. A player who has already passed a threshold is not paid. A bad milestones file disables milestone rewards and leaves recording alone. Startup logs how many milestones loaded.
+
+`/exploration` opens a written book of places already discovered. Structure finds are grouped by the families in `totals.yml`, and those family counters come from `structure-counters.yml`.
+
+Location placeholders from 1.2.0 are unchanged.
+
 ## 1.3.0-dev.9.3
 
 A newly recorded discovery plays the beacon power-select sound at volume 1.0 and pitch 2.0. Fifteen end-rod particles appear 1.5 blocks above the feet, spread 0.4 blocks sideways and 0.3 blocks vertically, and drift upward. A repeat of the same discovery does nothing.
@@ -61,8 +77,6 @@ A newly recorded structure still shows the discovery presentation. With `rewards
 ## 1.3.0-dev.3
 
 A newly recorded structure shows a title, subtitle, chat line, challenge sound, and a short particle burst. With `rewards.enabled` on, that discovery also grants the configured experience points. Rewards stay off unless the config says otherwise. Claim blocks are listed and not granted. A repeat of the same structure does nothing. `/exploration`, the counters, and older discovery rows are unchanged.
-
-Development builds use `1.3.0-dev.N`, then `1.3.0-rc.N`, then `1.3.0`. `1.2.0` remains the last stable release.
 
 ## 1.3.0-dev.2
 
