@@ -148,7 +148,11 @@ public final class DiscoveryCrates {
         if (world == null || entityType == null) {
             return "";
         }
-        return world.toLowerCase(Locale.ROOT) + "_" + entityType.toLowerCase(Locale.ROOT);
+        String kind = entityType.toLowerCase(Locale.ROOT);
+        if ("water".equals(kind)) {
+            kind = "region";
+        }
+        return world.toLowerCase(Locale.ROOT) + "_" + kind;
     }
 
     private static boolean singleToken(String value) {

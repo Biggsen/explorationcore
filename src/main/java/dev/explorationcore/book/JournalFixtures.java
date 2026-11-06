@@ -40,6 +40,7 @@ public final class JournalFixtures {
     private static ExplorationTotals totals() {
         return new ExplorationTotals(
                 544,
+                0,
                 56,
                 30,
                 30,

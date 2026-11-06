@@ -40,6 +40,7 @@ class DiscoveryNoticesTest {
     @Test
     void overworldCategoriesUseTheStoredDisplayName() {
         assertDiscovered("overworld", "region", "Sakonotur", "Region Discovered", "You discovered Sakonotur");
+        assertDiscovered("overworld", "water", "Azure Sea", "Region Discovered", "You discovered Azure Sea");
         assertDiscovered("overworld", "village", "Widecombe", "Village Discovered", "You discovered Widecombe");
         assertDiscovered("overworld", "heart", "Granos", "Heart Discovered", "You discovered the Heart of Granos");
         assertDiscovered("overworld", "nerve", "Granos", "Nerve Discovered", "You discovered the Nerve of Granos");
@@ -124,6 +125,9 @@ class DiscoveryNoticesTest {
         )).isEmpty());
         assertTrue(DiscoveryNotices.notice(recorded(
                 "nether", "nerve", "Sakonotur", null
+        )).isEmpty());
+        assertTrue(DiscoveryNotices.notice(recorded(
+                "nether", "water", "Azure Sea", null
         )).isEmpty());
     }
 

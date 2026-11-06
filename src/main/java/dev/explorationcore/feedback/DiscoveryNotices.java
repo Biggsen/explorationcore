@@ -19,7 +19,7 @@ public final class DiscoveryNotices {
             return Optional.of(found(recorded.structureType(), recorded.displayName()));
         }
         String title = switch (recorded.world() + "/" + recorded.entityType()) {
-            case "overworld/region" -> "Region Discovered";
+            case "overworld/region", "overworld/water" -> "Region Discovered";
             case "overworld/village" -> "Village Discovered";
             case "overworld/heart" -> "Heart Discovered";
             case "overworld/nerve" -> "Nerve Discovered";

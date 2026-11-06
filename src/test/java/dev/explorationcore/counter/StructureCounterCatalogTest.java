@@ -76,7 +76,7 @@ class StructureCounterCatalogTest {
 
         assertTrue(counters.accepted());
         assertEquals(0, counters.familyCount());
-        assertEquals(8, counters.names().size());
+        assertEquals(9, counters.names().size());
         assertTrue(counters.known("structures_found"));
         assertFalse(counters.known("shipwrecks_found"));
         assertTrue(records(logger).isEmpty());
@@ -121,7 +121,7 @@ class StructureCounterCatalogTest {
     private static void assertRejected(DiscoveryCounters counters, Logger logger, String message) {
         assertFalse(counters.accepted());
         assertEquals(0, counters.familyCount());
-        assertEquals(8, counters.names().size());
+        assertEquals(9, counters.names().size());
         assertTrue(counters.known("total_discovered"));
         List<LogRecord> records = records(logger);
         assertEquals(1, records.size());

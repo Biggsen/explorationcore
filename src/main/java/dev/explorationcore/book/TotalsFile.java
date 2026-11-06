@@ -31,6 +31,7 @@ public final class TotalsFile {
         Map<String, Object> nether = map(root.get("nether"), "nether");
         return new ExplorationTotals(
                 readTotal(overworld, "overworld.regions"),
+                readTotal(overworld, "overworld.water_regions"),
                 readTotal(overworld, "overworld.villages"),
                 readTotal(overworld, "overworld.hearts"),
                 readTotal(overworld, "overworld.nerves"),

@@ -4,6 +4,7 @@ import java.util.List;
 
 public record ExplorationTotals(
         int overworldRegions,
+        int waterRegions,
         int villages,
         int hearts,
         int nerves,

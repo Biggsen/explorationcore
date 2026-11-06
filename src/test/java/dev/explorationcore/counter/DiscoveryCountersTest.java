@@ -18,6 +18,8 @@ class DiscoveryCountersTest {
     void countsTypesWorldsAndStructureFamilies() {
         List<PlayerTally> tallies = List.of(
                 new PlayerTally("overworld", "region", null, 2),
+                new PlayerTally("overworld", "water", null, 8),
+                new PlayerTally("nether", "water", null, 3),
                 new PlayerTally("overworld", "village", null, 3),
                 new PlayerTally("nether", "village", null, 1),
                 new PlayerTally("overworld", "heart", null, 4),
@@ -42,8 +44,9 @@ class DiscoveryCountersTest {
                 new PlayerTally("overworld", "structure", "woodland_mansion", 1)
         );
 
-        assertEquals(28, COUNTERS.count(tallies, "total_discovered"));
+        assertEquals(36, COUNTERS.count(tallies, "total_discovered"));
         assertEquals(2, COUNTERS.count(tallies, "regions_discovered"));
+        assertEquals(8, COUNTERS.count(tallies, "water_regions_discovered"));
         assertEquals(4, COUNTERS.count(tallies, "villages_discovered"));
         assertEquals(4, COUNTERS.count(tallies, "hearts_discovered"));
         assertEquals(5, COUNTERS.count(tallies, "nerves_discovered"));
@@ -67,7 +70,7 @@ class DiscoveryCountersTest {
 
     @Test
     void playerWithNoRowsIsZeroForEveryCounter() {
-        assertEquals(21, COUNTERS.names().size());
+        assertEquals(22, COUNTERS.names().size());
         for (String name : COUNTERS.names()) {
             assertTrue(COUNTERS.known(name));
             assertEquals(0, COUNTERS.count(List.of(), name));
@@ -77,6 +80,11 @@ class DiscoveryCountersTest {
     @Test
     void aDiscoveryMovesItsCategoryAndTotalWhenTheLedgerCountsIt() {
         assertEquals(List.of("regions_discovered", "total_discovered"), COUNTERS.affected("overworld", "region", null));
+        assertEquals(
+                List.of("water_regions_discovered", "total_discovered"),
+                COUNTERS.affected("overworld", "water", null)
+        );
+        assertEquals(List.of(), COUNTERS.affected("nether", "water", null));
         assertEquals(List.of("villages_discovered", "total_discovered"), COUNTERS.affected("nether", "village", null));
         assertEquals(List.of("hearts_discovered", "total_discovered"), COUNTERS.affected("overworld", "heart", null));
         assertEquals(List.of("nerves_discovered", "total_discovered"), COUNTERS.affected("overworld", "nerve", null));

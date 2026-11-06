@@ -20,11 +20,12 @@ class ExplorationBookTest {
         assertEquals(String.join("\n",
                 "Lowothra",
                 "Exploration Record",
-                BookText.countedLine("World explored", "32%"),
+                BookText.countedLine("World explored", "28%"),
                 "",
-                "Overworld (32%)",
+                "Overworld (28%)",
                 "",
-                BookText.countedLine("Regions", "40/28"),
+                BookText.countedLine("Land Regions", "40/28"),
+                BookText.countedLine("Water Regions", "0/19"),
                 BookText.countedLine("Villages", "0/50"),
                 BookText.countedLine("Hearts", "2/28"),
                 BookText.countedLine("Nerves", "1/28")
@@ -54,7 +55,8 @@ class ExplorationBookTest {
         PreparedBook book = ExplorationBook.prepare("Lowothra", sampleTotals(), List.of());
 
         assertEquals(3, book.pages().size());
-        assertTrue(text(book, 0).contains(BookText.countedLine("Regions", "0/28")));
+        assertTrue(text(book, 0).contains(BookText.countedLine("Land Regions", "0/28")));
+        assertTrue(text(book, 0).contains(BookText.countedLine("Water Regions", "0/19")));
         assertTrue(text(book, 0).contains(BookText.countedLine("Villages", "0/50")));
         assertTrue(text(book, 0).contains("Overworld (0%)"));
         assertTrue(text(book, 0).endsWith(BookText.countedLine("Nerves", "0/28")));
@@ -102,7 +104,7 @@ class ExplorationBookTest {
                 new StructureTotal("shipwreck", "Shipwrecks", 126),
                 new StructureTotal("trail_ruins", "Trail Ruins", 19)
         );
-        ExplorationTotals totals = new ExplorationTotals(28, 50, 28, 28, structures, 9, 9);
+        ExplorationTotals totals = new ExplorationTotals(28, 0, 50, 28, 28, structures, 9, 9);
         PreparedBook book = ExplorationBook.prepare("Lowothra", totals, List.of());
 
         assertEquals(3, book.pages().size());
@@ -151,7 +153,7 @@ class ExplorationBookTest {
 
     @Test
     void noStructurePageWhenTheFileHasNone() {
-        ExplorationTotals totals = new ExplorationTotals(1, 1, 1, 1, List.of(), 1, 1);
+        ExplorationTotals totals = new ExplorationTotals(1, 0, 1, 1, 1, List.of(), 1, 1);
         PreparedBook book = ExplorationBook.prepare("Lowothra", totals, List.of());
 
         assertEquals(2, book.pages().size());
@@ -160,7 +162,7 @@ class ExplorationBookTest {
 
     @Test
     void shortenedStructureNamesKeepTheCountOnOneLine() {
-        ExplorationTotals totals = new ExplorationTotals(1, 1, 1, 1, List.of(
+        ExplorationTotals totals = new ExplorationTotals(1, 0, 1, 1, 1, List.of(
                 new StructureTotal("buried_treasure", "Buried Treasures", "Treasures", 89),
                 new StructureTotal("woodland_mansion", "Woodland Mansions", "WL Mansions", 3),
                 new StructureTotal("desert_well", "Desert Wells", 1)
@@ -215,6 +217,7 @@ class ExplorationBookTest {
     private static ExplorationTotals sampleTotals() {
         return new ExplorationTotals(
                 28,
+                19,
                 50,
                 28,
                 28,

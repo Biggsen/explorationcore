@@ -22,6 +22,8 @@ class TotalsFileTest {
                 overworld:
                   regions:
                     total: 28
+                  water_regions:
+                    total: 19
                   villages:
                     total: 50
                   hearts:
@@ -46,6 +48,7 @@ class TotalsFileTest {
         ExplorationTotals totals = TotalsFile.load(file);
 
         assertEquals(28, totals.overworldRegions());
+        assertEquals(19, totals.waterRegions());
         assertEquals(50, totals.villages());
         assertEquals(28, totals.hearts());
         assertEquals(28, totals.nerves());
@@ -69,6 +72,8 @@ class TotalsFileTest {
                 overworld:
                   regions:
                     total: 0
+                  water_regions:
+                    total: 0
                   villages:
                     total: 0
                   hearts:
@@ -85,6 +90,28 @@ class TotalsFileTest {
 
         assertTrue(totals.structures().isEmpty());
         assertEquals(0, totals.overworldRegions());
+        assertEquals(0, totals.waterRegions());
+    }
+
+    @Test
+    void missingWaterTotalIsRejected() {
+        assertRejected("""
+                overworld:
+                  regions:
+                    total: 0
+                  villages:
+                    total: 0
+                  hearts:
+                    total: 0
+                  nerves:
+                    total: 0
+                  structures: {}
+                nether:
+                  regions:
+                    total: 0
+                  hearts:
+                    total: 0
+                """, "overworld.water_regions is missing");
     }
 
     @Test
@@ -102,6 +129,8 @@ class TotalsFileTest {
                 overworld:
                   regions:
                     total: 1
+                  water_regions:
+                    total: 0
                   villages:
                     total: 1
                   hearts:
@@ -148,6 +177,8 @@ class TotalsFileTest {
                 overworld:
                   regions:
                     total: 0
+                  water_regions:
+                    total: 0
                   villages:
                     total: 0
                   hearts:
@@ -168,6 +199,8 @@ class TotalsFileTest {
                 overworld:
                   regions:
                     total: 0
+                  water_regions:
+                    total: 0
                   villages:
                     total: 0
                   hearts:
@@ -187,6 +220,8 @@ class TotalsFileTest {
         assertRejected("""
                 overworld:
                   regions:
+                    total: 0
+                  water_regions:
                     total: 0
                   villages:
                     total: 0

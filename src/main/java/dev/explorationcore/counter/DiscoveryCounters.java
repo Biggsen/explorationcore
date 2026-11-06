@@ -21,6 +21,7 @@ public final class DiscoveryCounters {
     private static final Set<String> MAIN = Set.of(
             "total_discovered",
             "regions_discovered",
+            "water_regions_discovered",
             "villages_discovered",
             "hearts_discovered",
             "nerves_discovered",
@@ -149,6 +150,11 @@ public final class DiscoveryCounters {
                     affected.add("nether_regions_discovered");
                 }
             }
+            case "water" -> {
+                if ("overworld".equals(world)) {
+                    affected.add("water_regions_discovered");
+                }
+            }
             case "village" -> affected.add("villages_discovered");
             case "heart" -> {
                 if ("overworld".equals(world)) {
@@ -186,12 +192,14 @@ public final class DiscoveryCounters {
         }
         return switch (name) {
             case "total_discovered" -> sum(tallies, "overworld", "region")
+                    + sum(tallies, "overworld", "water")
                     + sumType(tallies, "village")
                     + sum(tallies, "overworld", "heart")
                     + sum(tallies, "overworld", "nerve")
                     + sum(tallies, "nether", "region")
                     + sum(tallies, "nether", "heart");
             case "regions_discovered" -> sum(tallies, "overworld", "region");
+            case "water_regions_discovered" -> sum(tallies, "overworld", "water");
             case "villages_discovered" -> sumType(tallies, "village");
             case "hearts_discovered" -> sum(tallies, "overworld", "heart");
             case "nerves_discovered" -> sum(tallies, "overworld", "nerve");
@@ -206,7 +214,7 @@ public final class DiscoveryCounters {
         return switch (entityType == null ? "" : entityType) {
             case "village" -> true;
             case "region", "heart" -> "overworld".equals(world) || "nether".equals(world);
-            case "nerve" -> "overworld".equals(world);
+            case "water", "nerve" -> "overworld".equals(world);
             default -> false;
         };
     }

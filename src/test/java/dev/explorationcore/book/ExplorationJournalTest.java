@@ -22,6 +22,9 @@ class ExplorationJournalTest {
                 new DiscoveryEntry("overworld", "region", null, "alpine", "alpine"),
                 new DiscoveryEntry("overworld", "region", null, "echo-z", "Echo"),
                 new DiscoveryEntry("overworld", "region", null, "echo-a", "Echo"),
+                new DiscoveryEntry("overworld", "water", null, "tide", "Tide"),
+                new DiscoveryEntry("overworld", "water", null, "azure-b", "Azure"),
+                new DiscoveryEntry("overworld", "water", null, "azure-a", "Azure"),
                 new DiscoveryEntry("overworld", "heart", null, "heart", "Echo"),
                 new DiscoveryEntry("nether", "region", null, "nether-alpha", "Alpha"),
                 new DiscoveryEntry("overworld", "structure", "shipwreck", "ocean_ruin_52", "Ocean Ruin"),
@@ -35,13 +38,18 @@ class ExplorationJournalTest {
         );
 
         PreparedBook book = ExplorationBook.prepare("Lowothra", sampleTotals(), rows);
-        List<BookLine> regions = pageStarting(book, "Regions found", 0);
-        assertEquals(anchored("Regions found", BookText.rule(), "Alpha", "alpine", "beta", "Echo", "Echo", ExplorationBook.SUMMARY_LINK), texts(regions));
+        List<BookLine> regions = pageStarting(book, "Land Regions found", 0);
+        assertEquals(anchored("Land Regions found", BookText.rule(), "Alpha", "alpine", "beta", "Echo", "Echo", ExplorationBook.SUMMARY_LINK), texts(regions));
         assertNull(regions.get(0).page());
         assertEquals(1, regions.get(regions.size() - 1).page());
         assertFalse(texts(regions).contains("Hidden Shaft"));
         assertFalse(texts(regions).contains("Nameless"));
         assertFalse(texts(regions).contains("Ocean Ruin"));
+        assertFalse(texts(regions).contains("Azure"));
+        assertFalse(texts(regions).contains("Tide"));
+
+        List<BookLine> water = pageStarting(book, "Water Regions found", 0);
+        assertEquals(anchored("Water Regions found", BookText.rule(), "Azure", "Azure", "Tide", ExplorationBook.SUMMARY_LINK), texts(water));
 
         List<BookLine> hearts = pageStarting(book, "Hearts found", 0);
         assertEquals(anchored("Hearts found", BookText.rule(), "Echo", ExplorationBook.SUMMARY_LINK), texts(hearts));
@@ -59,7 +67,7 @@ class ExplorationJournalTest {
         ), book.notices());
 
         int regionPage = indexOf(book, regions) + 1;
-        assertEquals(regionPage, line(book.pages().get(0), "Regions:").page());
+        assertEquals(regionPage, line(book.pages().get(0), "Land Regions:").page());
         assertNull(line(book.pages().get(0), "Villages:").page());
         for (List<BookLine> page : book.pages()) {
             for (BookLine line : page) {
@@ -85,18 +93,18 @@ class ExplorationJournalTest {
         }
 
         PreparedBook book = ExplorationBook.prepare("Lowothra", sampleTotals(), rows);
-        List<Integer> regionPages = pagesStarting(book, "Regions found");
+        List<Integer> regionPages = pagesStarting(book, "Land Regions found");
         assertEquals(2, regionPages.size());
         List<BookLine> first = book.pages().get(regionPages.get(0));
         List<BookLine> second = book.pages().get(regionPages.get(1));
         assertEquals(14, first.size());
-        assertEquals("Regions found", first.get(0).text());
+        assertEquals("Land Regions found", first.get(0).text());
         assertEquals(BookText.rule(), first.get(1).text());
         assertEquals("Name 01", first.get(2).text());
         assertEquals("Name 10", first.get(11).text());
         assertEquals("", first.get(12).text());
         assertEquals(ExplorationBook.SUMMARY_LINK, first.get(13).text());
-        assertEquals(anchored("Regions found", BookText.rule(), "Name 11", "Name 12", "Name 13", "Name 14", "Name 15", ExplorationBook.SUMMARY_LINK), texts(second));
+        assertEquals(anchored("Land Regions found", BookText.rule(), "Name 11", "Name 12", "Name 13", "Name 14", "Name 15", ExplorationBook.SUMMARY_LINK), texts(second));
         assertEquals(ExplorationBook.SUMMARY_LINK, second.get(BookText.LINES_PER_PAGE - 1).text());
 
         List<Integer> villagePages = pagesStarting(book, "Villages found");
@@ -115,7 +123,7 @@ class ExplorationJournalTest {
         assertTrue(book.pages().size() <= ExplorationBook.MAX_PAGES);
         assertTrue(book.notices().isEmpty());
         assertEquals(981, countPlaces(book));
-        assertEquals("Regions found", book.pages().get(2).get(0).text());
+        assertEquals("Land Regions found", book.pages().get(2).get(0).text());
         assertEquals(BookText.rule(), book.pages().get(2).get(1).text());
         assertEquals("Place 0011", book.pages().get(3).get(0).text());
         assertEquals(ExplorationBook.SUMMARY_LINK, book.pages().get(3).get(book.pages().get(3).size() - 1).text());
@@ -142,7 +150,8 @@ class ExplorationJournalTest {
     void fixturesCoverEmptyPartialAndLongJournals() {
         PreparedBook empty = JournalFixtures.book("Lowothra", "empty");
         assertEquals(3, empty.pages().size());
-        assertTrue(BookLine.join(empty.pages().get(0)).contains(BookText.countedLine("Regions", "0/544")));
+        assertTrue(BookLine.join(empty.pages().get(0)).contains(BookText.countedLine("Land Regions", "0/544")));
+        assertTrue(BookLine.join(empty.pages().get(0)).contains(BookText.countedLine("Water Regions", "0/0")));
         for (List<BookLine> page : empty.pages()) {
             for (BookLine line : page) {
                 assertNull(line.page());
@@ -151,8 +160,8 @@ class ExplorationJournalTest {
 
         PreparedBook partial = JournalFixtures.book("Lowothra", "partial");
         assertEquals(
-                anchored("Regions found", BookText.rule(), "Alpha", "alpine", "beta", "Echo", "Echo", "Sakonotur", ExplorationBook.SUMMARY_LINK),
-                texts(pageStarting(partial, "Regions found", 0))
+                anchored("Land Regions found", BookText.rule(), "Alpha", "alpine", "beta", "Echo", "Echo", "Sakonotur", ExplorationBook.SUMMARY_LINK),
+                texts(pageStarting(partial, "Land Regions found", 0))
         );
         assertEquals(anchored("Nether Regions found", BookText.rule(), "Ashen Veins", "Sakonotur", ExplorationBook.SUMMARY_LINK), texts(pageStarting(partial, "Nether Regions found", 0)));
         assertEquals(anchored("Nether Hearts found", BookText.rule(), "Ash Heart", "Cinder Heart", "Vein Heart", ExplorationBook.SUMMARY_LINK), texts(pageStarting(partial, "Nether Hearts found", 0)));
@@ -164,7 +173,7 @@ class ExplorationJournalTest {
         assertTrue(partial.notices().contains("Left out structure_type mineshaft (1 discovery): no totals.yml entry"));
 
         PreparedBook longer = JournalFixtures.book("Lowothra", "long");
-        List<Integer> regionPages = pagesStarting(longer, "Regions found");
+        List<Integer> regionPages = pagesStarting(longer, "Land Regions found");
         assertEquals(2, regionPages.size());
         assertEquals("Long Region 01", longer.pages().get(regionPages.get(0)).get(2).text());
         assertEquals("Long Region 11", longer.pages().get(regionPages.get(1)).get(2).text());
@@ -206,6 +215,7 @@ class ExplorationJournalTest {
     private static ExplorationTotals sampleTotals() {
         return new ExplorationTotals(
                 28,
+                0,
                 50,
                 28,
                 28,
@@ -219,7 +229,7 @@ class ExplorationJournalTest {
     }
 
     private static ExplorationTotals bareTotals() {
-        return new ExplorationTotals(1, 1, 1, 1, List.of(), 1, 1);
+        return new ExplorationTotals(1, 0, 1, 1, 1, List.of(), 1, 1);
     }
 
     private static List<BookLine> pageStarting(PreparedBook book, String header, int occurrence) {

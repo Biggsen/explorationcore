@@ -13,6 +13,7 @@ public final class RecordAttempt {
     private static final String NO_CRATE = "nocrate";
     private static final Set<String> ENTITY_TYPES = Set.of(
             "region",
+            "water",
             "village",
             "heart",
             "nerve",

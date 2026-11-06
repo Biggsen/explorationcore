@@ -57,6 +57,7 @@ rewards:
       claimblocks: 25
 
 # A crate for a region, village, heart, or nerve the moment it is first recorded.
+# A water discovery uses the region crate for that world.
 # Turn this on to run command. {player} and {crate} are filled in when it is dispatched.
 # CrazyCrates presents the reward.
 discovery-crates:

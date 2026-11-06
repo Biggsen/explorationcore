@@ -49,7 +49,9 @@ class DiscoveryCratesTest {
 
         assertTrue(crates.enabled());
         assertEquals(Optional.of("RegionCrate"), crates.crate("overworld", "region"));
+        assertEquals(Optional.of("RegionCrate"), crates.crate("overworld", "water"));
         assertEquals(Optional.of("cc give virtual RegionCrate 1 Steve"), crates.command("overworld", "region", "Steve"));
+        assertEquals(Optional.of("cc give virtual RegionCrate 1 Steve"), crates.command("overworld", "water", "Steve"));
         assertEquals(Optional.of("cc give virtual HeartCrate 1 Steve"), crates.command("nether", "heart", "Steve"));
         assertEquals(Optional.of("cc give virtual VillageCrate 1 Steve"), crates.command("overworld", "village", "Steve"));
     }
@@ -65,7 +67,9 @@ class DiscoveryCratesTest {
                 """);
 
         assertEquals(Optional.empty(), crates.crate("nether", "region"));
+        assertEquals(Optional.empty(), crates.crate("nether", "water"));
         assertEquals(Optional.empty(), crates.command("nether", "region", "Steve"));
+        assertEquals(Optional.of("RegionCrate"), crates.crate("overworld", "water"));
         assertEquals(Optional.empty(), crates.command("overworld", "nerve", "Steve"));
         assertEquals(Optional.empty(), crates.command("overworld", "region", "Steve Two"));
         assertEquals(Optional.empty(), crates.command("overworld", "region", " "));

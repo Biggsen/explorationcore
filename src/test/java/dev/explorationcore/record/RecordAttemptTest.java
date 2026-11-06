@@ -88,6 +88,27 @@ class RecordAttemptTest {
         assertInstanceOf(AttemptResult.Recorded.class, attempt("overworld", "nerve", "nerve_of_sakonotur", "Sakonotur", "0"));
         assertInstanceOf(AttemptResult.Recorded.class, attempt("overworld", "structure", "ocean_ruin_37", "Ocean Ruin", "0"));
         assertInstanceOf(AttemptResult.Recorded.class, attempt("nether", "region", "ash_barrow", "Ash Barrow", "4"));
+        assertInstanceOf(AttemptResult.Recorded.class, attempt("overworld", "water", "azure_sea", "Azure Sea", "2"));
+        assertInstanceOf(AttemptResult.Recorded.class, attempt("nether", "water", "azure_sea", "Azure Sea", "2"));
+    }
+
+    @Test
+    void recordsAnOverworldWaterRegionAsWater() {
+        CapturingStore store = new CapturingStore();
+        AttemptResult result = RecordAttempt.attempt(
+                "Lowothra",
+                args("overworld", "Water", "azure_sea", "Azure Sea", "2"),
+                ONLINE,
+                store,
+                WHEN
+        );
+
+        AttemptResult.Recorded recorded = assertInstanceOf(AttemptResult.Recorded.class, result);
+        assertEquals("water", recorded.entityType());
+        assertEquals("water", store.row.entityType());
+        assertEquals("azure_sea", store.row.entityId());
+        assertEquals("Azure Sea", store.row.displayName());
+        assertNull(store.row.structureType());
     }
 
     @Test

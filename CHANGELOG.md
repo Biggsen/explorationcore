@@ -1,5 +1,25 @@
 # Release history
 
+## 1.4.0
+
+6 November 2026. Stable release.
+
+An overworld water region is recorded as entity type `water`. `%explorationcore_water_regions_discovered%` counts those rows, and they also count toward `%explorationcore_total_discovered%`. `regions_discovered` stays land regions only. A repeat of the same discovery does nothing.
+
+A newly recorded water region uses the Region Discovered title, the beacon sound, and the end-rod burst. It grants the Region Crate, unless the command ends with `nocrate`. Existing discovery rows, milestone grants, and ranks are left as they are.
+
+`/exploration` lists Land Regions and Water Regions separately. The book needs `overworld.water_regions.total` in `totals.yml`.
+
+Recording, crates, milestones, and the other counters behave as they did in 1.3.0.
+
+## 1.4.0-dev.1
+
+An overworld water region is recorded as entity type `water`. `%explorationcore_water_regions_discovered%` counts those rows, and they also count toward `%explorationcore_total_discovered%`. `regions_discovered` stays land regions only. A repeat of the same discovery does nothing.
+
+A newly recorded water region uses the Region Discovered title, the beacon sound, and the end-rod burst. It grants the Region Crate, unless the command ends with `nocrate`. Existing discovery rows, milestone grants, and ranks are left as they are.
+
+`/exploration` lists Land Regions and Water Regions separately. The book needs `overworld.water_regions.total` in `totals.yml`.
+
 ## 1.3.0
 
 3 November 2026. Stable release.
