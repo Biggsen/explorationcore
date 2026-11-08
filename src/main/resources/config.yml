@@ -79,3 +79,32 @@ discovery-crates:
 region-books:
   enabled: false
   command: "lp user {player} permission set bookgui.book.{region} true"
+
+# Short grass placed near a Heart can become a flower.
+# Redstone ore mined near a Nerve can drop coal.
+# The chance is highest at the site and falls to zero at the edge of its ellipsoid.
+# Horizontal radius is X and Z. Vertical radius is Y. Both are in blocks.
+# worlds.overworld is the Bukkit world folder.
+# Sites are read from plugins/ExplorationCore/detection-sites.yml.
+# A missing or bad site file leaves the grass and the ore alone.
+detection:
+  enabled: true
+  max-probability: 0.9
+  falloff: 1.5
+
+  worlds:
+    overworld: world
+
+  heart:
+    horizontal-radius: 256
+    vertical-radius: 64
+    place: SHORT_GRASS
+    become: POPPY
+
+  nerve:
+    horizontal-radius: 256
+    vertical-radius: 32
+    ores:
+      - REDSTONE_ORE
+      - DEEPSLATE_REDSTONE_ORE
+    drop: COAL

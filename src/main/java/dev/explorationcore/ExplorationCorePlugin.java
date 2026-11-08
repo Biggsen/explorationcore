@@ -7,6 +7,10 @@ import dev.explorationcore.counter.ExplorationCounterExpansion;
 import dev.explorationcore.counter.TallyCache;
 import dev.explorationcore.db.DatabaseFiles;
 import dev.explorationcore.db.DiscoveryRepository;
+import dev.explorationcore.detect.DetectionCatalogue;
+import dev.explorationcore.detect.DetectionSettings;
+import dev.explorationcore.detect.DetectionSites;
+import dev.explorationcore.detect.EnvironmentalDetectionListener;
 import dev.explorationcore.location.ExplorationLocationExpansion;
 import dev.explorationcore.milestone.Milestones;
 import dev.explorationcore.reward.DiscoveryCrates;
@@ -26,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -131,6 +136,50 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
         } else {
             getLogger().info("Server identity: " + serverName);
         }
+        registerDetection();
+    }
+
+    private void registerDetection() {
+        DetectionSettings settings;
+        try {
+            settings = DetectionSettings.load(getConfig(), getLogger());
+        } catch (RuntimeException exception) {
+            getLogger().log(Level.SEVERE, "detection is malformed. Environmental detection is disabled.", exception);
+            return;
+        }
+        if (!settings.enabled()) {
+            return;
+        }
+        Path file = getDataFolder().toPath().resolve("detection-sites.yml");
+        if (!Files.isRegularFile(file)) {
+            getLogger().info("detection-sites.yml is missing. Environmental detection is disabled.");
+            return;
+        }
+        DetectionCatalogue catalogue;
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            catalogue = DetectionSites.parse(reader);
+        } catch (IOException | RuntimeException exception) {
+            getLogger().log(
+                    Level.SEVERE,
+                    "detection-sites.yml is malformed. Environmental detection is disabled.",
+                    exception
+            );
+            return;
+        }
+        getLogger().info(
+                "Detection sites loaded: "
+                        + counted(catalogue.hearts(), "heart", "hearts")
+                        + ", "
+                        + counted(catalogue.nerves(), "nerve", "nerves")
+        );
+        if (catalogue.isEmpty()) {
+            return;
+        }
+        getServer().getPluginManager().registerEvents(new EnvironmentalDetectionListener(settings, catalogue), this);
+    }
+
+    private static String counted(int count, String singular, String plural) {
+        return count + " " + (count == 1 ? singular : plural);
     }
 
     @Override

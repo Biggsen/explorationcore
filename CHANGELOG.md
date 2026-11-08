@@ -1,5 +1,13 @@
 # Release history
 
+## 1.5.0-dev.1
+
+Placing short grass near a Heart can turn that grass into a flower. Mining redstone ore near a Nerve can drop coal instead of redstone. The chance is highest at the Heart or Nerve and falls off with distance, including height. A Heart reaches farther up and down than a Nerve.
+
+The same place can succeed or fail on the next try. A Heart or Nerve that is already discovered still does this. No title, chat line, sound, or particle is added.
+
+The sites come from `detection-sites.yml`. A missing or bad file leaves the grass and the ore alone. Recording is unchanged.
+
 ## 1.4.0
 
 6 November 2026. Stable release.
