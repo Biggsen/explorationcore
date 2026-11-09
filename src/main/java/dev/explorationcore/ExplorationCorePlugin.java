@@ -57,6 +57,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             getLogger().severe("Could not create plugin data folder " + getDataFolder().getAbsolutePath());
         }
         saveDefaultConfig();
+        saveGuidesFile();
 
         String configuredName = getConfig().getString("server-name", "");
         if (configuredName == null || configuredName.isBlank()) {
@@ -127,7 +128,10 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             bookCommand.setExecutor(bookExecutor);
             bookCommand.setTabCompleter(bookExecutor);
         }
-        getServer().getPluginManager().registerEvents(new JournalListener(bookExecutor::openJournal), this);
+        getServer().getPluginManager().registerEvents(
+                new JournalListener(bookExecutor::openJournal, bookExecutor::openGuides),
+                this
+        );
         getServer().getPluginManager().registerEvents(this, this);
         registerPlaceholders();
 
@@ -140,6 +144,13 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             getLogger().info("Server identity: " + serverName);
         }
         registerDetection();
+    }
+
+    private void saveGuidesFile() {
+        if (new File(getDataFolder(), "guides.yml").isFile()) {
+            return;
+        }
+        saveResource("guides.yml", false);
     }
 
     private void registerDetection() {

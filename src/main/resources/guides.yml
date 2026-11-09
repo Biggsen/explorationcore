@@ -1,0 +1,100 @@
+# Chapters are shown in this order. A chapter that is not listed is not in the book.
+# {SERVER_NAME} is replaced when the book opens.
+chapters:
+  - title: "Welcome to {SERVER_NAME}"
+    text: |-
+      This server invites you to experience Minecraft differently:
+
+      - be an explorer, not a grinder
+
+      - go far and wide, and take in the beauty of the world
+
+      - travel light and smart, with purpose
+  - title: "Discovery & progression"
+    text: |-
+      Exploration is how you progress on {SERVER_NAME}.
+
+      Discover regions and villages as you travel.
+
+      Every region contains one Heart and one underground Nerve.
+
+      Discoveries reward items and tools that can shape how your journey unfolds.
+
+      There's no need to rush — distance, curiosity, and movement matter.
+  - title: "Lore"
+    text: |-
+      Each region carries its own record.
+
+      When you discover a region, its record is added to your collection — written by those who have walked its ground before you.
+
+      To read a region’s record, use /lore [region name]
+
+      Not everything is said plainly. Some things are meant to be noticed.
+  - title: "Regions & difficulty"
+    text: |-
+      Each region has its own difficulty. When you enter one, you'll see a short message describing how dangerous it is.
+
+      Some regions are safer, others more hostile.
+
+      Pay attention as you travel — preparation matters.
+  - title: "Structures & rewards"
+    text: |-
+      As you explore, you may come across structures across the world.
+
+      These include things like ruins, temples, and other points of interest.
+
+      Discovering structures rewards experience and claim blocks.
+
+      Rarer or harder-to-find structures provide greater rewards.
+
+      Structures are optional discoveries.
+
+      They don't count toward your main exploration completion, but reward those who go off the beaten path.
+
+      Tracking structures
+
+      Structure discoveries are listed in /exploration, along with the rest of your exploration progress.
+  - title: "Death & keep-inventory"
+    text: |-
+      Keep Inventory is on. If you die, you keep your gear. It's there to make long expeditions less punishing — pick yourself up and keep moving.
+  - title: "Navigation & maps"
+    text: |-
+      Maps are your friend.
+
+      Use a Cartography Table to max-zoom a map (add paper four times).
+
+      You can copy maps to share with friends, or keep one for display and one for travel.
+
+      Use named banners to set markers on maps.
+
+      Carry a boat for rivers and oceans, and beds to manage daylight.
+  - title: "Crates & keys"
+    text: |-
+      Discovering regions, villages, hearts, and nerves rewards keys.
+
+      Keys can be used to open crates and obtain items and tools.
+
+      These are virtual keys, so they won't appear in your inventory.
+
+      You can check them with /keys and open crates with /cc.
+  - title: "Protection"
+    text: |-
+      When you place chests, they are private and protected by default.
+
+      You can lock and unlock containers with /lock and /unlock.
+
+      Give friends access using /bolt trust add <player>.
+
+      Claiming land
+
+      You start with 100 claim blocks to claim your first area.
+
+      You can earn more by discovering structures as you explore.
+
+      Use them to secure places you want to build in or return to.
+
+      Use a golden shovel to create and expand claims.
+
+      Inside your claim, other players cannot build or break blocks.
+
+      You can manage access and permissions as needed.

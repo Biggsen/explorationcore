@@ -57,7 +57,9 @@ final class BookPreviewDump {
         String serverName = serverName();
         String scenario = System.getProperty("book.scenario", "");
         PreparedBook book;
-        if (!scenario.isBlank()) {
+        if (scenario.equalsIgnoreCase("guides")) {
+            book = guidesBook(serverName);
+        } else if (!scenario.isBlank()) {
             book = JournalFixtures.book(serverName, scenario);
             System.out.println("Preview scenario " + scenario + " on " + serverName + ".");
         } else {
@@ -68,7 +70,7 @@ final class BookPreviewDump {
         if (parent != null) {
             Files.createDirectories(parent);
         }
-        Files.writeString(bookJs, render(book, serverName));
+        Files.writeString(bookJs, render(book, title(scenario), serverName));
         System.out.println("Wrote " + bookJs.toAbsolutePath());
     }
 
@@ -77,7 +79,14 @@ final class BookPreviewDump {
         if (parent != null) {
             Files.createDirectories(parent);
         }
-        Files.writeString(bookJs, render(sample(), "Lowothra"));
+        Files.writeString(bookJs, render(sample(), ExplorationBook.TITLE, "Lowothra"));
+    }
+
+    private static PreparedBook guidesBook(String serverName) throws Exception {
+        Path file = Path.of("src/main/resources/guides.yml");
+        List<GuideChapter> chapters = GuidesFile.load(file);
+        System.out.println("Guides preview on " + serverName + ". Chapters " + chapters.size() + ".");
+        return GuideBook.prepare(serverName, chapters);
     }
 
     private static PreparedBook realBook(String serverName, String requestedPlayer) throws Exception {
@@ -186,10 +195,14 @@ final class BookPreviewDump {
         return JournalFixtures.book("Lowothra", "partial");
     }
 
-    private static String render(PreparedBook book, String serverName) {
+    private static String title(String scenario) {
+        return scenario.equalsIgnoreCase("guides") ? GuideBook.TITLE : ExplorationBook.TITLE;
+    }
+
+    static String render(PreparedBook book, String title, String serverName) {
         StringBuilder out = new StringBuilder();
         out.append("window.EXPLORATION_BOOK = {\n");
-        stringField(out, "title", ExplorationBook.TITLE);
+        stringField(out, "title", title);
         stringField(out, "author", serverName);
         stringField(out, "pageIndicator", "Page %s of %s");
         stringField(out, "linkColor", String.format("%06X", ExplorationBook.LINK_COLOR));
@@ -227,7 +240,7 @@ final class BookPreviewDump {
             List<Painted> lines = new ArrayList<>();
             for (int lineIndex = 0; lineIndex < source.size(); lineIndex++) {
                 BookLine line = source.get(lineIndex);
-                boolean bold = pageIndex == 0 && lineIndex == 0;
+                boolean bold = line.bold() || (pageIndex == 0 && lineIndex == 0);
                 for (DisplayedLine displayed : BookText.layout(line.text(), bold)) {
                     lines.add(new Painted(displayed.text(), displayed.bold(), line.page()));
                 }

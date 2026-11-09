@@ -40,12 +40,28 @@ public final class BookPages {
     }
 
     private static Component body(BookLine line) {
+        if (line.bold()) {
+            return Component.text(line.text())
+                    .color(TextColor.color(ExplorationBook.SERVER_NAME_COLOR))
+                    .decorate(TextDecoration.BOLD);
+        }
         TextColor color = TextColor.color(ExplorationBook.BODY_COLOR);
         if (line.page() == null) {
             return Component.text(line.text()).color(color);
         }
         TextColor link = TextColor.color(ExplorationBook.LINK_COLOR);
         ClickEvent click = ClickEvent.changePage(line.page());
+        if (line.text().startsWith(GuideBook.INDEX_MARK)) {
+            return Component.empty()
+                    .append(Component.text(GuideBook.INDEX_MARK)
+                            .color(TextColor.color(ExplorationBook.SERVER_NAME_COLOR))
+                            .decoration(TextDecoration.UNDERLINED, false)
+                            .clickEvent(click))
+                    .append(Component.text(line.text().substring(GuideBook.INDEX_MARK.length()))
+                            .color(link)
+                            .decoration(TextDecoration.UNDERLINED, false)
+                            .clickEvent(click));
+        }
         int split = BookText.countSplit(line.text());
         if (split < 0) {
             return Component.text(line.text())

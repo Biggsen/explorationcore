@@ -23,6 +23,11 @@
     return;
   }
 
+  document.title = book.title;
+  var heading = document.querySelector("h1");
+  if (heading) {
+    heading.textContent = book.title;
+  }
   status.textContent = book.title + " — " + book.author;
   if (book.notices.length === 0) {
     var quiet = document.createElement("li");
@@ -184,9 +189,13 @@
     for (var index = 0; index < text.length; ) {
       var codePoint = text.codePointAt(index);
       var advance = glyphAdvance(codePoint, style.bold);
-      var color = seen < linkChars ? linkColor() : style.color;
+      var color = text.indexOf("\u2316 ") === 0 && seen < 2
+        ? "#986A27"
+        : (seen < linkChars ? linkColor() : style.color);
       var glyphs = fontFor(color);
-      if (glyphs && codePoint <= 255) {
+      if (codePoint === 0x2316) {
+        drawMark(pen, y, color);
+      } else if (glyphs && codePoint <= 255) {
         blitGlyph(glyphs, codePoint, pen, y);
         if (style.bold) {
           blitGlyph(glyphs, codePoint, pen + 1, y);
@@ -203,6 +212,12 @@
       seen += codePoint > 0xffff ? 2 : 1;
       index += codePoint > 0xffff ? 2 : 1;
     }
+  }
+
+  function drawMark(pen, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect((pen + 3) * scale, (y + 1) * scale, scale, 6 * scale);
+    ctx.fillRect(pen * scale, (y + 3) * scale, 7 * scale, scale);
   }
 
   function linkColor() {

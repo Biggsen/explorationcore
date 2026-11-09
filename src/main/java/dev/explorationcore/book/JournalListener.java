@@ -12,19 +12,24 @@ import org.bukkit.inventory.ItemStack;
 import java.util.function.Consumer;
 
 public final class JournalListener implements Listener {
-    private final Consumer<Player> open;
+    private final Consumer<Player> openJournal;
+    private final Consumer<Player> openGuides;
 
-    public JournalListener(Consumer<Player> open) {
-        this.open = open;
+    public JournalListener(Consumer<Player> openJournal, Consumer<Player> openGuides) {
+        this.openJournal = openJournal;
+        this.openGuides = openGuides;
     }
 
     @EventHandler
-    public void openJournal(PlayerInteractEvent event) {
+    public void openHeldBook(PlayerInteractEvent event) {
         Action action = event.getAction();
         if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
-        if (!ExplorationJournal.isJournal(event.getItem())) {
+        ItemStack item = event.getItem();
+        boolean journal = ExplorationJournal.isJournal(item);
+        boolean guides = GuidesItem.isGuide(item);
+        if (!journal && !guides) {
             return;
         }
         event.setUseItemInHand(Event.Result.DENY);
@@ -33,14 +38,18 @@ public final class JournalListener implements Listener {
         if (action != Action.RIGHT_CLICK_AIR) {
             return;
         }
-        if (event.getHand() == EquipmentSlot.OFF_HAND && mainHandIsJournal(player)) {
+        if (event.getHand() == EquipmentSlot.OFF_HAND && mainHandMatches(player, journal)) {
             return;
         }
-        open.accept(player);
+        if (journal) {
+            openJournal.accept(player);
+        } else {
+            openGuides.accept(player);
+        }
     }
 
-    private static boolean mainHandIsJournal(Player player) {
+    private static boolean mainHandMatches(Player player, boolean journal) {
         ItemStack main = player.getInventory().getItemInMainHand();
-        return ExplorationJournal.isJournal(main);
+        return journal ? ExplorationJournal.isJournal(main) : GuidesItem.isGuide(main);
     }
 }

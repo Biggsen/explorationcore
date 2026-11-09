@@ -8,14 +8,18 @@ public final class JournalGift {
     }
 
     public static Decision decide(boolean player, String[] args) {
+        return decide(player, args, SELF_ONLY, NAME_THE_PLAYER);
+    }
+
+    public static Decision decide(boolean player, String[] args, String selfOnly, String nameThePlayer) {
         if (player) {
             if (args == null || args.length == 0) {
                 return new Self();
             }
-            return new Rejected(SELF_ONLY);
+            return new Rejected(selfOnly);
         }
         if (args == null || args.length != 1 || !singleToken(args[0])) {
-            return new Rejected(NAME_THE_PLAYER);
+            return new Rejected(nameThePlayer);
         }
         return new Named(args[0]);
     }

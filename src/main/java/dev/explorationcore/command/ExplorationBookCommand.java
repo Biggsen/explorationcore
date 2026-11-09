@@ -5,6 +5,11 @@ import dev.explorationcore.book.BookPages;
 import dev.explorationcore.book.ExplorationBook;
 import dev.explorationcore.book.ExplorationJournal;
 import dev.explorationcore.book.ExplorationTotals;
+import dev.explorationcore.book.GuideBook;
+import dev.explorationcore.book.GuideChapter;
+import dev.explorationcore.book.GuidesException;
+import dev.explorationcore.book.GuidesFile;
+import dev.explorationcore.book.GuidesItem;
 import dev.explorationcore.book.JournalFixtures;
 import dev.explorationcore.book.PreparedBook;
 import dev.explorationcore.book.TotalsException;
@@ -27,12 +32,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 
 public final class ExplorationBookCommand implements CommandExecutor, TabCompleter {
     private static final String PERMISSION = "explorationcore.exploration";
     private static final String PREVIEW_PERMISSION = "explorationcore.bookpreview";
     private static final String UNAVAILABLE = "Exploration book is unavailable.";
+    private static final String GUIDES_UNAVAILABLE = "Guides are unavailable.";
+    private static final String GUIDE_SELF_ONLY = "This command gives you a guide book.";
+    private static final String GUIDE_NAME_THE_PLAYER = "Name the player who should receive the guide book.";
 
     private final ExplorationCorePlugin plugin;
 
@@ -44,6 +53,10 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length > 0 && args[0].equalsIgnoreCase("book")) {
             give(sender, Arrays.copyOfRange(args, 1, args.length));
+            return true;
+        }
+        if (args.length > 0 && args[0].equalsIgnoreCase("guides")) {
+            guides(sender, Arrays.copyOfRange(args, 1, args.length));
             return true;
         }
         if (!(sender instanceof Player player)) {
@@ -77,6 +90,7 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
             List<String> options = new ArrayList<>();
             if (canReceiveJournal(sender)) {
                 options.add("book");
+                options.add("guides");
             }
             if (sender.hasPermission(PREVIEW_PERMISSION)) {
                 options.add("preview");
@@ -85,6 +99,13 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("book") && !(sender instanceof Player)) {
             return startingWith(onlineNames(), args[1]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("guides") && canReceiveJournal(sender)) {
+            return startingWith(List.of("book"), args[1]);
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("guides") && args[1].equalsIgnoreCase("book")
+                && !(sender instanceof Player)) {
+            return startingWith(onlineNames(), args[2]);
         }
         if (sender.hasPermission(PREVIEW_PERMISSION) && args.length == 2 && args[0].equalsIgnoreCase("preview")) {
             return startingWith(JournalFixtures.SCENARIOS, args[1]);
@@ -140,20 +161,78 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
         ));
     }
 
+    private void guides(CommandSender sender, String[] args) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("book")) {
+            giveItem(
+                    sender,
+                    Arrays.copyOfRange(args, 1, args.length),
+                    GuidesItem::create,
+                    GUIDE_SELF_ONLY,
+                    GUIDE_NAME_THE_PLAYER
+            );
+            return;
+        }
+        if (args.length > 0) {
+            sender.sendMessage(Component.text("Use /exploration guides book."));
+            return;
+        }
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can open the guides."));
+            return;
+        }
+        if (!player.hasPermission(PERMISSION)) {
+            player.sendMessage(Component.text("You do not have permission to use this command."));
+            return;
+        }
+        openGuides(player);
+    }
+
+    public void openGuides(Player player) {
+        try {
+            Path file = plugin.getDataFolder().toPath().resolve("guides.yml");
+            List<GuideChapter> chapters = GuidesFile.load(file);
+            showGuides(player, GuideBook.prepare(plugin.serverName(), chapters));
+        } catch (GuidesException exception) {
+            plugin.getLogger().warning("Guides failed for " + player.getName() + ": " + exception.getMessage());
+            player.sendMessage(Component.text(GUIDES_UNAVAILABLE));
+        } catch (Exception exception) {
+            plugin.getLogger().log(Level.SEVERE, "Guides failed for " + player.getName(), exception);
+            player.sendMessage(Component.text(GUIDES_UNAVAILABLE));
+        }
+    }
+
+    private void showGuides(Player player, PreparedBook book) {
+        player.openBook(Book.book(
+                Component.text(GuideBook.TITLE),
+                Component.text(plugin.serverName()),
+                BookPages.components(book)
+        ));
+    }
+
     private void give(CommandSender sender, String[] args) {
+        giveItem(sender, args, ExplorationJournal::create, JournalGift.SELF_ONLY, JournalGift.NAME_THE_PLAYER);
+    }
+
+    private void giveItem(
+            CommandSender sender,
+            String[] args,
+            Supplier<ItemStack> item,
+            String selfOnly,
+            String nameThePlayer
+    ) {
         if (sender instanceof Player player && !player.hasPermission(PERMISSION)) {
             player.sendMessage(Component.text("You do not have permission to use this command."));
             return;
         }
-        JournalGift.Decision decision = JournalGift.decide(sender instanceof Player, args);
+        JournalGift.Decision decision = JournalGift.decide(sender instanceof Player, args, selfOnly, nameThePlayer);
         switch (decision) {
-            case JournalGift.Self ignored -> giveTo((Player) sender);
-            case JournalGift.Named named -> giveNamed(sender, named.name());
+            case JournalGift.Self ignored -> giveTo((Player) sender, item.get());
+            case JournalGift.Named named -> giveNamed(sender, named.name(), item);
             case JournalGift.Rejected rejected -> sender.sendMessage(Component.text(rejected.message()));
         }
     }
 
-    private void giveNamed(CommandSender sender, String name) {
+    private void giveNamed(CommandSender sender, String name, Supplier<ItemStack> item) {
         Player target = null;
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.getName().equalsIgnoreCase(name)) {
@@ -165,14 +244,14 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
             sender.sendMessage(Component.text("player is not online: " + name));
             return;
         }
-        giveTo(target);
+        giveTo(target, item.get());
     }
 
-    private static void giveTo(Player player) {
-        Map<Integer, ItemStack> leftover = player.getInventory().addItem(ExplorationJournal.create());
-        for (ItemStack stack : leftover.values()) {
-            if (stack != null && stack.getAmount() > 0) {
-                player.getWorld().dropItemNaturally(player.getLocation(), stack);
+    private static void giveTo(Player player, ItemStack stack) {
+        Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
+        for (ItemStack stackLeft : leftover.values()) {
+            if (stackLeft != null && stackLeft.getAmount() > 0) {
+                player.getWorld().dropItemNaturally(player.getLocation(), stackLeft);
             }
         }
     }

@@ -74,6 +74,37 @@ class BookPagesTest {
         assertEquals(TextColor.color(ExplorationBook.LINK_COLOR), summary.color());
     }
 
+    @Test
+    void chapterHeadingOnALaterPageIsBold() {
+        PreparedBook book = new PreparedBook(List.of(
+                List.of(BookLine.heading("Guides"), BookLine.link("Lore", 2)),
+                List.of(BookLine.heading("Lore"), BookLine.of("Each region."), BookLine.link("< Guides", 1))
+        ), List.of());
+
+        TextComponent heading = (TextComponent) BookPages.components(book).get(1).children().get(0);
+        assertEquals("Lore", heading.content());
+        assertEquals(TextDecoration.State.TRUE, heading.decoration(TextDecoration.BOLD));
+        assertEquals(TextColor.color(ExplorationBook.SERVER_NAME_COLOR), heading.color());
+        assertEquals(TextDecoration.State.NOT_SET, heading.decoration(TextDecoration.ITALIC));
+        assertNull(heading.clickEvent());
+    }
+
+    @Test
+    void indexMarkKeepsThePrefixColor() {
+        PreparedBook book = new PreparedBook(List.of(
+                List.of(BookLine.heading("Guides"), BookLine.link(GuideBook.INDEX_MARK + "Lore", 2))
+        ), List.of());
+        Component page = BookPages.components(book).get(0);
+
+        TextComponent mark = find(page, GuideBook.INDEX_MARK);
+        TextComponent title = find(page, "Lore");
+        assertEquals(TextColor.color(ExplorationBook.SERVER_NAME_COLOR), mark.color());
+        assertEquals(ClickEvent.changePage(2), mark.clickEvent());
+        assertEquals(TextDecoration.State.FALSE, mark.decoration(TextDecoration.UNDERLINED));
+        assertEquals(TextColor.color(ExplorationBook.LINK_COLOR), title.color());
+        assertEquals(ClickEvent.changePage(2), title.clickEvent());
+    }
+
     private static TextComponent find(Component component, String content) {
         if (component instanceof TextComponent text && content.equals(text.content())) {
             return text;

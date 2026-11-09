@@ -49,6 +49,21 @@ class BookPreviewDumpTest {
     }
 
     @Test
+    void guidesPreviewBoldsChapterHeadings() throws Exception {
+        PreparedBook book = GuideBook.prepare(
+                "Lowothra",
+                GuidesFile.load(Path.of("src/main/resources/guides.yml"))
+        );
+        String js = BookPreviewDump.render(book, GuideBook.TITLE, "Lowothra");
+
+        assertTrue(js.contains("\"title\": \"Guides\""));
+        assertTrue(js.contains("\"text\": \"Lore\", \"bold\": true"));
+        assertTrue(js.contains("\"text\": \"< Guides\", \"color\": \"704C2E\", \"page\": 1"));
+        assertTrue(js.contains("⌖ Welcome"));
+        assertTrue(js.contains("Lowothra"));
+    }
+
+    @Test
     void emptyScenarioHasNoPageTargets() {
         PreparedBook book = JournalFixtures.book("Lowothra", "empty");
         for (List<BookLine> page : book.pages()) {
