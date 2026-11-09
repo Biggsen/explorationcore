@@ -2,6 +2,7 @@ package dev.explorationcore.detect;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.type.Candle;
 import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,15 +33,15 @@ public final class EnvironmentalDetectionListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
-        HeartEffect heart = settings.heart();
         Block block = event.getBlock();
-        if (block.getType() != heart.place()) {
+        HeartEffect heart = settings.heart();
+        if (block.getType() == heart.place()) {
+            if (hit(block, "heart", heart.horizontalRadius(), heart.verticalRadius())) {
+                block.setType(heart.become(), false);
+            }
             return;
         }
-        if (!hit(block, "heart", heart.horizontalRadius(), heart.verticalRadius())) {
-            return;
-        }
-        block.setType(heart.become(), false);
+        lightCandle(block);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -57,6 +58,22 @@ public final class EnvironmentalDetectionListener implements Listener {
             return;
         }
         DetectionDrops.apply(items, REDSTONE_DUST, nerve.drop());
+    }
+
+    private void lightCandle(Block block) {
+        if (!SoulCandles.isCandle(block.getType())) {
+            return;
+        }
+        if (!(block.getBlockData() instanceof Candle candle) || candle.isLit()) {
+            return;
+        }
+        SoulEffect soul = settings.soul();
+        if (!hit(block, "soul", soul.horizontalRadius(), soul.verticalRadius())) {
+            return;
+        }
+        PlacedCandle placed = new PlacedCandle(block.getType(), candle.getCandles(), candle.isLit());
+        candle.setLit(SoulCandles.light(placed).lit());
+        block.setBlockData(candle, false);
     }
 
     private boolean hit(Block block, String type, double horizontalRadius, double verticalRadius) {

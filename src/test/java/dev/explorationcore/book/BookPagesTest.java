@@ -18,7 +18,7 @@ class BookPagesTest {
     void serverNameIsBoldAndColored() {
         PreparedBook book = ExplorationBook.prepare(
                 "Lowothra",
-                new ExplorationTotals(1, 0, 1, 1, 1, List.of(), 1, 1),
+                new ExplorationTotals(1, 0, 1, 1, 1, 0, List.of(), 1, 1),
                 List.of()
         );
 
@@ -46,12 +46,12 @@ class BookPagesTest {
     void categoryLabelIsTheOnlyLinkedPartOfACountedLine() {
         PreparedBook book = ExplorationBook.prepare(
                 "Lowothra",
-                new ExplorationTotals(2, 0, 1, 1, 1, List.of(), 1, 1),
+                new ExplorationTotals(2, 0, 1, 1, 1, 0, List.of(), 1, 1),
                 List.of(new DiscoveryEntry("overworld", "region", null, "sakonotur", "Sakonotur"))
         );
         BookLine regions = null;
         for (BookLine line : book.pages().get(0)) {
-            if (line.text().startsWith("Land Regions:")) {
+            if (line.text().startsWith("Land Regions")) {
                 regions = line;
             }
         }
@@ -59,7 +59,7 @@ class BookPagesTest {
 
         Component page = BookPages.components(book).get(0);
         TextComponent label = find(page, "Land Regions");
-        TextComponent count = findPrefix(page, ": ");
+        TextComponent count = findCount(page);
         assertEquals(TextDecoration.State.FALSE, label.decoration(TextDecoration.UNDERLINED));
         assertEquals(ClickEvent.changePage(3), label.clickEvent());
         assertEquals(TextColor.color(ExplorationBook.LINK_COLOR), label.color());
@@ -87,12 +87,12 @@ class BookPagesTest {
         return null;
     }
 
-    private static TextComponent findPrefix(Component component, String prefix) {
-        if (component instanceof TextComponent text && text.content().startsWith(prefix)) {
+    private static TextComponent findCount(Component component) {
+        if (component instanceof TextComponent text && text.content().matches(" +\\d+/\\d+")) {
             return text;
         }
         for (Component child : component.children()) {
-            TextComponent found = findPrefix(child, prefix);
+            TextComponent found = findCount(child);
             if (found != null) {
                 return found;
             }

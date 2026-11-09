@@ -14,7 +14,7 @@ public final class DiscoveryCrates {
     private static final String PLAYER = "{player}";
     private static final String CRATE = "{crate}";
     private static final Set<String> WORLDS = Set.of("overworld", "nether");
-    private static final Set<String> KINDS = Set.of("region", "village", "heart", "nerve");
+    private static final Set<String> KINDS = Set.of("region", "village", "heart", "nerve", "soul");
 
     private final boolean enabled;
     private final Map<String, String> cratesByKey;

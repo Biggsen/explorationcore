@@ -52,6 +52,7 @@ class TotalsFileTest {
         assertEquals(50, totals.villages());
         assertEquals(28, totals.hearts());
         assertEquals(28, totals.nerves());
+        assertEquals(0, totals.souls());
         assertEquals(9, totals.netherRegions());
         assertEquals(9, totals.netherHearts());
         assertEquals(2, totals.structures().size());
@@ -64,6 +65,7 @@ class TotalsFileTest {
         assertEquals("Ancient Cities", totals.structures().get(1).name());
         assertNull(totals.structures().get(1).shortLabel());
         assertEquals("Ancient Cities", totals.structures().get(1).label());
+        assertEquals(171, totals.available());
     }
 
     @Test
@@ -91,6 +93,55 @@ class TotalsFileTest {
         assertTrue(totals.structures().isEmpty());
         assertEquals(0, totals.overworldRegions());
         assertEquals(0, totals.waterRegions());
+    }
+
+    @Test
+    void soulsTotalIsOptionalAndReadWhenPresent() throws Exception {
+        ExplorationTotals absent = TotalsFile.load(write("""
+                overworld:
+                  regions:
+                    total: 1
+                  water_regions:
+                    total: 0
+                  villages:
+                    total: 0
+                  hearts:
+                    total: 0
+                  nerves:
+                    total: 0
+                  structures: {}
+                nether:
+                  regions:
+                    total: 0
+                  hearts:
+                    total: 0
+                """));
+        ExplorationTotals present = TotalsFile.load(write("""
+                overworld:
+                  regions:
+                    total: 1
+                  water_regions:
+                    total: 0
+                  villages:
+                    total: 0
+                  hearts:
+                    total: 0
+                  nerves:
+                    total: 0
+                  souls:
+                    total: 7
+                  structures: {}
+                nether:
+                  regions:
+                    total: 0
+                  hearts:
+                    total: 0
+                """));
+
+        assertEquals(0, absent.souls());
+        assertEquals(1, absent.available());
+        assertEquals(7, present.souls());
+        assertEquals(8, present.available());
     }
 
     @Test

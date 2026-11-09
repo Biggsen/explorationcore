@@ -23,6 +23,7 @@ public final class DiscoveryNotices {
             case "overworld/village" -> "Village Discovered";
             case "overworld/heart" -> "Heart Discovered";
             case "overworld/nerve" -> "Nerve Discovered";
+            case "overworld/soul" -> "Soul Discovered";
             case "nether/region" -> "Nether Region Discovered";
             case "nether/heart" -> "Nether Heart Discovered";
             default -> null;
@@ -38,6 +39,7 @@ public final class DiscoveryNotices {
         return switch (entityType) {
             case "heart" -> "You discovered the Heart of " + displayName;
             case "nerve" -> "You discovered the Nerve of " + displayName;
+            case "soul" -> "You discovered the Soul of " + displayName;
             default -> "You discovered " + displayName;
         };
     }

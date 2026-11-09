@@ -210,8 +210,23 @@
   }
 
   function linkedLength(text) {
-    var split = text.indexOf(": ");
+    var split = countSplit(text);
     return split < 0 ? text.length : split;
+  }
+
+  function countSplit(text) {
+    var countStart = text.length;
+    while (countStart > 0 && text.charAt(countStart - 1) !== " ") {
+      countStart--;
+    }
+    if (countStart === 0 || countStart === text.length || !/^\d+\/\d+$/.test(text.substring(countStart))) {
+      return -1;
+    }
+    var labelEnd = countStart;
+    while (labelEnd > 0 && text.charAt(labelEnd - 1) === " ") {
+      labelEnd--;
+    }
+    return labelEnd === 0 ? -1 : labelEnd;
   }
 
   function linkAt(x, y) {
@@ -231,7 +246,7 @@
   }
 
   function linkSpan(text) {
-    var split = text.indexOf(": ");
+    var split = countSplit(text);
     return measure(split < 0 ? text : text.substring(0, split));
   }
 

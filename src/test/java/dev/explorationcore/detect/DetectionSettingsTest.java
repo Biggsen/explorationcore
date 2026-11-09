@@ -35,6 +35,8 @@ class DetectionSettingsTest {
         assertEquals(Material.COAL, settings.nerve().drop());
         assertTrue(settings.nerve().ores().contains(Material.REDSTONE_ORE));
         assertTrue(settings.nerve().ores().contains(Material.DEEPSLATE_REDSTONE_ORE));
+        assertEquals(256, settings.soul().horizontalRadius(), 0.0);
+        assertEquals(128, settings.soul().verticalRadius(), 0.0);
     }
 
     @Test
@@ -53,6 +55,14 @@ class DetectionSettingsTest {
     @Test
     void anUnknownMaterialDisablesDetection() {
         assertFalse(load(shipped().replace("become: POPPY", "become: NOT_A_FLOWER")).enabled());
+    }
+
+    @Test
+    void aBadSoulRadiusDisablesDetection() {
+        DetectionSettings settings = load(shipped().replace("vertical-radius: 128", "vertical-radius: 0"));
+        assertFalse(settings.enabled());
+        assertNull(settings.heart());
+        assertNull(settings.soul());
     }
 
     @Test
@@ -80,6 +90,9 @@ class DetectionSettingsTest {
                       - REDSTONE_ORE
                       - DEEPSLATE_REDSTONE_ORE
                     drop: COAL
+                  soul:
+                    horizontal-radius: 256
+                    vertical-radius: 128
                 """;
     }
 

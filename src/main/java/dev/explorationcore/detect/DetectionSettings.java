@@ -18,6 +18,7 @@ public final class DetectionSettings {
     private final double falloff;
     private final HeartEffect heart;
     private final NerveEffect nerve;
+    private final SoulEffect soul;
 
     private DetectionSettings(
             boolean enabled,
@@ -25,7 +26,8 @@ public final class DetectionSettings {
             double maxProbability,
             double falloff,
             HeartEffect heart,
-            NerveEffect nerve
+            NerveEffect nerve,
+            SoulEffect soul
     ) {
         this.enabled = enabled;
         this.overworldFolder = overworldFolder;
@@ -33,10 +35,11 @@ public final class DetectionSettings {
         this.falloff = falloff;
         this.heart = heart;
         this.nerve = nerve;
+        this.soul = soul;
     }
 
     public static DetectionSettings none() {
-        return new DetectionSettings(false, "", 0, 0, null, null);
+        return new DetectionSettings(false, "", 0, 0, null, null, null);
     }
 
     public static DetectionSettings load(Configuration configuration, Logger logger) {
@@ -69,7 +72,11 @@ public final class DetectionSettings {
         if (nerve == null) {
             return none();
         }
-        return new DetectionSettings(enabled, folder, maxProbability, falloff, heart, nerve);
+        SoulEffect soul = soul(detection, logger);
+        if (soul == null) {
+            return none();
+        }
+        return new DetectionSettings(enabled, folder, maxProbability, falloff, heart, nerve, soul);
     }
 
     public boolean enabled() {
@@ -94,6 +101,10 @@ public final class DetectionSettings {
 
     public NerveEffect nerve() {
         return nerve;
+    }
+
+    public SoulEffect soul() {
+        return soul;
     }
 
     private static String overworldFolder(ConfigurationSection detection, Logger logger) {
@@ -142,6 +153,19 @@ public final class DetectionSettings {
             return null;
         }
         return new NerveEffect(horizontal, vertical, ores, drop);
+    }
+
+    private static SoulEffect soul(ConfigurationSection detection, Logger logger) {
+        ConfigurationSection soul = section(detection, "soul", logger);
+        if (soul == null) {
+            return null;
+        }
+        Double horizontal = positive(soul, "horizontal-radius", "detection.soul.horizontal-radius", logger);
+        Double vertical = positive(soul, "vertical-radius", "detection.soul.vertical-radius", logger);
+        if (horizontal == null || vertical == null) {
+            return null;
+        }
+        return new SoulEffect(horizontal, vertical);
     }
 
     private static ConfigurationSection section(ConfigurationSection detection, String name, Logger logger) {

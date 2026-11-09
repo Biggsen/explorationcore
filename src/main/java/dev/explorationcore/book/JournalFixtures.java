@@ -44,6 +44,7 @@ public final class JournalFixtures {
                 56,
                 30,
                 30,
+                2,
                 List.of(
                         new StructureTotal("ancient_city", "Ancient Cities", 12),
                         new StructureTotal("buried_treasure", "Buried Treasures", 53),
@@ -69,6 +70,9 @@ public final class JournalFixtures {
         rows.add(entry("overworld", "region", "echo-a", "Echo"));
         rows.add(entry("overworld", "village", "widecombe", "Widecombe"));
         rows.add(entry("overworld", "heart", "heart_of_sakonotur", "Sakonotur"));
+        rows.add(entry("overworld", "soul", "soul_of_ash", "Ash"));
+        rows.add(entry("overworld", "soul", "soul_of_bram", "Bram"));
+        rows.add(entry("nether", "soul", "soul_of_cinder", "Cinder Soul"));
         few(rows, "ancient_city", "city", "Deep Hall", "Deep Gallery", "Deep Vault");
         few(rows, "buried_treasure", "treasure", "Buried Cache", "Sandy Cache", "Tide Cache");
         few(rows, "desert_well", "well", "Dry Well", "Dust Well", "Lone Well");

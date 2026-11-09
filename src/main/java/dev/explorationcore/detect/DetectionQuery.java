@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 public final class DetectionQuery {
+    static final int SOUL_BLOCKS_ABOVE = 32;
+
     private DetectionQuery() {
     }
 
@@ -27,6 +29,9 @@ public final class DetectionQuery {
         }
         for (DetectionSite site : sites) {
             if (site == null || !type.equals(site.type())) {
+                continue;
+            }
+            if ("soul".equals(type) && y > site.y() + SOUL_BLOCKS_ABOVE) {
                 continue;
             }
             double dx = (double) x - site.x();

@@ -56,7 +56,7 @@ rewards:
       xp: 200
       claimblocks: 25
 
-# A crate for a region, village, heart, or nerve the moment it is first recorded.
+# A crate for a region, village, heart, nerve, or soul the moment it is first recorded.
 # A water discovery uses the region crate for that world.
 # Turn this on to run command. {player} and {crate} are filled in when it is dispatched.
 # CrazyCrates presents the reward.
@@ -71,6 +71,7 @@ discovery-crates:
     overworld_heart: HeartCrate
     nether_heart: HeartCrate
     overworld_nerve: NerveCrate
+    overworld_soul: SoulCrate
 
 # LuckPerms permission for an overworld region the moment it is first recorded.
 # Turn this on to run command. {player} and {region} are filled in when it is dispatched.
@@ -82,11 +83,13 @@ region-books:
 
 # Short grass placed near a Heart can become a flower.
 # Redstone ore mined near a Nerve can drop coal.
+# An unlit candle placed near a Soul can light.
 # The chance is highest at the site and falls to zero at the edge of its ellipsoid.
 # Horizontal radius is X and Z. Vertical radius is Y. Both are in blocks.
+# A Soul's Y is the top of that ellipsoid. Its vertical radius reaches downward.
 # worlds.overworld is the Bukkit world folder.
 # Sites are read from plugins/ExplorationCore/detection-sites.yml.
-# A missing or bad site file leaves the grass and the ore alone.
+# A missing or bad site file leaves the grass, the ore, and the candles alone.
 detection:
   enabled: true
   max-probability: 0.9
@@ -108,3 +111,7 @@ detection:
       - REDSTONE_ORE
       - DEEPSLATE_REDSTONE_ORE
     drop: COAL
+
+  soul:
+    horizontal-radius: 256
+    vertical-radius: 128

@@ -6,20 +6,25 @@ public final class DetectionCatalogue {
     private final List<DetectionSite> sites;
     private final int hearts;
     private final int nerves;
+    private final int souls;
 
     public DetectionCatalogue(List<DetectionSite> sites) {
         this.sites = List.copyOf(sites);
         int heartCount = 0;
         int nerveCount = 0;
+        int soulCount = 0;
         for (DetectionSite site : this.sites) {
             if ("heart".equals(site.type())) {
                 heartCount++;
             } else if ("nerve".equals(site.type())) {
                 nerveCount++;
+            } else if ("soul".equals(site.type())) {
+                soulCount++;
             }
         }
         this.hearts = heartCount;
         this.nerves = nerveCount;
+        this.souls = soulCount;
     }
 
     public List<DetectionSite> sites() {
@@ -32,6 +37,10 @@ public final class DetectionCatalogue {
 
     public int nerves() {
         return nerves;
+    }
+
+    public int souls() {
+        return souls;
     }
 
     public boolean isEmpty() {

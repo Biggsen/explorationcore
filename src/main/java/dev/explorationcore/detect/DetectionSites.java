@@ -66,7 +66,7 @@ public final class DetectionSites {
             throw new IllegalArgumentException("unknown detection site type for " + id);
         }
         String type = value.trim().toLowerCase(Locale.ROOT);
-        if (!"heart".equals(type) && !"nerve".equals(type)) {
+        if (!"heart".equals(type) && !"nerve".equals(type) && !"soul".equals(type)) {
             throw new IllegalArgumentException("unknown detection site type: " + value.trim());
         }
         return type;

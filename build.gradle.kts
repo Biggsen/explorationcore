@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.explorationcore"
-version = "1.5.0-dev.1"
+version = "1.5.0-dev.4"
 
 // Lowothra's exact Paper build is not recorded. 1.21.11 is the newest Paper API
 // this machine's JDK 21 can compile. plugin.yml api-version stays 1.21 so any
@@ -23,6 +23,7 @@ dependencies {
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9")
     compileOnly("me.clip:placeholderapi:2.11.6")
     testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    testImplementation("me.clip:placeholderapi:2.11.6")
     implementation("org.xerial:sqlite-jdbc:3.53.4.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
     testImplementation("org.yaml:snakeyaml:2.2")

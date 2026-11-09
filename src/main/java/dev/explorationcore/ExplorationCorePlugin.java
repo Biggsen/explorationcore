@@ -1,5 +1,6 @@
 package dev.explorationcore;
 
+import dev.explorationcore.book.AvailableDiscoveries;
 import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
 import dev.explorationcore.counter.DiscoveryCounters;
@@ -171,6 +172,8 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
                         + counted(catalogue.hearts(), "heart", "hearts")
                         + ", "
                         + counted(catalogue.nerves(), "nerve", "nerves")
+                        + ", "
+                        + counted(catalogue.souls(), "soul", "souls")
         );
         if (catalogue.isEmpty()) {
             return;
@@ -331,7 +334,8 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
                 getLogger(),
                 repository,
                 tallyCache,
-                counters
+                counters,
+                new AvailableDiscoveries(getDataFolder().toPath().resolve("totals.yml"), getLogger())
         );
         if (expansion.register()) {
             counterExpansion = expansion;

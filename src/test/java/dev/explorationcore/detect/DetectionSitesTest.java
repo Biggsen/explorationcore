@@ -29,8 +29,29 @@ class DetectionSitesTest {
 
         assertEquals(1, catalogue.hearts());
         assertEquals(1, catalogue.nerves());
+        assertEquals(0, catalogue.souls());
         assertEquals(new DetectionSite("heart_of_sakonotur", "heart", 100, 90, -200), catalogue.sites().get(0));
         assertEquals(new DetectionSite("nerve_of_sakonotur", "nerve", 12, -15, 4), catalogue.sites().get(1));
+    }
+
+    @Test
+    void readsAnOverworldSoul() {
+        DetectionCatalogue catalogue = DetectionSites.parse(
+                """
+                sites:
+                  - id: soul_of_sakonotur
+                    type: Soul
+                    world: overworld
+                    x: 8
+                    y: 64
+                    z: -3
+                """
+        );
+
+        assertEquals(0, catalogue.hearts());
+        assertEquals(0, catalogue.nerves());
+        assertEquals(1, catalogue.souls());
+        assertEquals(new DetectionSite("soul_of_sakonotur", "soul", 8, 64, -3), catalogue.sites().get(0));
     }
 
     @Test

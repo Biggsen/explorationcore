@@ -46,7 +46,7 @@ public final class BookPages {
         }
         TextColor link = TextColor.color(ExplorationBook.LINK_COLOR);
         ClickEvent click = ClickEvent.changePage(line.page());
-        int split = line.text().indexOf(": ");
+        int split = BookText.countSplit(line.text());
         if (split < 0) {
             return Component.text(line.text())
                     .color(link)

@@ -86,6 +86,8 @@ class RecordAttemptTest {
         assertInstanceOf(AttemptResult.Recorded.class, attempt("overworld", "village", "widecombe", "Widecombe", "0"));
         assertInstanceOf(AttemptResult.Recorded.class, attempt("overworld", "heart", "heart_of_sakonotur", "Sakonotur", "0"));
         assertInstanceOf(AttemptResult.Recorded.class, attempt("overworld", "nerve", "nerve_of_sakonotur", "Sakonotur", "0"));
+        assertInstanceOf(AttemptResult.Recorded.class, attempt("overworld", "soul", "soul_of_sakonotur", "Sakonotur", "0"));
+        assertInstanceOf(AttemptResult.Recorded.class, attempt("nether", "soul", "soul_of_sakonotur", "Sakonotur", "0"));
         assertInstanceOf(AttemptResult.Recorded.class, attempt("overworld", "structure", "ocean_ruin_37", "Ocean Ruin", "0"));
         assertInstanceOf(AttemptResult.Recorded.class, attempt("nether", "region", "ash_barrow", "Ash Barrow", "4"));
         assertInstanceOf(AttemptResult.Recorded.class, attempt("overworld", "water", "azure_sea", "Azure Sea", "2"));
@@ -164,6 +166,47 @@ class RecordAttemptTest {
                 store
         );
         assertEquals(0, calls.get());
+    }
+
+    @Test
+    void recordsAnOverworldSoulOnceAndSkipsItsCrateWhenAsked() {
+        CapturingStore store = new CapturingStore();
+        AttemptResult result = RecordAttempt.attempt(
+                "Lowothra",
+                args("overworld", "Soul", "soul_of_sakonotur", "Sakonotur", "0"),
+                ONLINE,
+                store,
+                WHEN
+        );
+
+        AttemptResult.Recorded recorded = assertInstanceOf(AttemptResult.Recorded.class, result);
+        assertFalse(recorded.skipCrate());
+        assertEquals("soul", recorded.entityType());
+        assertEquals("soul_of_sakonotur", recorded.entityId());
+        assertEquals(0, store.row.difficulty());
+        assertNull(store.row.structureType());
+
+        AttemptResult skipped = RecordAttempt.attempt(
+                "Lowothra",
+                withToken(args("overworld", "soul", "soul_of_sakonotur", "Sakonotur", "0"), "nocrate"),
+                ONLINE,
+                store,
+                WHEN
+        );
+        AttemptResult.Recorded withoutCrate = assertInstanceOf(AttemptResult.Recorded.class, skipped);
+        assertTrue(withoutCrate.skipCrate());
+        assertEquals("soul", withoutCrate.entityType());
+        assertNull(withoutCrate.structureType());
+
+        AttemptResult duplicate = RecordAttempt.attempt(
+                "Lowothra",
+                args("overworld", "soul", "soul_of_sakonotur", "Sakonotur", "0"),
+                ONLINE,
+                discovery -> InsertOutcome.DUPLICATE,
+                WHEN
+        );
+        AttemptResult.Duplicate ignored = assertInstanceOf(AttemptResult.Duplicate.class, duplicate);
+        assertEquals("Duplicate ignored verzion -> overworld/soul/soul_of_sakonotur", ignored.logLine());
     }
 
     @Test

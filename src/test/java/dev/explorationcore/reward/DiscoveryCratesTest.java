@@ -29,8 +29,10 @@ class DiscoveryCratesTest {
         assertEquals("HeartCrate", crates.configuredCrate("overworld_heart"));
         assertEquals("HeartCrate", crates.configuredCrate("nether_heart"));
         assertEquals("NerveCrate", crates.configuredCrate("overworld_nerve"));
+        assertEquals("SoulCrate", crates.configuredCrate("overworld_soul"));
         assertEquals("", crates.configuredCrate("nether_village"));
         assertEquals("", crates.configuredCrate("nether_nerve"));
+        assertEquals("", crates.configuredCrate("nether_soul"));
         assertEquals(Optional.empty(), crates.crate("overworld", "region"));
         assertEquals(Optional.empty(), crates.command("overworld", "region", "Steve"));
     }
@@ -45,6 +47,7 @@ class DiscoveryCratesTest {
                     overworld_region: RegionCrate
                     nether_heart: HeartCrate
                     overworld_village: VillageCrate
+                    overworld_soul: SoulCrate
                 """);
 
         assertTrue(crates.enabled());
@@ -54,6 +57,9 @@ class DiscoveryCratesTest {
         assertEquals(Optional.of("cc give virtual RegionCrate 1 Steve"), crates.command("overworld", "water", "Steve"));
         assertEquals(Optional.of("cc give virtual HeartCrate 1 Steve"), crates.command("nether", "heart", "Steve"));
         assertEquals(Optional.of("cc give virtual VillageCrate 1 Steve"), crates.command("overworld", "village", "Steve"));
+        assertEquals(Optional.of("SoulCrate"), crates.crate("overworld", "soul"));
+        assertEquals(Optional.of("cc give virtual SoulCrate 1 Steve"), crates.command("overworld", "soul", "Steve"));
+        assertEquals(Optional.empty(), crates.crate("nether", "soul"));
     }
 
     @Test
@@ -71,6 +77,7 @@ class DiscoveryCratesTest {
         assertEquals(Optional.empty(), crates.command("nether", "region", "Steve"));
         assertEquals(Optional.of("RegionCrate"), crates.crate("overworld", "water"));
         assertEquals(Optional.empty(), crates.command("overworld", "nerve", "Steve"));
+        assertEquals(Optional.empty(), crates.command("overworld", "soul", "Steve"));
         assertEquals(Optional.empty(), crates.command("overworld", "region", "Steve Two"));
         assertEquals(Optional.empty(), crates.command("overworld", "region", " "));
     }

@@ -40,9 +40,38 @@ final class BookText {
     }
 
     static String countedLine(String label, String count) {
-        String prefix = label + ": ";
-        int spaces = Math.max(0, (PAGE_WIDTH - width(prefix) - width(count)) / advance(' '));
-        return prefix + " ".repeat(spaces) + count;
+        int spaces = Math.max(1, (PAGE_WIDTH - width(label) - width(count)) / advance(' '));
+        return label + " ".repeat(spaces) + count;
+    }
+
+    // Where a right-aligned discovered/total suffix begins, padding included.
+    // -1 when the line is not a counted line, so a link covers the whole line.
+    static int countSplit(String text) {
+        int countStart = text.length();
+        while (countStart > 0 && text.charAt(countStart - 1) != ' ') {
+            countStart--;
+        }
+        if (countStart == 0 || countStart == text.length() || !isCount(text.substring(countStart))) {
+            return -1;
+        }
+        int labelEnd = countStart;
+        while (labelEnd > 0 && text.charAt(labelEnd - 1) == ' ') {
+            labelEnd--;
+        }
+        return labelEnd == 0 ? -1 : labelEnd;
+    }
+
+    private static boolean isCount(String token) {
+        int slash = token.indexOf('/');
+        if (slash <= 0 || slash == token.length() - 1) {
+            return false;
+        }
+        for (int index = 0; index < token.length(); index++) {
+            if (index != slash && !Character.isDigit(token.charAt(index))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     static int visualLines(String text) {

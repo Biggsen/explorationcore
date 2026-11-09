@@ -1,9 +1,9 @@
 # mc-plugin-manager: example for ExplorationCore detection-sites.yml
 # Write this file to plugins/ExplorationCore/detection-sites.yml.
-# One row for each overworld heart or nerve that already has block coordinates.
-# Skip a heart or nerve with no x, y, or z. Do not invent coordinates.
+# One row for each overworld heart, nerve, or soul that already has block coordinates.
+# Skip a heart, nerve, or soul with no x, y, or z. Do not invent coordinates.
 # id is the discovery id, the same token the record command uses.
-# type is heart or nerve. world is overworld.
+# type is heart, nerve, or soul. world is overworld.
 # x, y, and z are whole block coordinates. y is that Amp's real height.
 # Every id in the file is unique. One bad row rejects the whole file.
 sites:

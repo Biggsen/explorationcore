@@ -84,6 +84,52 @@ class MilestoneEvaluatorTest {
     }
 
     @Test
+    void oneSoulCrossesItsMilestoneAndTheTotalMilestone() {
+        Milestones milestones = load("""
+                milestones:
+                  souls_discovered:
+                    - id: souls_discovered_1
+                      threshold: 1
+                      display-name: Soul Wanderer
+                      message: You discovered a Soul!
+                  total_discovered:
+                    - id: total_discovered_10
+                      threshold: 4
+                      display-name: Wanderer
+                      message: 10% of Charidh explored!
+                """);
+
+        List<Milestone> firstSoul = crossed(
+                milestones,
+                "overworld",
+                "soul",
+                null,
+                List.of(new PlayerTally("overworld", "soul", null, 1))
+        );
+        List<Milestone> soulAndTotal = crossed(
+                milestones,
+                "overworld",
+                "soul",
+                null,
+                List.of(
+                        new PlayerTally("overworld", "village", null, 3),
+                        new PlayerTally("overworld", "soul", null, 1)
+                )
+        );
+        List<Milestone> netherSoul = crossed(
+                milestones,
+                "nether",
+                "soul",
+                null,
+                List.of(new PlayerTally("nether", "soul", null, 1))
+        );
+
+        assertEquals(List.of("souls_discovered_1"), ids(firstSoul));
+        assertEquals(List.of("souls_discovered_1", "total_discovered_10"), ids(soulAndTotal));
+        assertTrue(netherSoul.isEmpty());
+    }
+
+    @Test
     void netherNerveCrossesNothing() throws IOException {
         List<Milestone> crossed = crossed(
                 shipped(),

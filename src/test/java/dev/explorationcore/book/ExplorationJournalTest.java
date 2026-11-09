@@ -67,8 +67,8 @@ class ExplorationJournalTest {
         ), book.notices());
 
         int regionPage = indexOf(book, regions) + 1;
-        assertEquals(regionPage, line(book.pages().get(0), "Land Regions:").page());
-        assertNull(line(book.pages().get(0), "Villages:").page());
+        assertEquals(regionPage, line(book.pages().get(0), "Land Regions").page());
+        assertNull(line(book.pages().get(0), "Villages").page());
         for (List<BookLine> page : book.pages()) {
             for (BookLine line : page) {
                 if (line.page() != null) {
@@ -165,7 +165,13 @@ class ExplorationJournalTest {
         );
         assertEquals(anchored("Nether Regions found", BookText.rule(), "Ashen Veins", "Sakonotur", ExplorationBook.SUMMARY_LINK), texts(pageStarting(partial, "Nether Regions found", 0)));
         assertEquals(anchored("Nether Hearts found", BookText.rule(), "Ash Heart", "Cinder Heart", "Vein Heart", ExplorationBook.SUMMARY_LINK), texts(pageStarting(partial, "Nether Hearts found", 0)));
-        assertNull(line(partial.pages().get(0), "Nerves:").page());
+        assertNull(line(partial.pages().get(0), "Nerves").page());
+        assertEquals(
+                anchored("Souls found", BookText.rule(), "Ash", "Bram", ExplorationBook.SUMMARY_LINK),
+                texts(pageStarting(partial, "Souls found", 0))
+        );
+        assertTrue(line(partial.pages().get(0), "Souls").page() > 0);
+        assertFalse(joined(partial).contains("Cinder Soul"));
         assertFalse(joined(partial).contains("Hidden Shaft"));
         assertFalse(joined(partial).contains("Nameless"));
         assertFalse(joined(partial).contains("Ignored Village"));
@@ -179,7 +185,8 @@ class ExplorationJournalTest {
         assertEquals("Long Region 11", longer.pages().get(regionPages.get(1)).get(2).text());
         assertEquals("Ashen Veins", pageStarting(longer, "Nether Regions found", 0).get(2).text());
         assertEquals(2, pagesStarting(longer, "Shipwrecks found").size());
-        assertNull(line(longer.pages().get(0), "Nerves:").page());
+        assertNull(line(longer.pages().get(0), "Nerves").page());
+        assertNull(line(longer.pages().get(0), "Souls").page());
 
         assertThrows(IllegalArgumentException.class, () -> JournalFixtures.book("Lowothra", "nope"));
         assertNull(JournalFixtures.scenario("nope"));
@@ -219,6 +226,7 @@ class ExplorationJournalTest {
                 50,
                 28,
                 28,
+                0,
                 List.of(
                         new StructureTotal("shipwreck", "Shipwrecks", 126),
                         new StructureTotal("ancient_city", "Ancient Cities", 12)
@@ -229,7 +237,7 @@ class ExplorationJournalTest {
     }
 
     private static ExplorationTotals bareTotals() {
-        return new ExplorationTotals(1, 0, 1, 1, 1, List.of(), 1, 1);
+        return new ExplorationTotals(1, 0, 1, 1, 1, 0, List.of(), 1, 1);
     }
 
     private static List<BookLine> pageStarting(PreparedBook book, String header, int occurrence) {

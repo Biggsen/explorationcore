@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DetectionQueryTest {
     private static final DetectionSite HEART = new DetectionSite("heart_of_sakonotur", "heart", 0, 100, 0);
     private static final DetectionSite NERVE = new DetectionSite("nerve_of_sakonotur", "nerve", 0, 0, 0);
+    private static final DetectionSite SOUL = new DetectionSite("soul_of_sakonotur", "soul", 0, 180, 0);
 
     @Test
     void horizontalAndVerticalRimsAreOutOfRange() {
@@ -64,6 +65,59 @@ class DetectionQueryTest {
     }
 
     @Test
+    void soulUpperBoundaryIsThirtyTwoAboveTheSite() {
+        int ceiling = SOUL.y() + DetectionQuery.SOUL_BLOCKS_ABOVE;
+        assertEquals(0.0, souls(0, 180, 0).orElseThrow().distance(), 0.0);
+        assertEquals(32.0 / 128.0, souls(0, ceiling, 0).orElseThrow().distance(), 1e-9);
+        assertTrue(souls(0, ceiling + 1, 0).isEmpty());
+        assertEquals(Math.sqrt(0.5), souls(128, 180, 128).orElseThrow().distance(), 1e-9);
+        assertTrue(souls(256, 180, 0).isEmpty());
+    }
+
+    @Test
+    void soulDownwardReachStopsAtOneRadiusBelow() {
+        assertEquals(127.0 / 128.0, souls(0, 53, 0).orElseThrow().distance(), 1e-9);
+        assertTrue(souls(0, 52, 0).isEmpty());
+        assertTrue(souls(0, 51, 0).isEmpty());
+
+        double ceiling = DetectionChance.chance(souls(0, 180, 0).orElseThrow().distance(), 0.9, 1.5);
+        double midway = DetectionChance.chance(souls(0, 116, 0).orElseThrow().distance(), 0.9, 1.5);
+        double nearFloor = DetectionChance.chance(souls(0, 53, 0).orElseThrow().distance(), 0.9, 1.5);
+        assertEquals(0.9, ceiling, 0.0);
+        assertTrue(ceiling > midway);
+        assertTrue(midway > nearFloor);
+    }
+
+    @Test
+    void soulCombinedOffsetFollowsTheLowerHalfEllipsoid() {
+        DetectionHit inside = souls(128, 116, 128).orElseThrow();
+        assertEquals(Math.sqrt(0.75), inside.distance(), 1e-9);
+        assertEquals(SOUL, inside.site());
+
+        assertTrue(souls(200, 180, 0).isPresent());
+        assertTrue(souls(0, 100, 0).isPresent());
+        assertTrue(souls(200, 100, 200).isEmpty());
+    }
+
+    @Test
+    void soulGateDoesNotApplyToHearts() {
+        DetectionSite heart = new DetectionSite("heart_of_ceiling", "heart", 0, 180, 0);
+        Optional<DetectionHit> above = DetectionQuery.nearest(
+                List.of(heart, SOUL),
+                "heart",
+                "world",
+                "world",
+                0,
+                181,
+                0,
+                256,
+                64
+        );
+        assertEquals(1.0 / 64.0, above.orElseThrow().distance(), 1e-9);
+        assertTrue(souls(0, SOUL.y() + DetectionQuery.SOUL_BLOCKS_ABOVE + 1, 0).isEmpty());
+    }
+
+    @Test
     void anotherBukkitWorldIsOutOfRange() {
         assertTrue(DetectionQuery.nearest(
                 List.of(HEART),
@@ -84,5 +138,9 @@ class DetectionQueryTest {
 
     private static Optional<DetectionHit> nerves(int x, int y, int z) {
         return DetectionQuery.nearest(List.of(NERVE), "nerve", "world", "world", x, y, z, 256, 32);
+    }
+
+    private static Optional<DetectionHit> souls(int x, int y, int z) {
+        return DetectionQuery.nearest(List.of(SOUL), "soul", "world", "world", x, y, z, 256, 128);
     }
 }

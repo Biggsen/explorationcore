@@ -40,9 +40,11 @@ public final class ExplorationBook {
         List<DiscoveryEntry> villages = matching(rows, "overworld", "village");
         List<DiscoveryEntry> hearts = matching(rows, "overworld", "heart");
         List<DiscoveryEntry> nerves = matching(rows, "overworld", "nerve");
+        List<DiscoveryEntry> souls = matching(rows, "overworld", "soul");
         sections.add(new Section("Land Regions", overworldRegions));
         sections.add(new Section("Water Regions", waterRegions));
         sections.add(new Section("Villages", villages));
+        sections.add(new Section("Souls", souls));
         sections.add(new Section("Hearts", hearts));
         sections.add(new Section("Nerves", nerves));
 
@@ -74,6 +76,7 @@ public final class ExplorationBook {
                 villages.size(),
                 hearts.size(),
                 nerves.size(),
+                souls.size(),
                 structuresFound,
                 structuresAvailable,
                 structureLines,
@@ -125,6 +128,7 @@ public final class ExplorationBook {
             long villages,
             long hearts,
             long nerves,
+            long souls,
             long structuresFound,
             int structuresAvailable,
             List<Draft> structureLines,
@@ -136,22 +140,22 @@ public final class ExplorationBook {
         first.add(Draft.plain(serverName == null ? "" : serverName));
         first.add(Draft.plain(SUBTITLE));
         first.add(Draft.plain(BookText.countedLine("World explored", percent(
-                overworldRegions + waterRegions + villages + hearts + nerves
+                overworldRegions + waterRegions + villages + hearts + nerves + souls
                         + netherRegions.discovered() + netherHearts.discovered(),
-                totals.overworldRegions() + totals.waterRegions() + totals.villages() + totals.hearts()
-                        + totals.nerves() + totals.netherRegions() + totals.netherHearts()
+                totals.available()
         ))));
         first.add(Draft.plain(""));
         first.add(Draft.plain(heading("Overworld",
-                overworldRegions + waterRegions + villages + hearts + nerves,
+                overworldRegions + waterRegions + villages + hearts + nerves + souls,
                 totals.overworldRegions() + totals.waterRegions() + totals.villages() + totals.hearts()
-                        + totals.nerves())));
+                        + totals.nerves() + totals.souls())));
         first.add(Draft.plain(""));
         first.add(counted("Land Regions", overworldRegions, totals.overworldRegions(), 0));
         first.add(counted("Water Regions", waterRegions, totals.waterRegions(), 1));
         first.add(counted("Villages", villages, totals.villages(), 2));
-        first.add(counted("Hearts", hearts, totals.hearts(), 3));
-        first.add(counted("Nerves", nerves, totals.nerves(), 4));
+        first.add(counted("Souls", souls, totals.souls(), 3));
+        first.add(counted("Hearts", hearts, totals.hearts(), 4));
+        first.add(counted("Nerves", nerves, totals.nerves(), 5));
         pages.add(first);
 
         if (!structureLines.isEmpty()) {

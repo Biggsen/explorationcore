@@ -44,6 +44,7 @@ class DiscoveryNoticesTest {
         assertDiscovered("overworld", "village", "Widecombe", "Village Discovered", "You discovered Widecombe");
         assertDiscovered("overworld", "heart", "Granos", "Heart Discovered", "You discovered the Heart of Granos");
         assertDiscovered("overworld", "nerve", "Granos", "Nerve Discovered", "You discovered the Nerve of Granos");
+        assertDiscovered("overworld", "soul", "Granos", "Soul Discovered", "You discovered the Soul of Granos");
     }
 
     @Test
@@ -125,6 +126,9 @@ class DiscoveryNoticesTest {
         )).isEmpty());
         assertTrue(DiscoveryNotices.notice(recorded(
                 "nether", "nerve", "Sakonotur", null
+        )).isEmpty());
+        assertTrue(DiscoveryNotices.notice(recorded(
+                "nether", "soul", "Sakonotur", null
         )).isEmpty());
         assertTrue(DiscoveryNotices.notice(recorded(
                 "nether", "water", "Azure Sea", null

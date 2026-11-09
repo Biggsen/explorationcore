@@ -25,6 +25,7 @@ public final class DiscoveryCounters {
             "villages_discovered",
             "hearts_discovered",
             "nerves_discovered",
+            "souls_discovered",
             "nether_regions_discovered",
             "nether_hearts_discovered",
             "structures_found"
@@ -168,6 +169,11 @@ public final class DiscoveryCounters {
                     affected.add("nerves_discovered");
                 }
             }
+            case "soul" -> {
+                if ("overworld".equals(world)) {
+                    affected.add("souls_discovered");
+                }
+            }
             case "structure" -> {
                 affected.add("structures_found");
                 if (structureType != null && !structureType.isBlank()) {
@@ -196,6 +202,7 @@ public final class DiscoveryCounters {
                     + sumType(tallies, "village")
                     + sum(tallies, "overworld", "heart")
                     + sum(tallies, "overworld", "nerve")
+                    + sum(tallies, "overworld", "soul")
                     + sum(tallies, "nether", "region")
                     + sum(tallies, "nether", "heart");
             case "regions_discovered" -> sum(tallies, "overworld", "region");
@@ -203,6 +210,7 @@ public final class DiscoveryCounters {
             case "villages_discovered" -> sumType(tallies, "village");
             case "hearts_discovered" -> sum(tallies, "overworld", "heart");
             case "nerves_discovered" -> sum(tallies, "overworld", "nerve");
+            case "souls_discovered" -> sum(tallies, "overworld", "soul");
             case "nether_regions_discovered" -> sum(tallies, "nether", "region");
             case "nether_hearts_discovered" -> sum(tallies, "nether", "heart");
             case "structures_found" -> sumType(tallies, "structure");
@@ -214,7 +222,7 @@ public final class DiscoveryCounters {
         return switch (entityType == null ? "" : entityType) {
             case "village" -> true;
             case "region", "heart" -> "overworld".equals(world) || "nether".equals(world);
-            case "water", "nerve" -> "overworld".equals(world);
+            case "water", "nerve", "soul" -> "overworld".equals(world);
             default -> false;
         };
     }

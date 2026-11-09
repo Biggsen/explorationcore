@@ -1,5 +1,23 @@
 # Release history
 
+## 1.5.0-dev.4
+
+A candle can light up to 32 blocks above a Soul. The chance is still highest at the Soul and falls off with distance. Below the Soul, the zone reaches downward as it did in 1.5.0-dev.2. A candle higher than those 32 blocks stays unlit.
+
+## 1.5.0-dev.3
+
+The exploration book lists Souls, then Hearts, then Nerves. The journal pages follow that order. Counted lines no longer use a colon. The count stays at the right of the line, and the label is still the page link.
+
+## 1.5.0-dev.2
+
+An overworld soul is recorded as entity type `soul`. `%explorationcore_souls_discovered%` counts those rows, and they also count toward `%explorationcore_total_discovered%`. A nether soul does not. A newly recorded soul uses the Soul Discovered title, the beacon sound, and the end-rod burst. It grants the Soul Crate, unless the command ends with `nocrate`. Difficulty `0` is accepted.
+
+`/exploration` lists Souls. The book reads `overworld.souls.total` when that entry is present. A totals file without it still loads, and the soul total is zero. Souls count toward the world-explored percentage.
+
+Placing an unlit candle near a Soul can light that candle. Any candle can light, including the coloured ones and the plain candle. The chance is highest at the Soul and falls off with distance. The Soul's height is the top of the zone, and the zone reaches downward. A candle above the Soul stays unlit. A candle that is already lit stays as it is. No title, chat line, sound, or particle is added, and nothing is recorded. Heart grass and Nerve coal behave as they did in 1.5.0-dev.1.
+
+`%explorationcore_total_available%` is the number of places in the world-explored percentage. That is overworld land regions, water regions, villages, hearts, nerves, and souls, plus nether regions and nether hearts. Structures stay out. The number comes from `totals.yml` and does not depend on the player. A missing or bad totals file leaves this placeholder empty. The other placeholders still answer.
+
 ## 1.5.0-dev.1
 
 Placing short grass near a Heart can turn that grass into a flower. Mining redstone ore near a Nerve can drop coal instead of redstone. The chance is highest at the Heart or Nerve and falls off with distance, including height. A Heart reaches farther up and down than a Nerve.

@@ -27,6 +27,7 @@ class ExplorationBookTest {
                 BookText.countedLine("Land Regions", "40/28"),
                 BookText.countedLine("Water Regions", "0/19"),
                 BookText.countedLine("Villages", "0/50"),
+                BookText.countedLine("Souls", "0/0"),
                 BookText.countedLine("Hearts", "2/28"),
                 BookText.countedLine("Nerves", "1/28")
         ), text(book, 0));
@@ -46,8 +47,35 @@ class ExplorationBookTest {
         assertFalse(text(book, 1).contains("9/"));
         assertFalse(text(book, 2).contains("Villages"));
         assertEquals(null, line(book, 0, BookText.countedLine("Villages", "0/50")).page());
+        assertEquals(null, line(book, 0, BookText.countedLine("Souls", "0/0")).page());
         assertTrue(line(book, 1, BookText.countedLine("Shipwrecks", "3/126")).page() > 0);
         assertEquals(null, line(book, 1, BookText.countedLine("Ancient Cities", "0/12")).page());
+    }
+
+    @Test
+    void soulsCountInTheOverworldTotalAndListAlphabetically() {
+        ExplorationTotals totals = new ExplorationTotals(1, 0, 0, 0, 0, 2, List.of(), 0, 0);
+        assertEquals(3, totals.available());
+        List<DiscoveryEntry> rows = List.of(
+                new DiscoveryEntry("overworld", "soul", null, "soul_of_zeta", "Zeta"),
+                new DiscoveryEntry("overworld", "soul", null, "soul_of_alpha", "Alpha"),
+                new DiscoveryEntry("nether", "soul", null, "soul_of_cinder", "Cinder Soul")
+        );
+        PreparedBook book = ExplorationBook.prepare("Lowothra", totals, rows);
+
+        assertTrue(text(book, 0).contains(BookText.countedLine("World explored", "67%")));
+        assertTrue(text(book, 0).contains("Overworld (67%)"));
+        assertTrue(text(book, 0).contains(BookText.countedLine("Souls", "2/2")));
+        assertTrue(line(book, 0, BookText.countedLine("Souls", "2/2")).page() > 0);
+        assertTrue(text(book, 2).startsWith(String.join("\n",
+                "Souls found",
+                BookText.rule(),
+                "Alpha",
+                "Zeta",
+                ""
+        )));
+        assertTrue(text(book, 2).endsWith(ExplorationBook.SUMMARY_LINK));
+        assertFalse((text(book, 0) + text(book, 1) + text(book, 2)).contains("Cinder Soul"));
     }
 
     @Test
@@ -59,6 +87,7 @@ class ExplorationBookTest {
         assertTrue(text(book, 0).contains(BookText.countedLine("Water Regions", "0/19")));
         assertTrue(text(book, 0).contains(BookText.countedLine("Villages", "0/50")));
         assertTrue(text(book, 0).contains("Overworld (0%)"));
+        assertTrue(text(book, 0).contains(BookText.countedLine("Nerves", "0/28")));
         assertTrue(text(book, 0).endsWith(BookText.countedLine("Nerves", "0/28")));
         assertTrue(text(book, 1).contains(BookText.countedLine("Shipwrecks", "0/126")));
         assertTrue(text(book, 1).contains(BookText.countedLine("Ancient Cities", "0/12")));
@@ -104,20 +133,23 @@ class ExplorationBookTest {
                 new StructureTotal("shipwreck", "Shipwrecks", 126),
                 new StructureTotal("trail_ruins", "Trail Ruins", 19)
         );
-        ExplorationTotals totals = new ExplorationTotals(28, 0, 50, 28, 28, structures, 9, 9);
+        ExplorationTotals totals = new ExplorationTotals(28, 0, 50, 28, 28, 0, structures, 9, 9);
         PreparedBook book = ExplorationBook.prepare("Lowothra", totals, List.of());
 
         assertEquals(3, book.pages().size());
         assertTrue(text(book, 1).startsWith("Structures (0%)\n\n"));
         assertTrue(text(book, 1).contains(BookText.countedLine("Treasures", "0/53")));
         assertTrue(text(book, 1).endsWith(BookText.countedLine("Trail Ruins", "0/19")));
+        int counted = 0;
         for (String structureLine : text(book, 1).split("\n", -1)) {
-            if (!structureLine.contains(":")) {
+            if (BookText.countSplit(structureLine) < 0) {
                 continue;
             }
+            counted++;
             assertEquals(1, BookText.visualLines(structureLine));
             assertTrue(BookText.PAGE_WIDTH - BookText.width(structureLine) < 4);
         }
+        assertTrue(counted > 0);
     }
 
     @Test
@@ -137,9 +169,9 @@ class ExplorationBookTest {
         assertTrue(BookText.displayedLines("M".repeat(19), true).size() > 1);
         assertEquals("M".repeat(19), String.join("", BookText.displayedLines("M".repeat(19), true)));
         assertEquals(List.of("M".repeat(19), "M"), BookText.displayedLines("M".repeat(20)));
-        List<String> buried = BookText.displayedLines("Buried Treasures: 0/53");
+        List<String> buried = BookText.displayedLines("Buried Treasures 0/53");
         assertEquals(2, buried.size());
-        assertEquals("Buried Treasures: 0/53", String.join("", buried));
+        assertEquals("Buried Treasures 0/53", String.join("", buried));
         assertEquals(List.of("a", "", "b"), BookText.displayedLines("a\n\nb"));
         List<String> wideLines = new ArrayList<>();
         for (int index = 0; index < 8; index++) {
@@ -152,8 +184,30 @@ class ExplorationBookTest {
     }
 
     @Test
+    void worldExploredPercentageUsesAvailableDiscoveries() {
+        ExplorationTotals totals = new ExplorationTotals(
+                1,
+                3,
+                0,
+                0,
+                0,
+                0,
+                List.of(new StructureTotal("shipwreck", "Shipwrecks", 40)),
+                0,
+                0
+        );
+        PreparedBook book = ExplorationBook.prepare("Lowothra", totals, List.of(
+                new DiscoveryEntry("overworld", "region", null, "alpha", "Alpha")
+        ));
+
+        assertEquals(4, totals.available());
+        assertTrue(text(book, 0).contains(BookText.countedLine("World explored", "25%")));
+        assertTrue(text(book, 1).contains(BookText.countedLine("Shipwrecks", "0/40")));
+    }
+
+    @Test
     void noStructurePageWhenTheFileHasNone() {
-        ExplorationTotals totals = new ExplorationTotals(1, 0, 1, 1, 1, List.of(), 1, 1);
+        ExplorationTotals totals = new ExplorationTotals(1, 0, 1, 1, 1, 0, List.of(), 1, 1);
         PreparedBook book = ExplorationBook.prepare("Lowothra", totals, List.of());
 
         assertEquals(2, book.pages().size());
@@ -162,7 +216,7 @@ class ExplorationBookTest {
 
     @Test
     void shortenedStructureNamesKeepTheCountOnOneLine() {
-        ExplorationTotals totals = new ExplorationTotals(1, 0, 1, 1, 1, List.of(
+        ExplorationTotals totals = new ExplorationTotals(1, 0, 1, 1, 1, 0, List.of(
                 new StructureTotal("buried_treasure", "Buried Treasures", "Treasures", 89),
                 new StructureTotal("woodland_mansion", "Woodland Mansions", "WL Mansions", 3),
                 new StructureTotal("desert_well", "Desert Wells", 1)
@@ -221,6 +275,7 @@ class ExplorationBookTest {
                 50,
                 28,
                 28,
+                0,
                 List.of(
                         new StructureTotal("shipwreck", "Shipwrecks", 126),
                         new StructureTotal("ancient_city", "Ancient Cities", 12)

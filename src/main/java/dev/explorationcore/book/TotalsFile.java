@@ -35,6 +35,7 @@ public final class TotalsFile {
                 readTotal(overworld, "overworld.villages"),
                 readTotal(overworld, "overworld.hearts"),
                 readTotal(overworld, "overworld.nerves"),
+                readOptionalTotal(overworld, "overworld.souls"),
                 readStructures(overworld.get("structures")),
                 readTotal(nether, "nether.regions"),
                 readTotal(nether, "nether.hearts")
@@ -73,6 +74,14 @@ public final class TotalsFile {
             throw new TotalsException(path + ".short must be a non-blank string");
         }
         return text;
+    }
+
+    private static int readOptionalTotal(Map<String, Object> parent, String path) throws TotalsException {
+        String field = path.substring(path.lastIndexOf('.') + 1);
+        if (!parent.containsKey(field)) {
+            return 0;
+        }
+        return readTotal(parent, path);
     }
 
     private static int readTotal(Map<String, Object> parent, String path) throws TotalsException {

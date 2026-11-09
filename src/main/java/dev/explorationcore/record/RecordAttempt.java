@@ -17,6 +17,7 @@ public final class RecordAttempt {
             "village",
             "heart",
             "nerve",
+            "soul",
             "structure"
     );
 
