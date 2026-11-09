@@ -10,7 +10,7 @@ commands:
     usage: /<command> <status|record>
   exploration:
     description: Open your exploration progress
-    usage: /<command>
+    usage: /<command> [book [player]|preview <scenario>]
     permission: explorationcore.exploration
 permissions:
   explorationcore.record:

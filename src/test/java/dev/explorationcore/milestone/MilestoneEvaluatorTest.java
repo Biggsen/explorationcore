@@ -198,6 +198,62 @@ class MilestoneEvaluatorTest {
     }
 
     @Test
+    void waterDiscoveryCountsTowardTheRegionsMilestone() {
+        Milestones milestones = load("""
+                milestones:
+                  regions_discovered:
+                    - id: regions_discovered_25
+                      threshold: 25
+                      display-name: Region Trailblazer
+                      message: You discovered half of all the regions!
+                    - id: regions_discovered_50
+                      threshold: 50
+                      display-name: Region Legend
+                      message: You discovered all the regions!
+                """);
+
+        List<Milestone> landOnly = crossed(
+                milestones,
+                "overworld",
+                "region",
+                null,
+                List.of(new PlayerTally("overworld", "region", null, 24))
+        );
+        List<Milestone> half = crossed(
+                milestones,
+                "overworld",
+                "water",
+                null,
+                List.of(
+                        new PlayerTally("overworld", "region", null, 24),
+                        new PlayerTally("overworld", "water", null, 1)
+                )
+        );
+        List<Milestone> all = crossed(
+                milestones,
+                "overworld",
+                "water",
+                null,
+                List.of(
+                        new PlayerTally("overworld", "region", null, 30),
+                        new PlayerTally("overworld", "water", null, 20)
+                )
+        );
+        List<Milestone> netherWater = crossed(
+                milestones,
+                "nether",
+                "water",
+                null,
+                List.of(new PlayerTally("nether", "water", null, 50))
+        );
+
+        assertTrue(landOnly.isEmpty());
+        assertEquals(List.of("regions_discovered_25"), ids(half));
+        assertEquals(List.of("regions_discovered_50"), ids(all));
+        assertTrue(netherWater.isEmpty());
+    }
+
+    @Test
     void equalThresholdsOnOneCounterCrossTogetherInListOrder() {
         Milestones milestones = load("""
                 milestones:

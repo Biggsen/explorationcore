@@ -1,6 +1,7 @@
 package dev.explorationcore;
 
 import dev.explorationcore.book.AvailableDiscoveries;
+import dev.explorationcore.book.JournalListener;
 import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
 import dev.explorationcore.counter.DiscoveryCounters;
@@ -118,14 +119,15 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             command.setExecutor(executor);
             command.setTabCompleter(executor);
         }
+        ExplorationBookCommand bookExecutor = new ExplorationBookCommand(this);
         PluginCommand bookCommand = getCommand("exploration");
         if (bookCommand == null) {
             getLogger().severe("Command exploration is missing from plugin.yml");
         } else {
-            ExplorationBookCommand bookExecutor = new ExplorationBookCommand(this);
             bookCommand.setExecutor(bookExecutor);
             bookCommand.setTabCompleter(bookExecutor);
         }
+        getServer().getPluginManager().registerEvents(new JournalListener(bookExecutor::openJournal), this);
         getServer().getPluginManager().registerEvents(this, this);
         registerPlaceholders();
 

@@ -3,6 +3,7 @@ package dev.explorationcore.command;
 import dev.explorationcore.ExplorationCorePlugin;
 import dev.explorationcore.book.BookPages;
 import dev.explorationcore.book.ExplorationBook;
+import dev.explorationcore.book.ExplorationJournal;
 import dev.explorationcore.book.ExplorationTotals;
 import dev.explorationcore.book.JournalFixtures;
 import dev.explorationcore.book.PreparedBook;
@@ -12,16 +13,20 @@ import dev.explorationcore.db.DiscoveryEntry;
 import dev.explorationcore.db.DiscoveryRepository;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Level;
 
 public final class ExplorationBookCommand implements CommandExecutor, TabCompleter {
@@ -37,6 +42,10 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("book")) {
+            give(sender, Arrays.copyOfRange(args, 1, args.length));
+            return true;
+        }
         if (!(sender instanceof Player player)) {
             sender.sendMessage(Component.text("Only a player can open the exploration book."));
             return true;
@@ -49,24 +58,35 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
             player.sendMessage(Component.text("You do not have permission to use this command."));
             return true;
         }
+        openJournal(player);
+        return true;
+    }
+
+    public void openJournal(Player player) {
         try {
             open(player);
         } catch (Exception exception) {
             plugin.getLogger().log(Level.SEVERE, "Exploration book failed for " + player.getName(), exception);
             player.sendMessage(Component.text(UNAVAILABLE));
         }
-        return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission(PREVIEW_PERMISSION)) {
-            return List.of();
-        }
         if (args.length == 1) {
-            return startingWith(List.of("preview"), args[0]);
+            List<String> options = new ArrayList<>();
+            if (canReceiveJournal(sender)) {
+                options.add("book");
+            }
+            if (sender.hasPermission(PREVIEW_PERMISSION)) {
+                options.add("preview");
+            }
+            return startingWith(options, args[0]);
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("preview")) {
+        if (args.length == 2 && args[0].equalsIgnoreCase("book") && !(sender instanceof Player)) {
+            return startingWith(onlineNames(), args[1]);
+        }
+        if (sender.hasPermission(PREVIEW_PERMISSION) && args.length == 2 && args[0].equalsIgnoreCase("preview")) {
             return startingWith(JournalFixtures.SCENARIOS, args[1]);
         }
         return List.of();
@@ -118,6 +138,55 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
                 Component.text(plugin.serverName()),
                 BookPages.components(book)
         ));
+    }
+
+    private void give(CommandSender sender, String[] args) {
+        if (sender instanceof Player player && !player.hasPermission(PERMISSION)) {
+            player.sendMessage(Component.text("You do not have permission to use this command."));
+            return;
+        }
+        JournalGift.Decision decision = JournalGift.decide(sender instanceof Player, args);
+        switch (decision) {
+            case JournalGift.Self ignored -> giveTo((Player) sender);
+            case JournalGift.Named named -> giveNamed(sender, named.name());
+            case JournalGift.Rejected rejected -> sender.sendMessage(Component.text(rejected.message()));
+        }
+    }
+
+    private void giveNamed(CommandSender sender, String name) {
+        Player target = null;
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online.getName().equalsIgnoreCase(name)) {
+                target = online;
+                break;
+            }
+        }
+        if (target == null) {
+            sender.sendMessage(Component.text("player is not online: " + name));
+            return;
+        }
+        giveTo(target);
+    }
+
+    private static void giveTo(Player player) {
+        Map<Integer, ItemStack> leftover = player.getInventory().addItem(ExplorationJournal.create());
+        for (ItemStack stack : leftover.values()) {
+            if (stack != null && stack.getAmount() > 0) {
+                player.getWorld().dropItemNaturally(player.getLocation(), stack);
+            }
+        }
+    }
+
+    private static boolean canReceiveJournal(CommandSender sender) {
+        return !(sender instanceof Player) || sender.hasPermission(PERMISSION);
+    }
+
+    private static List<String> onlineNames() {
+        List<String> names = new ArrayList<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            names.add(player.getName());
+        }
+        return names;
     }
 
     private static List<String> startingWith(List<String> options, String typed) {

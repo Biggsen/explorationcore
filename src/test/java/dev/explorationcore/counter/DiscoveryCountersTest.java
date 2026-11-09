@@ -47,7 +47,7 @@ class DiscoveryCountersTest {
         );
 
         assertEquals(38, COUNTERS.count(tallies, "total_discovered"));
-        assertEquals(2, COUNTERS.count(tallies, "regions_discovered"));
+        assertEquals(10, COUNTERS.count(tallies, "regions_discovered"));
         assertEquals(8, COUNTERS.count(tallies, "water_regions_discovered"));
         assertEquals(4, COUNTERS.count(tallies, "villages_discovered"));
         assertEquals(4, COUNTERS.count(tallies, "hearts_discovered"));
@@ -84,7 +84,7 @@ class DiscoveryCountersTest {
     void aDiscoveryMovesItsCategoryAndTotalWhenTheLedgerCountsIt() {
         assertEquals(List.of("regions_discovered", "total_discovered"), COUNTERS.affected("overworld", "region", null));
         assertEquals(
-                List.of("water_regions_discovered", "total_discovered"),
+                List.of("water_regions_discovered", "regions_discovered", "total_discovered"),
                 COUNTERS.affected("overworld", "water", null)
         );
         assertEquals(List.of(), COUNTERS.affected("nether", "water", null));

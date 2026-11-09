@@ -1,6 +1,12 @@
 # Release history
 
+## 1.5.0-dev.5
+
+`/exploration book` gives the player an Exploration Journal. Console, remote console, and a command block use `/exploration book <player>` for an online player. The journal is a knowledge book. Right-clicking it in the air opens the same exploration book as `/exploration`, built again from that player's discoveries. Right-clicking a block still uses that block. Giving the journal again gives another copy. `/exploration` and `/exploration preview` are unchanged.
+
 ## 1.5.0-dev.4
+
+`%explorationcore_regions_discovered%` counts overworld land regions and overworld water regions. Discovering a water region can cross a regions milestone. `%explorationcore_water_regions_discovered%` still counts water only. Nether water still counts toward neither.
 
 A candle can light up to 32 blocks above a Soul. The chance is still highest at the Soul and falls off with distance. Below the Soul, the zone reaches downward as it did in 1.5.0-dev.2. A candle higher than those 32 blocks stays unlit.
 

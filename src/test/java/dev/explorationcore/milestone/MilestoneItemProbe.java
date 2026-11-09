@@ -1,7 +1,9 @@
 package dev.explorationcore.milestone;
 
+import dev.explorationcore.book.ExplorationJournal;
 import dev.explorationcore.counter.DiscoveryCounters;
 import dev.explorationcore.milestone.Milestone.ItemReward;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -131,8 +133,27 @@ public final class MilestoneItemProbe extends JavaPlugin {
         if (!potion(report, items.get(2), Material.LINGERING_POTION, 1, PotionType.LONG_SWIFTNESS)) {
             return report.append("FAIL lingering potion\n").toString();
         }
+        if (!journal(report)) {
+            return report.append("FAIL journal item\n").toString();
+        }
         report.append("status=ok\n");
         return report.toString();
+    }
+
+    private static boolean journal(StringBuilder report) {
+        ItemStack journal = ExplorationJournal.create();
+        ItemMeta meta = journal.getItemMeta();
+        String name = meta == null || meta.displayName() == null
+                ? ""
+                : PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+        report.append("journal-name=").append(name).append('\n');
+        ItemStack plain = new ItemStack(Material.KNOWLEDGE_BOOK);
+        return journal.getType() == Material.KNOWLEDGE_BOOK
+                && ExplorationJournal.NAME.equals(name)
+                && ExplorationJournal.isJournal(journal)
+                && !ExplorationJournal.isJournal(plain)
+                && meta != null
+                && !meta.hasLore();
     }
 
     private static boolean potion(

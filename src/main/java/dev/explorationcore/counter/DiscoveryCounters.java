@@ -154,6 +154,7 @@ public final class DiscoveryCounters {
             case "water" -> {
                 if ("overworld".equals(world)) {
                     affected.add("water_regions_discovered");
+                    affected.add("regions_discovered");
                 }
             }
             case "village" -> affected.add("villages_discovered");
@@ -205,7 +206,7 @@ public final class DiscoveryCounters {
                     + sum(tallies, "overworld", "soul")
                     + sum(tallies, "nether", "region")
                     + sum(tallies, "nether", "heart");
-            case "regions_discovered" -> sum(tallies, "overworld", "region");
+            case "regions_discovered" -> sum(tallies, "overworld", "region") + sum(tallies, "overworld", "water");
             case "water_regions_discovered" -> sum(tallies, "overworld", "water");
             case "villages_discovered" -> sumType(tallies, "village");
             case "hearts_discovered" -> sum(tallies, "overworld", "heart");
