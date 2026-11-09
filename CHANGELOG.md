@@ -1,5 +1,23 @@
 # Release history
 
+## 1.5.0
+
+9 November 2026. Stable release.
+
+Placing short grass near a Heart can turn that grass into a flower. Mining redstone ore near a Nerve can drop coal instead of redstone. Placing an unlit candle near a Soul can light that candle, up to 32 blocks above the Soul. The chance is highest at the Heart, Nerve, or Soul and falls off with distance. A candle that is already lit stays as it is. The sites come from `detection-sites.yml`. A missing or bad file leaves the grass, the ore, and the candle alone. No title, chat line, sound, or particle is added, and nothing is recorded.
+
+An overworld soul is recorded as entity type `soul`. `%explorationcore_souls_discovered%` counts those rows, and they also count toward `%explorationcore_total_discovered%`. A nether soul does not. A newly recorded soul uses the Soul Discovered title, the beacon sound, and the end-rod burst. It grants the Soul Crate, unless the command ends with `nocrate`. Difficulty `0` is accepted.
+
+`%explorationcore_regions_discovered%` counts overworld land regions and overworld water regions. Discovering a water region can cross a regions milestone. `%explorationcore_water_regions_discovered%` still counts water only. Nether water still counts toward neither.
+
+`%explorationcore_total_available%` is the number of places in the world-explored percentage. That is overworld land regions, water regions, villages, hearts, nerves, and souls, plus nether regions and nether hearts. Structures stay out. The number comes from `totals.yml` and does not depend on the player. A missing or bad totals file leaves this placeholder empty.
+
+`/exploration` lists Souls, then Hearts, then Nerves. Counted lines no longer use a colon. The count stays at the right of the line, and the label is still the page link. The book reads `overworld.souls.total` when that entry is present.
+
+`/exploration book` gives the player an Exploration Journal. Console, remote console, and a command block use `/exploration book <player>` for an online player. The journal is a knowledge book. Right-clicking it in the air opens the same exploration book, built again from that player's discoveries. Right-clicking a block still uses that block. Giving the journal again gives another copy.
+
+Recording, crates, and the other counters behave as they did in 1.4.0, apart from souls and the regions counter.
+
 ## 1.5.0-dev.5
 
 `/exploration book` gives the player an Exploration Journal. Console, remote console, and a command block use `/exploration book <player>` for an online player. The journal is a knowledge book. Right-clicking it in the air opens the same exploration book as `/exploration`, built again from that player's discoveries. Right-clicking a block still uses that block. Giving the journal again gives another copy. `/exploration` and `/exploration preview` are unchanged.
