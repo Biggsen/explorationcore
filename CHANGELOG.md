@@ -1,5 +1,11 @@
 # Release history
 
+## 1.5.1
+
+11 November 2026. Stable release.
+
+A milestone's experience, items, claim blocks, and promotion command are paid when its title appears. The title still waits until the discovery title has finished, and each further milestone in that discovery waits one title longer. The claim is still stored in `milestone_grants` before that wait, and only while the player is still online. A player who leaves during the wait is logged for manual recovery and does not receive those rewards. The broadcast still goes out on that same delay.
+
 ## 1.5.0
 
 9 November 2026. Stable release.

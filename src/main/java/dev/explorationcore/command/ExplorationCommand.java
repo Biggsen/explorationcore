@@ -273,13 +273,11 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
                 }
                 continue;
             }
-            List<String> confirmations = deliverMilestone(player, recorded, milestone);
             shown++;
             scheduleMilestone(
-                    recorded.playerUuid(),
+                    recorded,
                     player.getName(),
                     milestone,
-                    confirmations,
                     DiscoveryPresenter.durationTicks() * shown
             );
         }
@@ -421,21 +419,91 @@ public final class ExplorationCommand implements CommandExecutor, TabCompleter {
     }
 
     private void scheduleMilestone(
-            UUID playerUuid,
+            AttemptResult.Recorded recorded,
             String playerName,
             Milestone milestone,
-            List<String> confirmations,
             long delayTicks
     ) {
         DiscoveryNotice notice = DiscoveryNotices.milestone(milestone.displayName(), milestone.message());
-        List<String> lines = List.copyOf(confirmations);
-        String broadcast = milestone.broadcast();
+        UUID playerUuid = recorded.playerUuid();
         String milestoneId = milestone.id();
+        String broadcast = milestone.broadcast();
         Bukkit.getScheduler().runTaskLater(
                 plugin,
-                () -> showMilestone(playerUuid, playerName, milestoneId, notice, lines, broadcast),
+                () -> payAndShowMilestone(
+                        recorded,
+                        playerName,
+                        milestone,
+                        notice,
+                        playerUuid,
+                        milestoneId,
+                        broadcast
+                ),
                 delayTicks
         );
+    }
+
+    private void payAndShowMilestone(
+            AttemptResult.Recorded recorded,
+            String playerName,
+            Milestone milestone,
+            DiscoveryNotice notice,
+            UUID playerUuid,
+            String milestoneId,
+            String broadcast
+    ) {
+        Player player = Bukkit.getPlayer(playerUuid);
+        List<String> confirmations;
+        if (player != null && player.isOnline()) {
+            confirmations = deliverMilestone(player, recorded, milestone);
+        } else {
+            logRewardsUndelivered(recorded, playerName, milestone);
+            confirmations = List.of();
+        }
+        showMilestone(playerUuid, playerName, milestoneId, notice, confirmations, broadcast);
+    }
+
+    private void logRewardsUndelivered(
+            AttemptResult.Recorded recorded,
+            String playerName,
+            Milestone milestone
+    ) {
+        if (milestone.xp() > 0) {
+            logRewardFailed(
+                    recorded,
+                    playerName,
+                    milestone,
+                    "xp amount=" + milestone.xp() + " reason=player offline",
+                    null
+            );
+        }
+        for (Milestone.ItemReward item : milestone.items()) {
+            logRewardFailed(
+                    recorded,
+                    playerName,
+                    milestone,
+                    "item " + item.name() + item.detail() + " amount=" + item.amount() + " reason=player offline",
+                    null
+            );
+        }
+        if (milestone.claimblocks() > 0) {
+            logRewardFailed(
+                    recorded,
+                    playerName,
+                    milestone,
+                    "claimblocks amount=" + milestone.claimblocks() + " reason=player offline",
+                    null
+            );
+        }
+        if (milestone.promotionCommand() != null) {
+            logRewardFailed(
+                    recorded,
+                    playerName,
+                    milestone,
+                    "promotion command=\"" + milestone.promotionCommand() + "\" reason=player offline",
+                    null
+            );
+        }
     }
 
     private void showMilestone(
