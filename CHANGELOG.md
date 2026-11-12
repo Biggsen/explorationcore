@@ -1,5 +1,11 @@
 # Release history
 
+## 1.5.2
+
+11 November 2026. Stable release.
+
+The Exploration Journal's name is white. A knowledge book's own name is light purple, and a custom name with no colour keeps that colour.
+
 ## 1.5.1
 
 11 November 2026. Stable release.
