@@ -3,6 +3,8 @@ package dev.explorationcore.milestone;
 import dev.explorationcore.book.ExplorationJournal;
 import dev.explorationcore.counter.DiscoveryCounters;
 import dev.explorationcore.milestone.Milestone.ItemReward;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -143,13 +145,19 @@ public final class MilestoneItemProbe extends JavaPlugin {
     private static boolean journal(StringBuilder report) {
         ItemStack journal = ExplorationJournal.create();
         ItemMeta meta = journal.getItemMeta();
-        String name = meta == null || meta.displayName() == null
+        Component displayName = meta == null ? null : meta.displayName();
+        String name = displayName == null
                 ? ""
-                : PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+                : PlainTextComponentSerializer.plainText().serialize(displayName);
+        String color = displayName == null || displayName.color() == null ? "" : displayName.color().toString();
         report.append("journal-name=").append(name).append('\n');
+        report.append("journal-color=").append(color).append('\n');
         ItemStack plain = new ItemStack(Material.KNOWLEDGE_BOOK);
         return journal.getType() == Material.KNOWLEDGE_BOOK
                 && ExplorationJournal.NAME.equals(name)
+                && displayName != null
+                && displayName.color() != null
+                && displayName.color().value() == NamedTextColor.WHITE.value()
                 && ExplorationJournal.isJournal(journal)
                 && !ExplorationJournal.isJournal(plain)
                 && meta != null
