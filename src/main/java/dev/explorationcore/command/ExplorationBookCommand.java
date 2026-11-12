@@ -18,6 +18,8 @@ import dev.explorationcore.db.DiscoveryEntry;
 import dev.explorationcore.db.DiscoveryRepository;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -51,6 +53,10 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (command.getName().equalsIgnoreCase("guides")) {
+            guides(sender, args);
+            return true;
+        }
         if (args.length > 0 && args[0].equalsIgnoreCase("book")) {
             give(sender, Arrays.copyOfRange(args, 1, args.length));
             return true;
@@ -86,6 +92,9 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (command.getName().equalsIgnoreCase("guides")) {
+            return completeGuides(sender, args);
+        }
         if (args.length == 1) {
             List<String> options = new ArrayList<>();
             if (canReceiveJournal(sender)) {
@@ -109,6 +118,16 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
         }
         if (sender.hasPermission(PREVIEW_PERMISSION) && args.length == 2 && args[0].equalsIgnoreCase("preview")) {
             return startingWith(JournalFixtures.SCENARIOS, args[1]);
+        }
+        return List.of();
+    }
+
+    private List<String> completeGuides(CommandSender sender, String[] args) {
+        if (args.length == 1 && canReceiveJournal(sender)) {
+            return startingWith(List.of("book"), args[0]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("book") && !(sender instanceof Player)) {
+            return startingWith(onlineNames(), args[1]);
         }
         return List.of();
     }
@@ -173,7 +192,7 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
             return;
         }
         if (args.length > 0) {
-            sender.sendMessage(Component.text("Use /exploration guides book."));
+            sender.sendMessage(Component.text("Use /guides book."));
             return;
         }
         if (!(sender instanceof Player player)) {
@@ -203,7 +222,8 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
 
     private void showGuides(Player player, PreparedBook book) {
         player.openBook(Book.book(
-                Component.text(GuideBook.TITLE),
+                Component.text(GuideBook.TITLE, TextColor.color(GuideBook.TITLE_COLOR))
+                        .decoration(TextDecoration.ITALIC, false),
                 Component.text(plugin.serverName()),
                 BookPages.components(book)
         ));

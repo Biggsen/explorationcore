@@ -1,6 +1,7 @@
 package dev.explorationcore.book;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -9,9 +10,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 public final class GuidesItem {
-    public static final String NAME = "Guides";
+    public static final String NAME = "Exploration Field Guide";
     private static final NamespacedKey MARKER = new NamespacedKey("explorationcore", "guides");
-    private static final Component DISPLAY_NAME = Component.text(NAME).decoration(TextDecoration.ITALIC, false);
+    private static final Component DISPLAY_NAME = Component.text(NAME, NamedTextColor.WHITE)
+            .decoration(TextDecoration.ITALIC, false);
 
     private GuidesItem() {
     }

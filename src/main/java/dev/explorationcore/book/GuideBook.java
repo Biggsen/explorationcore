@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class GuideBook {
-    public static final String TITLE = "Guides";
-    public static final String INDEX_MARK = "⌖ ";
+    public static final String TITLE = "Exploration Field Guide";
+    public static final int TITLE_COLOR = 0xFFFFFF;
     public static final String RETURN_LINK = "< Guides";
-    public static final int INDEX_PAGE = 1;
+    public static final int INDEX_PAGE = 2;
+    public static final int COMMAND_COLOR = 0x00AA00;
+    private static final String COVER_RULE = "-".repeat(13);
 
     private GuideBook() {
     }
@@ -28,13 +30,15 @@ public final class GuideBook {
 
         int indexPages = paginateLines(indexLines(titles, ones(titles.size()))).size();
         int[] starts = new int[titles.size()];
-        int next = indexPages + 1;
+        int next = INDEX_PAGE + indexPages;
         for (int index = 0; index < starts.length; index++) {
             starts[index] = next;
             next += chapterPages.get(index).size();
         }
 
-        List<List<BookLine>> pages = new ArrayList<>(paginateLines(indexLines(titles, starts)));
+        List<List<BookLine>> pages = new ArrayList<>();
+        pages.add(cover());
+        pages.addAll(paginateLines(indexLines(titles, starts)));
         for (List<List<BookLine>> chapter : chapterPages) {
             pages.addAll(chapter);
         }
@@ -42,6 +46,29 @@ public final class GuideBook {
             throw new GuidesException("guides.yml has " + pages.size() + " pages");
         }
         return new PreparedBook(pages, List.of());
+    }
+
+    private static List<BookLine> cover() {
+        return List.of(
+                BookLine.of(""),
+                BookLine.of(""),
+                coverLine("EXPLORATION", ExplorationBook.SERVER_NAME_COLOR, true, false),
+                coverLine("Field Guide", ExplorationBook.SERVER_NAME_COLOR, false, false),
+                coverLine(COVER_RULE, ExplorationBook.SERVER_NAME_COLOR, false, false),
+                BookLine.of(""),
+                coverLine("Where the journey", ExplorationBook.BODY_COLOR, false, false),
+                coverLine("matters.", ExplorationBook.BODY_COLOR, false, false),
+                BookLine.of(""),
+                BookLine.of(""),
+                BookLine.of(""),
+                BookLine.of(""),
+                BookLine.of(""),
+                BookLine.of("")
+        );
+    }
+
+    private static BookLine coverLine(String text, Integer color, boolean bold, boolean italic) {
+        return BookLine.styled(BookText.center(text, bold), color, bold, italic);
     }
 
     private static int[] ones(int count) {
@@ -54,12 +81,14 @@ public final class GuideBook {
 
     private static List<BookLine> indexLines(List<String> titles, int[] starts) {
         List<BookLine> lines = new ArrayList<>();
-        lines.add(BookLine.heading(TITLE));
+        for (String line : BookText.displayedLines(TITLE, true)) {
+            lines.add(BookLine.styled(line, TITLE_COLOR, true, false));
+        }
         if (!titles.isEmpty()) {
             lines.add(BookLine.of(""));
         }
         for (int index = 0; index < titles.size(); index++) {
-            for (String line : BookText.displayedLines(INDEX_MARK + titles.get(index), false)) {
+            for (String line : BookText.displayedLines(titles.get(index), false)) {
                 lines.add(BookLine.link(line, starts[index]));
             }
         }
@@ -73,8 +102,8 @@ public final class GuideBook {
         }
         if (!text.isEmpty()) {
             content.add(BookLine.of(""));
-            for (String line : BookText.displayedLines(text, false)) {
-                content.add(BookLine.of(line));
+            for (BookText.Wrapped line : BookText.wrapPlain(text)) {
+                content.add(BookLine.of(line.text(), line.green()));
             }
         }
         List<List<BookLine>> pages = new ArrayList<>();

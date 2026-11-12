@@ -189,16 +189,14 @@
     for (var index = 0; index < text.length; ) {
       var codePoint = text.codePointAt(index);
       var advance = glyphAdvance(codePoint, style.bold);
-      var color = text.indexOf("\u2316 ") === 0 && seen < 2
-        ? "#986A27"
+      var color = inGreen(line, seen)
+        ? "#00AA00"
         : (seen < linkChars ? linkColor() : style.color);
       var glyphs = fontFor(color);
-      if (codePoint === 0x2316) {
-        drawMark(pen, y, color);
-      } else if (glyphs && codePoint <= 255) {
-        blitGlyph(glyphs, codePoint, pen, y);
+      if (glyphs && codePoint <= 255) {
+        blitGlyph(glyphs, codePoint, pen, y, style.italic);
         if (style.bold) {
-          blitGlyph(glyphs, codePoint, pen + 1, y);
+          blitGlyph(glyphs, codePoint, pen + 1, y, style.italic);
         }
       } else if (codePoint !== 32) {
         var width = Math.max(advanceOf(codePoint) - 1, 1);
@@ -212,12 +210,6 @@
       seen += codePoint > 0xffff ? 2 : 1;
       index += codePoint > 0xffff ? 2 : 1;
     }
-  }
-
-  function drawMark(pen, y, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect((pen + 3) * scale, (y + 1) * scale, scale, 6 * scale);
-    ctx.fillRect(pen * scale, (y + 3) * scale, 7 * scale, scale);
   }
 
   function linkColor() {
@@ -267,19 +259,55 @@
 
   function lineStyle(line) {
     if (typeof line === "string") {
-      return { text: line, bold: false, color: "#000000", page: null };
+      return { text: line, bold: false, italic: false, color: "#000000", page: null };
     }
     return {
       text: line.text,
       bold: !!line.bold,
+      italic: !!line.italic,
       color: line.color ? "#" + line.color : "#000000",
-      page: line.page || null
+      page: line.page || null,
+      green: line.green || null
     };
   }
 
-  function blitGlyph(glyphs, codePoint, pen, y) {
+  function inGreen(line, seen) {
+    var spans = line.green;
+    if (!spans) {
+      return false;
+    }
+    for (var index = 0; index + 1 < spans.length; index += 2) {
+      if (seen >= spans[index] && seen < spans[index + 1]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function blitGlyph(glyphs, codePoint, pen, y, italic) {
     var column = codePoint % 16;
     var row = Math.floor(codePoint / 16);
+    if (italic) {
+      var cell = book.glyphSize;
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      for (var glyphRow = 0; glyphRow < cell; glyphRow++) {
+        var shift = (cell - 1 - glyphRow) >> 1;
+        ctx.drawImage(
+          glyphs,
+          column * cell,
+          row * cell + glyphRow,
+          cell,
+          1,
+          (pen + shift) * scale,
+          (y + glyphRow) * scale,
+          cell * scale,
+          scale
+        );
+      }
+      ctx.restore();
+      return;
+    }
     ctx.drawImage(
       glyphs,
       column * book.glyphSize,

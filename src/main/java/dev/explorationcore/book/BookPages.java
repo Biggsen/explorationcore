@@ -40,28 +40,22 @@ public final class BookPages {
     }
 
     private static Component body(BookLine line) {
-        if (line.bold()) {
-            return Component.text(line.text())
-                    .color(TextColor.color(ExplorationBook.SERVER_NAME_COLOR))
-                    .decorate(TextDecoration.BOLD);
+        if (line.page() == null) {
+            int rgb = line.color() != null
+                    ? line.color()
+                    : (line.bold() ? ExplorationBook.SERVER_NAME_COLOR : ExplorationBook.BODY_COLOR);
+            Component text = colored(line.text(), line.green(), TextColor.color(rgb));
+            if (line.bold()) {
+                text = text.decorate(TextDecoration.BOLD);
+            }
+            if (line.italic()) {
+                text = text.decorate(TextDecoration.ITALIC);
+            }
+            return text;
         }
         TextColor color = TextColor.color(ExplorationBook.BODY_COLOR);
-        if (line.page() == null) {
-            return Component.text(line.text()).color(color);
-        }
         TextColor link = TextColor.color(ExplorationBook.LINK_COLOR);
         ClickEvent click = ClickEvent.changePage(line.page());
-        if (line.text().startsWith(GuideBook.INDEX_MARK)) {
-            return Component.empty()
-                    .append(Component.text(GuideBook.INDEX_MARK)
-                            .color(TextColor.color(ExplorationBook.SERVER_NAME_COLOR))
-                            .decoration(TextDecoration.UNDERLINED, false)
-                            .clickEvent(click))
-                    .append(Component.text(line.text().substring(GuideBook.INDEX_MARK.length()))
-                            .color(link)
-                            .decoration(TextDecoration.UNDERLINED, false)
-                            .clickEvent(click));
-        }
         int split = BookText.countSplit(line.text());
         if (split < 0) {
             return Component.text(line.text())
@@ -77,5 +71,27 @@ public final class BookPages {
                 .append(Component.text(line.text().substring(split))
                         .color(color)
                         .decoration(TextDecoration.UNDERLINED, false));
+    }
+
+    private static Component colored(String text, List<Integer> green, TextColor color) {
+        if (green.isEmpty()) {
+            return Component.text(text).color(color);
+        }
+        TextColor command = TextColor.color(GuideBook.COMMAND_COLOR);
+        Component out = Component.empty();
+        int cursor = 0;
+        for (int index = 0; index + 1 < green.size(); index += 2) {
+            int start = green.get(index);
+            int end = green.get(index + 1);
+            if (start > cursor) {
+                out = out.append(Component.text(text.substring(cursor, start)).color(color));
+            }
+            out = out.append(Component.text(text.substring(start, end)).color(command));
+            cursor = end;
+        }
+        if (cursor < text.length()) {
+            out = out.append(Component.text(text.substring(cursor)).color(color));
+        }
+        return out;
     }
 }

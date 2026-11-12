@@ -1,5 +1,21 @@
 # Release history
 
+## 1.6-dev.3
+
+`/guides book` gives an Exploration Field Guide. The name is white. A knowledge book's own name is light purple, and a custom name with no colour keeps that colour.
+
+The opened book's title is Exploration Field Guide, in white. The index heading uses that title, in white. The return link stays `< Guides`. The cover is unchanged.
+
+## 1.6-dev.2
+
+The Exploration Journal still is a knowledge book. Its icon is the written book. Right-clicking it in the air still opens the exploration book. A lectern still cannot take it. A journal given before this version keeps the knowledge book icon.
+
+## 1.6-dev.1
+
+`/guides` opens the guides book. The pages are built from `guides.yml` when the book opens. The first page is a cover, and the next page is an index of the chapters in file order. Each chapter returns to the index. `{SERVER_NAME}` is replaced with the server name. A missing `guides.yml` is copied from the jar once. An existing file is left as it is.
+
+`/guides book` gives the player a Guides book. Console, remote console, and a command block use `/guides book <player>` for an online player. The book is a knowledge book. Right-clicking it in the air opens the guides again. Right-clicking a block still uses that block. `/exploration guides` and `/exploration guides book` do the same. The permission is `explorationcore.exploration`.
+
 ## 1.5.2
 
 11 November 2026. Stable release.

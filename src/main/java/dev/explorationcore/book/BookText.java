@@ -2,6 +2,7 @@ package dev.explorationcore.book;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 final class BookText {
     static final int PAGE_WIDTH = 114;
@@ -30,13 +31,28 @@ final class BookText {
     }
 
     static int width(String text) {
+        return width(text, false);
+    }
+
+    static int width(String text, boolean bold) {
         int total = 0;
         for (int index = 0; index < text.length(); ) {
             int codePoint = text.codePointAt(index);
-            total += advance(codePoint);
+            total += advance(codePoint) + (bold ? 1 : 0);
             index += Character.charCount(codePoint);
         }
         return total;
+    }
+
+    static String center(String text, boolean bold) {
+        int textWidth = width(text, bold);
+        int space = advance(' ') + (bold ? 1 : 0);
+        int slack = PAGE_WIDTH - textWidth;
+        int spaces = slack <= 0 ? 0 : (int) Math.round((slack / 2.0) / space);
+        while (spaces > 0 && spaces * space + textWidth > PAGE_WIDTH) {
+            spaces--;
+        }
+        return spaces == 0 ? text : " ".repeat(spaces) + text;
     }
 
     static String countedLine(String label, String count) {
@@ -270,6 +286,131 @@ final class BookText {
             characters++;
         }
         return characters + footer.length();
+    }
+
+    record Wrapped(String text, List<Integer> green) {
+    }
+
+    static List<Wrapped> wrapPlain(String text) {
+        List<Wrapped> lines = new ArrayList<>();
+        int start = 0;
+        for (int index = 0; index <= text.length(); index++) {
+            if (index == text.length() || text.charAt(index) == '\n') {
+                String segment = text.substring(start, index);
+                int[] spans = commandSpans(segment);
+                int offset = 0;
+                for (String piece : wrapSegment(segment, false)) {
+                    lines.add(new Wrapped(piece, localSpans(spans, offset, piece.length())));
+                    offset += piece.length();
+                }
+                if (offset != segment.length()) {
+                    throw new IllegalStateException("Wrapped text drifted");
+                }
+                start = index + 1;
+            }
+        }
+        return lines;
+    }
+
+    private static int[] commandSpans(String text) {
+        List<Integer> spans = new ArrayList<>();
+        for (int index = 0; index < text.length(); index++) {
+            if (text.charAt(index) != '/') {
+                continue;
+            }
+            if (index > 0 && Character.isLetterOrDigit(text.charAt(index - 1))) {
+                continue;
+            }
+            int end = commandEnd(text, index);
+            if (end == index + 1) {
+                continue;
+            }
+            spans.add(index);
+            spans.add(end);
+            index = end - 1;
+        }
+        int[] ranges = new int[spans.size()];
+        for (int index = 0; index < spans.size(); index++) {
+            ranges[index] = spans.get(index);
+        }
+        return ranges;
+    }
+
+    private static int commandEnd(String text, int slash) {
+        int index = slash + 1;
+        if (index >= text.length() || !isCommandChar(text.charAt(index))) {
+            return slash;
+        }
+        while (index < text.length() && isCommandChar(text.charAt(index))) {
+            index++;
+        }
+        while (true) {
+            if (index >= text.length() || text.charAt(index) != ' ') {
+                break;
+            }
+            int next = index + 1;
+            if (next >= text.length()) {
+                break;
+            }
+            char marker = text.charAt(next);
+            if (marker == '<') {
+                int close = text.indexOf('>', next);
+                if (close < 0) {
+                    break;
+                }
+                index = close + 1;
+                continue;
+            }
+            if (marker == '[') {
+                int close = text.indexOf(']', next);
+                if (close < 0) {
+                    break;
+                }
+                index = close + 1;
+                continue;
+            }
+            if (!isCommandChar(marker) || isSentenceWord(text, next)) {
+                break;
+            }
+            index = next;
+            while (index < text.length() && isCommandChar(text.charAt(index))) {
+                index++;
+            }
+        }
+        return index;
+    }
+
+    private static boolean isCommandChar(char character) {
+        return Character.isLetterOrDigit(character) || character == '_' || character == '-';
+    }
+
+    private static boolean isSentenceWord(String text, int start) {
+        int end = start;
+        while (end < text.length() && isCommandChar(text.charAt(end))) {
+            end++;
+        }
+        return switch (text.substring(start, end).toLowerCase(Locale.ROOT)) {
+            case "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "it",
+                    "of", "on", "or", "the", "them", "to", "with", "you", "your" -> true;
+            default -> false;
+        };
+    }
+
+    private static List<Integer> localSpans(int[] spans, int offset, int length) {
+        if (spans.length == 0 || length == 0) {
+            return List.of();
+        }
+        List<Integer> local = new ArrayList<>();
+        int end = offset + length;
+        for (int index = 0; index + 1 < spans.length; index += 2) {
+            int from = Math.max(spans[index], offset);
+            int to = Math.min(spans[index + 1], end);
+            if (from < to) {
+                local.add(from - offset);
+                local.add(to - offset);
+            }
+        }
+        return local;
     }
 
     private static List<String> wrapSegment(String text, boolean bold) {

@@ -30,23 +30,35 @@ class GuideBookTest {
                 new GuideChapter("Lore", "Each region carries its own record.")
         ));
 
-        List<BookLine> index = book.pages().get(0);
-        assertEquals(GuideBook.TITLE, index.get(0).text());
-        assertTrue(index.get(0).bold());
-        assertEquals(GuideBook.INDEX_MARK + "Welcome to Charidh", link(index, GuideBook.INDEX_MARK + "Welcome to Charidh").text());
-        assertEquals(2, link(index, GuideBook.INDEX_MARK + "Welcome to Charidh").page());
-        assertEquals(4, link(index, GuideBook.INDEX_MARK + "Lore").page());
+        List<BookLine> cover = book.pages().get(0);
+        assertEquals(BookText.LINES_PER_PAGE, cover.size());
+        assertTrue(texts(cover).stream().anyMatch(text -> text.contains("EXPLORATION")));
+        assertTrue(texts(cover).stream().anyMatch(text -> text.contains("Field Guide")));
+        for (BookLine line : cover) {
+            assertTrue(BookText.width(line.text(), line.bold()) <= BookText.PAGE_WIDTH, line.text());
+        }
+
+        List<BookLine> index = book.pages().get(1);
+        List<String> heading = BookText.displayedLines(GuideBook.TITLE, true);
+        for (int line = 0; line < heading.size(); line++) {
+            assertEquals(heading.get(line), index.get(line).text());
+            assertTrue(index.get(line).bold());
+            assertEquals(GuideBook.TITLE_COLOR, index.get(line).color());
+        }
+        assertEquals("Welcome to Charidh", link(index, "Welcome to Charidh").text());
+        assertEquals(3, link(index, "Welcome to Charidh").page());
+        assertEquals(5, link(index, "Lore").page());
         assertFalse(texts(index).contains("Regions & difficulty"));
 
-        List<BookLine> first = book.pages().get(1);
+        List<BookLine> first = book.pages().get(2);
         assertEquals("Welcome to Charidh", first.get(0).text());
         assertTrue(first.get(0).bold());
         assertTrue(texts(first).contains("Line 0"));
         assertEquals(GuideBook.RETURN_LINK, first.get(first.size() - 1).text());
         assertEquals(GuideBook.INDEX_PAGE, first.get(first.size() - 1).page());
-        assertEquals(GuideBook.RETURN_LINK, book.pages().get(2).get(book.pages().get(2).size() - 1).text());
+        assertEquals(GuideBook.RETURN_LINK, book.pages().get(3).get(book.pages().get(3).size() - 1).text());
 
-        List<BookLine> lore = book.pages().get(3);
+        List<BookLine> lore = book.pages().get(4);
         assertEquals("Lore", lore.get(0).text());
         assertTrue(lore.get(0).bold());
         assertEquals(BookText.LINES_PER_PAGE, lore.size());
@@ -63,22 +75,22 @@ class GuideBookTest {
             Files.copy(in, file);
             PreparedBook book = GuideBook.prepare("Charidh", GuidesFile.load(file));
             assertEquals(List.of(
-                    "⌖ Welcome to Charidh",
-                    "⌖ Discovery & progression",
-                    "⌖ Lore",
-                    "⌖ Regions & difficulty",
-                    "⌖ Structures & rewards",
-                    "⌖ Death & keep-inventory",
-                    "⌖ Navigation & maps",
-                    "⌖ Crates & keys",
-                    "⌖ Protection"
+                    "Welcome",
+                    "Discovery",
+                    "Lore",
+                    "Regions & Mobs",
+                    "Structures",
+                    "Death & Inventory",
+                    "Navigation",
+                    "Crates & Keys",
+                    "Protection"
             ), chapterTitles(indexPages(book)));
             String joined = BookLine.join(book.pages().stream().flatMap(List::stream).toList()).replace("\n", "");
             assertTrue(joined.contains("be an explorer, not a grinder"));
             assertTrue(joined.contains("Exploration is how you progress on Charidh."));
             assertTrue(joined.contains("/keys"));
             assertTrue(joined.contains("Claiming land"));
-            assertTrue(joined.contains("Tracking structures"));
+            assertTrue(joined.contains("shipwrecks"));
             assertFalse(joined.contains("<bold>"));
             assertFalse(joined.contains("<dark_green>"));
             assertFalse(joined.contains("{SERVER_NAME}"));

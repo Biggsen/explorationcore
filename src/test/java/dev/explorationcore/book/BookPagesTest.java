@@ -75,6 +75,59 @@ class BookPagesTest {
     }
 
     @Test
+    void commandsAreDarkGreen() {
+        String crates = "You can check them with /keys and open crates with /cc.";
+        String bolt = "Give friends access using /bolt trust add <player>.";
+        String fraction = "A single map covers 1/16 of the entire world.";
+        String lore = "To read a region's record, use /lore [region name]";
+        assertEquals("/keys/cc", greenText(crates));
+        assertEquals("/bolt trust add <player>", greenText(bolt));
+        assertEquals("/lore [region name]", greenText(lore));
+        assertEquals("", greenText(fraction));
+
+        BookText.Wrapped keys = BookText.wrapPlain("with /keys.").get(0);
+        PreparedBook book = new PreparedBook(List.of(List.of(
+                BookLine.heading("Crates"),
+                BookLine.of(keys.text(), keys.green())
+        )), List.of());
+        TextComponent command = find(BookPages.components(book).get(0), "/keys");
+        assertEquals(TextColor.color(GuideBook.COMMAND_COLOR), command.color());
+        assertEquals(TextDecoration.State.NOT_SET, command.decoration(TextDecoration.ITALIC));
+    }
+
+    private static String greenText(String text) {
+        StringBuilder green = new StringBuilder();
+        for (BookText.Wrapped line : BookText.wrapPlain(text)) {
+            List<Integer> spans = line.green();
+            for (int index = 0; index + 1 < spans.size(); index += 2) {
+                green.append(line.text(), spans.get(index), spans.get(index + 1));
+            }
+        }
+        return green.toString();
+    }
+
+    @Test
+    void guidesCoverUsesTitlePageColors() throws GuidesException {
+        PreparedBook book = GuideBook.prepare("Lowothra", List.of(new GuideChapter("Welcome", "Hello.")));
+        Component page = BookPages.components(book).get(0);
+
+        TextComponent title = findContaining(page, "EXPLORATION");
+        assertEquals(TextColor.color(ExplorationBook.SERVER_NAME_COLOR), title.color());
+        assertEquals(TextDecoration.State.TRUE, title.decoration(TextDecoration.BOLD));
+        assertNull(title.clickEvent());
+
+        TextComponent subtitle = findContaining(page, "Field Guide");
+        assertEquals(TextColor.color(ExplorationBook.SERVER_NAME_COLOR), subtitle.color());
+        assertEquals(TextDecoration.State.NOT_SET, subtitle.decoration(TextDecoration.BOLD));
+
+        TextComponent motto = findContaining(page, "Where the journey");
+        assertEquals(TextColor.color(ExplorationBook.BODY_COLOR), motto.color());
+        assertEquals(TextDecoration.State.NOT_SET, motto.decoration(TextDecoration.ITALIC));
+        assertNull(motto.clickEvent());
+        assertNull(findContaining(page, "Travel. Discover."));
+    }
+
+    @Test
     void chapterHeadingOnALaterPageIsBold() {
         PreparedBook book = new PreparedBook(List.of(
                 List.of(BookLine.heading("Guides"), BookLine.link("Lore", 2)),
@@ -89,20 +142,17 @@ class BookPagesTest {
         assertNull(heading.clickEvent());
     }
 
-    @Test
-    void indexMarkKeepsThePrefixColor() {
-        PreparedBook book = new PreparedBook(List.of(
-                List.of(BookLine.heading("Guides"), BookLine.link(GuideBook.INDEX_MARK + "Lore", 2))
-        ), List.of());
-        Component page = BookPages.components(book).get(0);
-
-        TextComponent mark = find(page, GuideBook.INDEX_MARK);
-        TextComponent title = find(page, "Lore");
-        assertEquals(TextColor.color(ExplorationBook.SERVER_NAME_COLOR), mark.color());
-        assertEquals(ClickEvent.changePage(2), mark.clickEvent());
-        assertEquals(TextDecoration.State.FALSE, mark.decoration(TextDecoration.UNDERLINED));
-        assertEquals(TextColor.color(ExplorationBook.LINK_COLOR), title.color());
-        assertEquals(ClickEvent.changePage(2), title.clickEvent());
+    private static TextComponent findContaining(Component component, String content) {
+        if (component instanceof TextComponent text && text.content().contains(content)) {
+            return text;
+        }
+        for (Component child : component.children()) {
+            TextComponent found = findContaining(child, content);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
     }
 
     private static TextComponent find(Component component, String content) {

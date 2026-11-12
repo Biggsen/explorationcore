@@ -1,7 +1,7 @@
 # Chapters are shown in this order. A chapter that is not listed is not in the book.
 # {SERVER_NAME} is replaced when the book opens.
 chapters:
-  - title: "Welcome to {SERVER_NAME}"
+  - title: "Welcome"
     text: |-
       This server invites you to experience Minecraft differently:
 
@@ -10,69 +10,71 @@ chapters:
       - go far and wide, and take in the beauty of the world
 
       - travel light and smart, with purpose
-  - title: "Discovery & progression"
+  - title: "Discovery"
     text: |-
       Exploration is how you progress on {SERVER_NAME}.
 
-      Discover regions and villages as you travel.
+      Discover land regions, water regions and villages as you travel.
 
-      Every region contains one Heart and one underground Nerve.
+      Every land region holds a Heart and an underground Nerve. Some also conceal a Soul high in the mountains.
 
       Discoveries reward items and tools that can shape how your journey unfolds.
 
-      There's no need to rush — distance, curiosity, and movement matter.
+      There's no need to rush - distance, curiosity, and movement matter.
+
+      Your Exploration Journal keeps a record of your discoveries and progress.
+
+      If you lose your journal, use /exploration book to get another copy.
   - title: "Lore"
     text: |-
       Each region carries its own record.
 
-      When you discover a region, its record is added to your collection — written by those who have walked its ground before you.
+      When you discover a region, its record is added to your collection - written by those who have walked its ground before you.
 
-      To read a region’s record, use /lore [region name]
+      To read a region's record, use /lore [region name]
 
       Not everything is said plainly. Some things are meant to be noticed.
-  - title: "Regions & difficulty"
+  - title: "Regions & Mobs"
     text: |-
       Each region has its own difficulty. When you enter one, you'll see a short message describing how dangerous it is.
 
       Some regions are safer, others more hostile.
 
-      Pay attention as you travel — preparation matters.
-  - title: "Structures & rewards"
+      Pay attention as you travel - preparation matters.
+  - title: "Structures"
     text: |-
-      As you explore, you may come across structures across the world.
+      The familiar structures of Minecraft have a new purpose in Exploration.
 
-      These include things like ruins, temples, and other points of interest.
+      Discover shipwrecks, temples, ruins and other naturally generated structures as you travel.
 
-      Discovering structures rewards experience and claim blocks.
+      Each structure has its own name, and discovering one rewards experience and claim blocks.
 
       Rarer or harder-to-find structures provide greater rewards.
 
-      Structures are optional discoveries.
+      Structures are optional discoveries. They don't count toward your main exploration completion, but reward those who go off the beaten path.
 
-      They don't count toward your main exploration completion, but reward those who go off the beaten path.
-
-      Tracking structures
-
-      Structure discoveries are listed in /exploration, along with the rest of your exploration progress.
-  - title: "Death & keep-inventory"
+      You can track the structures you've discovered in your Exploration Journal.
+  - title: "Death & Inventory"
     text: |-
-      Keep Inventory is on. If you die, you keep your gear. It's there to make long expeditions less punishing — pick yourself up and keep moving.
-  - title: "Navigation & maps"
+      Keep Inventory is on. If you die, you keep your gear. It's there to make long expeditions less punishing - pick yourself up and keep moving.
+  - title: "Navigation"
     text: |-
-      Maps are your friend.
+      Maps are especially useful in Exploration, helping you keep track of where you've travelled and what remains unexplored.
 
-      Use a Cartography Table to max-zoom a map (add paper four times).
+      Use a Cartography Table to fully zoom out a map (add paper four times). At this scale, a single map covers 1/16 of the entire world.
 
       You can copy maps to share with friends, or keep one for display and one for travel.
 
       Use named banners to set markers on maps.
 
-      Carry a boat for rivers and oceans, and beds to manage daylight.
-  - title: "Crates & keys"
-    text: |-
-      Discovering regions, villages, hearts, and nerves rewards keys.
+      Hearts, Nerves and Souls have lodestones. Bind a compass to one to find your way back to that location.
 
-      Keys can be used to open crates and obtain items and tools.
+      Carry a boat for rivers and oceans, and beds to manage daylight.
+  - title: "Crates & Keys"
+    text: |-
+      Discovering regions, villages, Hearts, Nerves and Souls rewards keys.
+
+      Keys can be used to open crates and obtain items and tools that support your journey.
 
       These are virtual keys, so they won't appear in your inventory.
 

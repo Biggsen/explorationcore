@@ -12,6 +12,7 @@ import org.bukkit.persistence.PersistentDataType;
 public final class ExplorationJournal {
     public static final String NAME = "Exploration Journal";
     private static final NamespacedKey MARKER = new NamespacedKey("explorationcore", "journal");
+    private static final NamespacedKey MODEL = NamespacedKey.minecraft("written_book");
     private static final Component DISPLAY_NAME = Component.text(NAME, NamedTextColor.WHITE)
             .decoration(TextDecoration.ITALIC, false);
 
@@ -25,6 +26,7 @@ public final class ExplorationJournal {
             throw new IllegalStateException("knowledge book has no item meta");
         }
         meta.displayName(DISPLAY_NAME);
+        meta.setItemModel(MODEL);
         meta.getPersistentDataContainer().set(MARKER, PersistentDataType.BYTE, (byte) 1);
         stack.setItemMeta(meta);
         return stack;

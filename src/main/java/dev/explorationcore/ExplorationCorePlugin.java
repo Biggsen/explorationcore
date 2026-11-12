@@ -128,6 +128,13 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             bookCommand.setExecutor(bookExecutor);
             bookCommand.setTabCompleter(bookExecutor);
         }
+        PluginCommand guidesCommand = getCommand("guides");
+        if (guidesCommand == null) {
+            getLogger().severe("Command guides is missing from plugin.yml");
+        } else {
+            guidesCommand.setExecutor(bookExecutor);
+            guidesCommand.setTabCompleter(bookExecutor);
+        }
         getServer().getPluginManager().registerEvents(
                 new JournalListener(bookExecutor::openJournal, bookExecutor::openGuides),
                 this

@@ -241,8 +241,17 @@ final class BookPreviewDump {
             for (int lineIndex = 0; lineIndex < source.size(); lineIndex++) {
                 BookLine line = source.get(lineIndex);
                 boolean bold = line.bold() || (pageIndex == 0 && lineIndex == 0);
-                for (DisplayedLine displayed : BookText.layout(line.text(), bold)) {
-                    lines.add(new Painted(displayed.text(), displayed.bold(), line.page()));
+                int color = line.color() != null
+                        ? line.color()
+                        : (bold ? ExplorationBook.SERVER_NAME_COLOR : ExplorationBook.BODY_COLOR);
+                List<DisplayedLine> displayed = BookText.layout(line.text(), bold);
+                if (displayed.size() == 1) {
+                    DisplayedLine piece = displayed.get(0);
+                    lines.add(new Painted(piece.text(), piece.bold(), line.page(), line.green(), color, line.italic()));
+                } else {
+                    for (DisplayedLine piece : displayed) {
+                        lines.add(new Painted(piece.text(), piece.bold(), line.page(), List.of(), color, line.italic()));
+                    }
                 }
             }
             out.append("    [\n");
@@ -282,20 +291,32 @@ final class BookPreviewDump {
     }
 
     private static String jsonLine(Painted line) {
-        int color = line.bold() ? ExplorationBook.SERVER_NAME_COLOR : ExplorationBook.BODY_COLOR;
         StringBuilder out = new StringBuilder("{ \"text\": ").append(jsonString(line.text()));
         if (line.bold()) {
             out.append(", \"bold\": true");
         }
-        out.append(", \"color\": \"").append(String.format("%06X", color)).append("\"");
+        out.append(", \"color\": \"").append(String.format("%06X", line.color())).append("\"");
+        if (line.italic()) {
+            out.append(", \"italic\": true");
+        }
         if (line.page() != null) {
             out.append(", \"page\": ").append(line.page());
+        }
+        if (!line.green().isEmpty()) {
+            out.append(", \"green\": [");
+            for (int index = 0; index < line.green().size(); index++) {
+                if (index > 0) {
+                    out.append(", ");
+                }
+                out.append(line.green().get(index));
+            }
+            out.append(']');
         }
         out.append(" }");
         return out.toString();
     }
 
-    private record Painted(String text, boolean bold, Integer page) {
+    private record Painted(String text, boolean bold, Integer page, List<Integer> green, int color, boolean italic) {
     }
 
     private static String jsonString(String value) {

@@ -1,12 +1,14 @@
 package dev.explorationcore.milestone;
 
 import dev.explorationcore.book.ExplorationJournal;
+import dev.explorationcore.book.GuidesItem;
 import dev.explorationcore.counter.DiscoveryCounters;
 import dev.explorationcore.milestone.Milestone.ItemReward;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -138,6 +140,9 @@ public final class MilestoneItemProbe extends JavaPlugin {
         if (!journal(report)) {
             return report.append("FAIL journal item\n").toString();
         }
+        if (!guide(report)) {
+            return report.append("FAIL guide item\n").toString();
+        }
         report.append("status=ok\n");
         return report.toString();
     }
@@ -150,8 +155,10 @@ public final class MilestoneItemProbe extends JavaPlugin {
                 ? ""
                 : PlainTextComponentSerializer.plainText().serialize(displayName);
         String color = displayName == null || displayName.color() == null ? "" : displayName.color().toString();
+        NamespacedKey model = meta == null ? null : meta.getItemModel();
         report.append("journal-name=").append(name).append('\n');
         report.append("journal-color=").append(color).append('\n');
+        report.append("journal-model=").append(model == null ? "" : model).append('\n');
         ItemStack plain = new ItemStack(Material.KNOWLEDGE_BOOK);
         return journal.getType() == Material.KNOWLEDGE_BOOK
                 && ExplorationJournal.NAME.equals(name)
@@ -160,6 +167,29 @@ public final class MilestoneItemProbe extends JavaPlugin {
                 && displayName.color().value() == NamedTextColor.WHITE.value()
                 && ExplorationJournal.isJournal(journal)
                 && !ExplorationJournal.isJournal(plain)
+                && meta != null
+                && !meta.hasLore()
+                && NamespacedKey.minecraft("written_book").equals(model);
+    }
+
+    private static boolean guide(StringBuilder report) {
+        ItemStack guide = GuidesItem.create();
+        ItemMeta meta = guide.getItemMeta();
+        Component displayName = meta == null ? null : meta.displayName();
+        String name = displayName == null
+                ? ""
+                : PlainTextComponentSerializer.plainText().serialize(displayName);
+        String color = displayName == null || displayName.color() == null ? "" : displayName.color().toString();
+        report.append("guide-name=").append(name).append('\n');
+        report.append("guide-color=").append(color).append('\n');
+        ItemStack plain = new ItemStack(Material.KNOWLEDGE_BOOK);
+        return guide.getType() == Material.KNOWLEDGE_BOOK
+                && GuidesItem.NAME.equals(name)
+                && displayName != null
+                && displayName.color() != null
+                && displayName.color().value() == NamedTextColor.WHITE.value()
+                && GuidesItem.isGuide(guide)
+                && !GuidesItem.isGuide(plain)
                 && meta != null
                 && !meta.hasLore();
     }

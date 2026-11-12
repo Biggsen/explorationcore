@@ -12,6 +12,10 @@ commands:
     description: Open your exploration progress
     usage: /<command> [book [player]|guides [book [player]]|preview <scenario>]
     permission: explorationcore.exploration
+  guides:
+    description: Open the guides
+    usage: /<command> [book [player]]
+    permission: explorationcore.exploration
 permissions:
   explorationcore.record:
     description: Record one discovery into the ledger. Not granted to operators.
