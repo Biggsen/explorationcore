@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class GuideBook {
-    public static final String TITLE = "Exploration Field Guide";
-    public static final int TITLE_COLOR = 0xFFFFFF;
+    public static final String TITLE = "Guides";
     public static final String RETURN_LINK = "< Guides";
     public static final int INDEX_PAGE = 2;
     public static final int COMMAND_COLOR = 0x00AA00;
@@ -81,9 +80,7 @@ public final class GuideBook {
 
     private static List<BookLine> indexLines(List<String> titles, int[] starts) {
         List<BookLine> lines = new ArrayList<>();
-        for (String line : BookText.displayedLines(TITLE, true)) {
-            lines.add(BookLine.styled(line, TITLE_COLOR, true, false));
-        }
+        lines.add(BookLine.heading(TITLE));
         if (!titles.isEmpty()) {
             lines.add(BookLine.of(""));
         }

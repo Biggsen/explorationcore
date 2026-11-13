@@ -12,6 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -39,12 +40,9 @@ class GuideBookTest {
         }
 
         List<BookLine> index = book.pages().get(1);
-        List<String> heading = BookText.displayedLines(GuideBook.TITLE, true);
-        for (int line = 0; line < heading.size(); line++) {
-            assertEquals(heading.get(line), index.get(line).text());
-            assertTrue(index.get(line).bold());
-            assertEquals(GuideBook.TITLE_COLOR, index.get(line).color());
-        }
+        assertEquals(GuideBook.TITLE, index.get(0).text());
+        assertTrue(index.get(0).bold());
+        assertNull(index.get(0).color());
         assertEquals("Welcome to Charidh", link(index, "Welcome to Charidh").text());
         assertEquals(3, link(index, "Welcome to Charidh").page());
         assertEquals(5, link(index, "Lore").page());

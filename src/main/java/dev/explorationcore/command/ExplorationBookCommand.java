@@ -18,8 +18,6 @@ import dev.explorationcore.db.DiscoveryEntry;
 import dev.explorationcore.db.DiscoveryRepository;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -222,8 +220,7 @@ public final class ExplorationBookCommand implements CommandExecutor, TabComplet
 
     private void showGuides(Player player, PreparedBook book) {
         player.openBook(Book.book(
-                Component.text(GuideBook.TITLE, TextColor.color(GuideBook.TITLE_COLOR))
-                        .decoration(TextDecoration.ITALIC, false),
+                Component.text(GuideBook.TITLE),
                 Component.text(plugin.serverName()),
                 BookPages.components(book)
         ));

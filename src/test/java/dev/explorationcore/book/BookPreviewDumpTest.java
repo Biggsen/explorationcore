@@ -57,7 +57,6 @@ class BookPreviewDumpTest {
         String js = BookPreviewDump.render(book, GuideBook.TITLE, "Lowothra");
 
         assertTrue(js.contains("\"title\": \"" + GuideBook.TITLE + "\""));
-        assertTrue(js.contains("\"color\": \"FFFFFF\""));
         assertTrue(js.contains("\"text\": \"Lore\", \"bold\": true"));
         assertTrue(js.contains("\"text\": \"< Guides\", \"color\": \"704C2E\", \"page\": 2"));
         assertFalse(js.contains("\"italic\": true"));

@@ -1,5 +1,9 @@
 # Release history
 
+## 1.6-dev.4
+
+The opened book's title and the index heading are Guides again. Only the held item is named Exploration Field Guide, in white. The return link stays `< Guides`. The cover is unchanged.
+
 ## 1.6-dev.3
 
 `/guides book` gives an Exploration Field Guide. The name is white. A knowledge book's own name is light purple, and a custom name with no colour keeps that colour.
