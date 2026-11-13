@@ -1,5 +1,9 @@
 # Release history
 
+## 1.6-dev.5
+
+A heart, nerve, or soul says "You discovered the " and then the stored name. A heart stored as Heart of Auronia reads "You discovered the Heart of Auronia". The title stays Heart Discovered, Nerve Discovered, or Soul Discovered. A region still says "You discovered Sakonotur". The journal lists the stored name unchanged.
+
 ## 1.6-dev.4
 
 The opened book's title and the index heading are Guides again. Only the held item is named Exploration Field Guide, in white. The return link stays `< Guides`. The cover is unchanged.

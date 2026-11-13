@@ -37,9 +37,7 @@ public final class DiscoveryNotices {
 
     private static String sentence(String entityType, String displayName) {
         return switch (entityType) {
-            case "heart" -> "You discovered the Heart of " + displayName;
-            case "nerve" -> "You discovered the Nerve of " + displayName;
-            case "soul" -> "You discovered the Soul of " + displayName;
+            case "heart", "nerve", "soul" -> "You discovered the " + displayName;
             default -> "You discovered " + displayName;
         };
     }

@@ -102,7 +102,7 @@ information:
 -   world/dimension is not logged
 -   `region=` contains a display name rather than a stable ID
 -   display names can contain spaces
--   a region and its heart can share the same display name
+-   a region and its heart can share the same `region=` text
 -   Nether state counters can report the wrong counter
 -   state messages are delayed snapshots rather than discovery events
 
@@ -269,10 +269,19 @@ Examples:
 
 ``` text
 Sakonotur
+Heart of Sakonotur
+Nerve of Sakonotur
+Soul of Sakonotur
 Widecombe
 Ocean Ruin
 Inner Core
 ```
+
+`display_name` is the name a player reads for that discovery. A region,
+village, water region, or structure stores its own name. A heart stores
+`Heart of Sakonotur`, a nerve stores `Nerve of Sakonotur`, and a soul
+stores `Soul of Sakonotur`. The plugin stores the decoded text and does
+not add those words itself.
 
 Display names are **not identities**.
 
@@ -293,10 +302,12 @@ and:
 ``` text
 entity_type = heart
 entity_id   = heart_of_sakonotur
-display_name = Sakonotur
+display_name = Heart of Sakonotur
 ```
 
-must be stored as two distinct discoveries.
+must be stored as two distinct discoveries. Two rows that happen to
+carry the same display name remain two discoveries when their entity
+ids differ.
 
 ------------------------------------------------------------------------
 
@@ -917,7 +928,7 @@ difficulty must not rewrite those columns.
 
 ------------------------------------------------------------------------
 
-### C. Region and heart name collision
+### C. Region and heart
 
 If the player has:
 
@@ -932,10 +943,14 @@ and later discovers:
 ``` text
 heart:
   entity_id = heart_of_sakonotur
-  display_name = Sakonotur
+  display_name = Heart of Sakonotur
 ```
 
-both records must exist independently.
+both records must exist independently. A nerve of that region is stored
+as `Nerve of Sakonotur`, and a soul as `Soul of Sakonotur`.
+
+A second discovery that reuses a display name under a different entity
+id is still its own row. The display name does not decide identity.
 
 ------------------------------------------------------------------------
 
@@ -1014,12 +1029,13 @@ A nerve discovery must persist as its own row:
 world        = overworld
 entity_type  = nerve
 entity_id    = the nerve's stable id
-display_name = the nerve's display name
+display_name = Nerve of Sakonotur
 difficulty   = 0
 ```
 
-The row is distinct from the parent region and from any heart that
-shares the display name.
+The display name is the phrase a player reads. The parent region name
+is not what this column stores. The row is distinct from region
+`sakonotur` and from the heart `Heart of Sakonotur`.
 
 ------------------------------------------------------------------------
 
@@ -1101,8 +1117,10 @@ running.
 7.  Record the same discovery twice, the second time with a different
     display name and difficulty. Verify only one row exists and every
     original column is unchanged.
-8.  Record a region and heart with the same display name but different
-    IDs and verify both exist.
+8.  Record region `sakonotur` as `Sakonotur` and heart
+    `heart_of_sakonotur` as `Heart of Sakonotur`. Verify both rows
+    exist. Record a second row that reuses a display name under a
+    different entity id and verify that row exists too.
 9.  Record a village and a nerve and verify each is its own row.
 10. Test an explicit Nether discovery.
 11. Reject an unknown world, an unknown type, an empty entity id, a

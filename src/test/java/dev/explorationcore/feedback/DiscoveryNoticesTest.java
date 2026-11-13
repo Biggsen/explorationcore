@@ -42,9 +42,9 @@ class DiscoveryNoticesTest {
         assertDiscovered("overworld", "region", "Sakonotur", "Region Discovered", "You discovered Sakonotur");
         assertDiscovered("overworld", "water", "Azure Sea", "Region Discovered", "You discovered Azure Sea");
         assertDiscovered("overworld", "village", "Widecombe", "Village Discovered", "You discovered Widecombe");
-        assertDiscovered("overworld", "heart", "Granos", "Heart Discovered", "You discovered the Heart of Granos");
-        assertDiscovered("overworld", "nerve", "Granos", "Nerve Discovered", "You discovered the Nerve of Granos");
-        assertDiscovered("overworld", "soul", "Granos", "Soul Discovered", "You discovered the Soul of Granos");
+        assertDiscovered("overworld", "heart", "Heart of Granos", "Heart Discovered", "You discovered the Heart of Granos");
+        assertDiscovered("overworld", "nerve", "Nerve of Granos", "Nerve Discovered", "You discovered the Nerve of Granos");
+        assertDiscovered("overworld", "soul", "Soul of Granos", "Soul Discovered", "You discovered the Soul of Granos");
     }
 
     @Test
@@ -53,7 +53,7 @@ class DiscoveryNoticesTest {
         assertDiscovered(
                 "nether",
                 "heart",
-                "Umbral of Ruin",
+                "Heart of Umbral of Ruin",
                 "Nether Heart Discovered",
                 "You discovered the Heart of Umbral of Ruin"
         );
@@ -65,8 +65,8 @@ class DiscoveryNoticesTest {
         assertEquals(overworldRegion.subtitle(), netherRegion.subtitle());
         assertEquals(overworldRegion.chat(), netherRegion.chat());
 
-        DiscoveryNotice overworldHeart = notice("overworld", "heart", "Sakonotur", null);
-        DiscoveryNotice netherHeart = notice("nether", "heart", "Sakonotur", null);
+        DiscoveryNotice overworldHeart = notice("overworld", "heart", "Heart of Sakonotur", null);
+        DiscoveryNotice netherHeart = notice("nether", "heart", "Heart of Sakonotur", null);
         assertEquals("Heart Discovered", overworldHeart.title());
         assertEquals("Nether Heart Discovered", netherHeart.title());
         assertEquals("You discovered the Heart of Sakonotur", overworldHeart.subtitle());
