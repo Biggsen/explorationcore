@@ -1,9 +1,11 @@
 package dev.explorationcore.cartography;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
@@ -28,6 +30,7 @@ public final class CartographyReport {
         lines.add("Same map id: " + sameId(inspection));
         lines.add("Same grid: " + sameGrid(inspection, tile));
         lines.add("Valid: " + yesNo(valid(inspection, tile)));
+        appendMarkers(lines, inspection.markers());
         return List.copyOf(lines);
     }
 
@@ -101,6 +104,20 @@ public final class CartographyReport {
         return String.join(", ", parts);
     }
 
+    private static void appendMarkers(List<String> lines, Optional<List<AmpMarker>> markers) {
+        if (markers == null || markers.isEmpty()) {
+            lines.add("Amp markers: unavailable");
+            return;
+        }
+        List<AmpMarker> found = new ArrayList<>(markers.get());
+        found.sort(Comparator.comparing(AmpMarker::id));
+        lines.add("Amp markers: " + found.size());
+        lines.add("Shared data: yes");
+        for (AmpMarker marker : found) {
+            lines.add(marker.id() + " " + marker.kind() + " " + marker.x() + ", " + marker.y() + ", " + marker.z());
+        }
+    }
+
     private static String coverage(OptionalInt explored) {
         if (explored.isEmpty()) {
             return "Coverage: unavailable";
@@ -133,8 +150,12 @@ public final class CartographyReport {
             boolean virtual,
             OptionalInt explored,
             int heldCount,
-            List<Sighting> others
+            List<Sighting> others,
+            Optional<List<AmpMarker>> markers
     ) {
+    }
+
+    public record AmpMarker(String id, String kind, int x, int y, int z) {
     }
 
     public record Sighting(

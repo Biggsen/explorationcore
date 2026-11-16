@@ -14,6 +14,14 @@ public final class MapGrid {
         return 128 << scale;
     }
 
+    public static boolean contains(int scale, int centerX, int centerZ, int blockX, int blockZ) {
+        int half = size(scale) / 2;
+        return blockX >= centerX - half
+                && blockX <= centerX + half - 1
+                && blockZ >= centerZ - half
+                && blockZ <= centerZ + half - 1;
+    }
+
     public static Tile tile(int scale, int centerX, int centerZ) {
         int size = size(scale);
         int x = Math.floorDiv(centerX + 64 - size / 2, size);

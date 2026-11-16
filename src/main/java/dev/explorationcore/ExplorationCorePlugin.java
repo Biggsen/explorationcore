@@ -2,6 +2,7 @@ package dev.explorationcore;
 
 import dev.explorationcore.book.AvailableDiscoveries;
 import dev.explorationcore.book.JournalListener;
+import dev.explorationcore.cartography.AmpMapListener;
 import dev.explorationcore.cartography.CartographyTestCommand;
 import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
@@ -15,6 +16,7 @@ import dev.explorationcore.detect.DetectionSettings;
 import dev.explorationcore.detect.DetectionSites;
 import dev.explorationcore.detect.EnvironmentalDetectionListener;
 import dev.explorationcore.location.ExplorationLocationExpansion;
+import dev.explorationcore.location.LocationIndexLoader;
 import dev.explorationcore.milestone.Milestones;
 import dev.explorationcore.reward.DiscoveryCrates;
 import dev.explorationcore.reward.RegionBooks;
@@ -141,6 +143,15 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             getLogger().severe("Command cartographytest is missing from plugin.yml");
         } else {
             cartographyCommand.setExecutor(new CartographyTestCommand(this));
+        }
+        if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+            getServer().getPluginManager().registerEvents(
+                    new AmpMapListener(
+                            this,
+                            new LocationIndexLoader(getDataFolder().toPath().resolve("location").resolve("index.yml"))
+                    ),
+                    this
+            );
         }
         getServer().getPluginManager().registerEvents(
                 new JournalListener(bookExecutor::openJournal, bookExecutor::openGuides),

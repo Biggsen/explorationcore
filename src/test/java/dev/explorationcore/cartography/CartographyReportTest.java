@@ -3,6 +3,7 @@ package dev.explorationcore.cartography;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
@@ -29,7 +30,9 @@ class CartographyReportTest {
                 "Required: 98%",
                 "Same map id: none",
                 "Same grid: none",
-                "Valid: Yes"
+                "Valid: Yes",
+                "Amp markers: 0",
+                "Shared data: yes"
         ), CartographyReport.lines(held(12, 4, 960, -1088, false, false, OptionalInt.of(16122), 1, List.of())));
     }
 
@@ -84,7 +87,8 @@ class CartographyReportTest {
                 false,
                 OptionalInt.of(16384),
                 1,
-                List.of()
+                List.of(),
+                Optional.of(List.of())
         ));
 
         assertEquals("World: unknown", lines.get(2));
@@ -127,6 +131,53 @@ class CartographyReportTest {
         assertNull(CartographyReport.dimensionName("  "));
     }
 
+    @Test
+    void listsAmpMarkersAfterValidity() {
+        List<String> lines = CartographyReport.lines(held(
+                12,
+                4,
+                960,
+                -1088,
+                false,
+                false,
+                OptionalInt.of(16122),
+                1,
+                List.of(),
+                Optional.of(List.of(
+                        new CartographyReport.AmpMarker("nerve_of_monkvos", "nerve", 10, 64, -20),
+                        new CartographyReport.AmpMarker("heart_of_monkvos", "heart", 4, 70, 8)
+                ))
+        ));
+
+        assertEquals("Valid: Yes", lines.get(13));
+        assertEquals("Amp markers: 2", lines.get(14));
+        assertEquals("Shared data: yes", lines.get(15));
+        assertEquals("heart_of_monkvos heart 4, 70, 8", lines.get(16));
+        assertEquals("nerve_of_monkvos nerve 10, 64, -20", lines.get(17));
+    }
+
+    @Test
+    void saysMarkersAreUnavailableWhenTheReadFailed() {
+        List<String> lines = CartographyReport.lines(new CartographyReport.Inspection(
+                12,
+                "world",
+                WORLD,
+                "overworld",
+                4,
+                960,
+                -1088,
+                false,
+                false,
+                OptionalInt.of(16122),
+                1,
+                List.of(),
+                Optional.empty()
+        ));
+        assertEquals("Valid: Yes", lines.get(13));
+        assertEquals("Amp markers: unavailable", lines.get(14));
+        assertEquals(15, lines.size());
+    }
+
     private static String line(CartographyReport.Inspection inspection, String label) {
         String prefix = label + ": ";
         for (String line : CartographyReport.lines(inspection)) {
@@ -148,6 +199,21 @@ class CartographyReportTest {
             int heldCount,
             List<CartographyReport.Sighting> others
     ) {
+        return held(mapId, scale, centerX, centerZ, locked, virtual, explored, heldCount, others, Optional.of(List.of()));
+    }
+
+    private static CartographyReport.Inspection held(
+            int mapId,
+            int scale,
+            int centerX,
+            int centerZ,
+            boolean locked,
+            boolean virtual,
+            OptionalInt explored,
+            int heldCount,
+            List<CartographyReport.Sighting> others,
+            Optional<List<CartographyReport.AmpMarker>> markers
+    ) {
         return new CartographyReport.Inspection(
                 mapId,
                 "world",
@@ -160,7 +226,8 @@ class CartographyReportTest {
                 virtual,
                 explored,
                 heldCount,
-                others
+                others,
+                markers
         );
     }
 

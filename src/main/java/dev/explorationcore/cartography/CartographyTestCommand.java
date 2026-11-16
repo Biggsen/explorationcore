@@ -77,14 +77,15 @@ public final class CartographyTestCommand implements CommandExecutor {
                 worldName,
                 worldId,
                 dimension,
-                scale(view.getScale()),
+                MapScale.of(view.getScale()),
                 view.getCenterX(),
                 view.getCenterZ(),
                 view.isLocked(),
                 view.isVirtual(),
                 StoredMapColors.explored(view),
                 held.getAmount(),
-                others(player)
+                others(player),
+                SharedMapMarkers.read(view)
         );
     }
 
@@ -136,7 +137,7 @@ public final class CartographyTestCommand implements CommandExecutor {
                 place,
                 worldId,
                 dimension,
-                scale(view.getScale()),
+                MapScale.of(view.getScale()),
                 view.getCenterX(),
                 view.getCenterZ()
         );
@@ -150,15 +151,5 @@ public final class CartographyTestCommand implements CommandExecutor {
             return null;
         }
         return meta.getMapView();
-    }
-
-    private static int scale(MapView.Scale scale) {
-        return switch (scale) {
-            case CLOSEST -> 0;
-            case CLOSE -> 1;
-            case NORMAL -> 2;
-            case FAR -> 3;
-            case FARTHEST -> 4;
-        };
     }
 }

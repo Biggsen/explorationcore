@@ -68,4 +68,27 @@ class MapGridTest {
 
         assertFalse(tile.aligned());
     }
+
+    @Test
+    void levelZeroCoverageIsThe128BlocksAroundTheCenter() {
+        assertTrue(MapGrid.contains(0, 0, 0, -64, -64));
+        assertTrue(MapGrid.contains(0, 0, 0, 63, 63));
+        assertFalse(MapGrid.contains(0, 0, 0, 64, 0));
+        assertFalse(MapGrid.contains(0, 0, 0, -65, 0));
+    }
+
+    @Test
+    void levelThreeCoverageMatchesTheDocumentedSquare() {
+        assertTrue(MapGrid.contains(3, 448, 448, -64, -64));
+        assertTrue(MapGrid.contains(3, 448, 448, 959, 959));
+        assertFalse(MapGrid.contains(3, 448, 448, 960, 448));
+    }
+
+    @Test
+    void scaleFourNegativeEdgeStopsAtTheNextTile() {
+        assertTrue(MapGrid.contains(4, 960, -1088, -64, -2112));
+        assertTrue(MapGrid.contains(4, 960, -1088, 1983, -65));
+        assertFalse(MapGrid.contains(4, 960, -1088, -64, -2113));
+        assertFalse(MapGrid.contains(4, 960, -1088, -64, -64));
+    }
 }
