@@ -16,6 +16,11 @@ commands:
     description: Open the guides
     usage: /<command> [book [player]]
     permission: explorationcore.exploration
+  cartographytest:
+    description: Temporary cartography map validation
+    usage: /<command>
+    permission: explorationcore.cartographytest
+    permission-message: You do not have permission to use this command.
 permissions:
   explorationcore.record:
     description: Record one discovery into the ledger. Not granted to operators.
@@ -28,4 +33,7 @@ permissions:
     default: true
   explorationcore.bookpreview:
     description: Open a sample exploration journal without exploring.
+    default: op
+  explorationcore.cartographytest:
+    description: Inspect the filled map in your main hand.
     default: op

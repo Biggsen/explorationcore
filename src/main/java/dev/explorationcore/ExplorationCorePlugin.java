@@ -2,6 +2,7 @@ package dev.explorationcore;
 
 import dev.explorationcore.book.AvailableDiscoveries;
 import dev.explorationcore.book.JournalListener;
+import dev.explorationcore.cartography.CartographyTestCommand;
 import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
 import dev.explorationcore.counter.DiscoveryCounters;
@@ -135,6 +136,12 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             guidesCommand.setExecutor(bookExecutor);
             guidesCommand.setTabCompleter(bookExecutor);
         }
+        PluginCommand cartographyCommand = getCommand("cartographytest");
+        if (cartographyCommand == null) {
+            getLogger().severe("Command cartographytest is missing from plugin.yml");
+        } else {
+            cartographyCommand.setExecutor(new CartographyTestCommand(this));
+        }
         getServer().getPluginManager().registerEvents(
                 new JournalListener(bookExecutor::openJournal, bookExecutor::openGuides),
                 this
@@ -238,6 +245,9 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
         }
         if (!event.getPlayer().hasPermission("explorationcore.exploration")) {
             event.getCommands().remove("exploration");
+        }
+        if (!event.getPlayer().hasPermission(CartographyTestCommand.PERMISSION)) {
+            event.getCommands().remove("cartographytest");
         }
     }
 
