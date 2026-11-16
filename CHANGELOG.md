@@ -1,5 +1,19 @@
 # Release history
 
+## 1.6.0
+
+13 November 2026. Stable release.
+
+`/guides` opens the guides book. The pages are built from `guides.yml` when the book opens. The first page is a cover, and the next page is an index of the chapters in file order. Each chapter returns to the index. `{SERVER_NAME}` is replaced with the server name. A missing `guides.yml` is copied from the jar once. An existing file is left as it is.
+
+`/guides book` gives the player an Exploration Field Guide. The held item's name is white. Console, remote console, and a command block use `/guides book <player>` for an online player. The book is a knowledge book. Right-clicking it in the air opens the guides again. Right-clicking a block still uses that block. The opened book's title and the index heading are Guides. The return link is `< Guides`. `/exploration guides` and `/exploration guides book` do the same. The permission is `explorationcore.exploration`.
+
+The Exploration Journal is still a knowledge book. Its icon is the written book. Right-clicking it in the air still opens the exploration book. A lectern still cannot take it. A journal given before this version keeps the knowledge book icon.
+
+A heart, nerve, or soul says "You discovered the " and then the stored name. A heart stored as Heart of Auronia reads "You discovered the Heart of Auronia". The title stays Heart Discovered, Nerve Discovered, or Soul Discovered. A region still says "You discovered Sakonotur". The journal lists the stored name unchanged.
+
+Recording, crates, and the other counters behave as they did in 1.5.2.
+
 ## 1.6-dev.5
 
 A heart, nerve, or soul says "You discovered the " and then the stored name. A heart stored as Heart of Auronia reads "You discovered the Heart of Auronia". The title stays Heart Discovered, Nerve Discovered, or Soul Discovered. A region still says "You discovered Sakonotur". The journal lists the stored name unchanged.
