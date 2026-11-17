@@ -1,11 +1,13 @@
 package dev.explorationcore;
 
+import dev.explorationcore.atlas.AtlasListener;
 import dev.explorationcore.book.AvailableDiscoveries;
 import dev.explorationcore.book.JournalListener;
 import dev.explorationcore.cartography.AmpMapListener;
 import dev.explorationcore.cartography.AmpMarkerRestore;
 import dev.explorationcore.cartography.AmpMarkerRestoreListener;
 import dev.explorationcore.cartography.CartographyTestCommand;
+import dev.explorationcore.command.AtlasCommand;
 import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
 import dev.explorationcore.counter.DiscoveryCounters;
@@ -141,6 +143,14 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
             guidesCommand.setExecutor(bookExecutor);
             guidesCommand.setTabCompleter(bookExecutor);
         }
+        PluginCommand atlasCommand = getCommand("atlas");
+        if (atlasCommand == null) {
+            getLogger().severe("Command atlas is missing from plugin.yml");
+        } else {
+            AtlasCommand atlasExecutor = new AtlasCommand();
+            atlasCommand.setExecutor(atlasExecutor);
+            atlasCommand.setTabCompleter(atlasExecutor);
+        }
         PluginCommand cartographyCommand = getCommand("cartographytest");
         if (cartographyCommand == null) {
             getLogger().severe("Command cartographytest is missing from plugin.yml");
@@ -165,6 +175,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
                 new JournalListener(bookExecutor::openJournal, bookExecutor::openGuides),
                 this
         );
+        getServer().getPluginManager().registerEvents(new AtlasListener(this), this);
         getServer().getPluginManager().registerEvents(this, this);
         registerPlaceholders();
 
@@ -265,6 +276,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
         }
         if (!event.getPlayer().hasPermission("explorationcore.exploration")) {
             event.getCommands().remove("exploration");
+            event.getCommands().remove("atlas");
         }
         if (!event.getPlayer().hasPermission(CartographyTestCommand.PERMISSION)) {
             event.getCommands().remove("cartographytest");

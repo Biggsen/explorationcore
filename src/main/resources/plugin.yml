@@ -16,6 +16,10 @@ commands:
     description: Open the guides
     usage: /<command> [book [player]]
     permission: explorationcore.exploration
+  atlas:
+    description: Give an Exploration Atlas
+    usage: /<command> book [player]
+    permission: explorationcore.exploration
   cartographytest:
     description: Temporary cartography map validation
     usage: /<command>
