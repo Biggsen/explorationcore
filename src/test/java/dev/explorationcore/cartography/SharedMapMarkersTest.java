@@ -57,13 +57,34 @@ class SharedMapMarkersTest {
         saved.decorations.put("Player", new Decoration("player"));
         saved.decorations.put("ec:nerve_of_monkvos", new Decoration("banner_red"));
         saved.decorations.put("ec:heart_of_monkvos", new Decoration("banner_green"));
+        saved.decorations.put("ec:drewbank", new Decoration("banner_yellow"));
+        saved.decorations.put("ec:drowned_cutty", new Decoration("banner_gray"));
 
         Optional<List<CartographyReport.AmpMarker>> read = SharedMapMarkers.readSaved(saved);
 
         assertEquals(Optional.of(List.of(
+                new CartographyReport.AmpMarker("drewbank", "village"),
+                new CartographyReport.AmpMarker("drowned_cutty", "structure"),
                 new CartographyReport.AmpMarker("heart_of_monkvos", "heart"),
                 new CartographyReport.AmpMarker("nerve_of_monkvos", "nerve")
         )), read);
+    }
+
+    @Test
+    void clearingAnAmpRemovesOnlyThatDecoration() {
+        Saved saved = new Saved();
+        saved.decorations.put("ec:heart_of_monkvos", new Decoration("banner_green"));
+        saved.decorations.put("ec:nerve_of_monkvos", new Decoration("banner_red"));
+
+        SharedMapMarkers.Outcome outcome = SharedMapMarkers.unmarkSaved(saved, "heart_of_monkvos");
+
+        assertEquals(SharedMapMarkers.Outcome.REMOVED, outcome);
+        assertEquals(List.of("ec:nerve_of_monkvos"), List.copyOf(saved.decorations.keySet()));
+    }
+
+    @Test
+    void clearingWithoutADecorationMapIsUnavailable() {
+        assertEquals(SharedMapMarkers.Outcome.UNAVAILABLE, SharedMapMarkers.unmarkSaved(new Object(), "heart_of_monkvos"));
     }
 
     @Test

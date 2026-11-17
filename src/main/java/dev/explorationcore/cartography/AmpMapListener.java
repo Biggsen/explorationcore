@@ -50,7 +50,11 @@ public final class AmpMapListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void mark(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getHand() != EquipmentSlot.HAND) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        EquipmentSlot hand = event.getHand();
+        if (hand != EquipmentSlot.HAND && hand != EquipmentSlot.OFF_HAND) {
             return;
         }
         Block block = event.getClickedBlock();
@@ -58,8 +62,8 @@ public final class AmpMapListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        ItemStack held = player.getInventory().getItemInMainHand();
-        if (held == null || held.getType() != Material.FILLED_MAP) {
+        EquipmentSlot chosen = mapHand(player);
+        if (chosen == null) {
             return;
         }
         List<String> regions;
@@ -75,10 +79,19 @@ public final class AmpMapListener implements Listener {
         event.setCancelled(true);
         event.setUseInteractedBlock(Event.Result.DENY);
         event.setUseItemInHand(Event.Result.DENY);
+        if (hand != chosen) {
+            return;
+        }
+        if (toggle(player, block, amp, player.getInventory().getItem(chosen))) {
+            player.swingHand(chosen);
+        }
+    }
+
+    private boolean toggle(Player player, Block block, AmpSelection.Amp amp, ItemStack held) {
         MapView view = mapView(held);
         if (view == null) {
             tell(player, "That map has no stored data.");
-            return;
+            return false;
         }
         World mapWorld = view.getWorld();
         UUID mapWorldId = mapWorld == null ? null : mapWorld.getUID();
@@ -92,14 +105,20 @@ public final class AmpMapListener implements Listener {
                         block.getZ()
                 )) {
             tell(player, "This location is outside your map.");
-            return;
+            return false;
         }
-        SharedMapMarkers.Outcome outcome;
         if (store == null) {
             tell(player, "That map could not be marked.");
-            return;
+            return false;
         }
         restore.ensure(view);
+        Toggle removed = remove(player, view, amp, block);
+        if (removed == Toggle.CHANGED) {
+            return true;
+        }
+        if (removed == Toggle.UNCHANGED) {
+            return false;
+        }
         boolean inserted;
         try {
             inserted = store.insert(new AmpMarkerStore.Marker(
@@ -114,9 +133,9 @@ public final class AmpMapListener implements Listener {
         } catch (SQLException exception) {
             plugin.getLogger().log(Level.WARNING, "Could not store amp marker " + amp.id(), exception);
             tell(player, "That map could not be marked.");
-            return;
+            return false;
         }
-        outcome = SharedMapMarkers.mark(
+        SharedMapMarkers.Outcome outcome = SharedMapMarkers.mark(
                 view,
                 amp,
                 block.getX(),
@@ -127,13 +146,64 @@ public final class AmpMapListener implements Listener {
         if (outcome == SharedMapMarkers.Outcome.UNAVAILABLE) {
             restore.forget(view.getId());
             tell(player, "That map could not be marked.");
-            return;
+            return false;
         }
         if (inserted) {
             tell(player, "Marked " + amp.name() + " on your map.");
-        } else {
-            tell(player, amp.name() + " is already marked on this map.");
+            return true;
         }
+        tell(player, amp.name() + " is already marked on this map.");
+        return false;
+    }
+
+    private Toggle remove(Player player, MapView view, AmpSelection.Amp amp, Block block) {
+        List<AmpMarkerStore.Marker> stored;
+        try {
+            stored = store.forMap(view.getId());
+        } catch (SQLException exception) {
+            plugin.getLogger().log(Level.WARNING, "Could not read amp marker " + amp.id(), exception);
+            tell(player, "That marker could not be removed.");
+            return Toggle.UNCHANGED;
+        }
+        AmpMarkerStore.Marker existing = null;
+        for (AmpMarkerStore.Marker marker : stored) {
+            if (amp.id().equals(marker.ampId())) {
+                existing = marker;
+                break;
+            }
+        }
+        if (existing == null) {
+            return Toggle.ABSENT;
+        }
+        if (SharedMapMarkers.unmark(view, amp.id()) == SharedMapMarkers.Outcome.UNAVAILABLE) {
+            restore.forget(view.getId());
+            tell(player, "That marker could not be removed.");
+            return Toggle.UNCHANGED;
+        }
+        try {
+            store.delete(view.getId(), amp.id());
+        } catch (SQLException exception) {
+            plugin.getLogger().log(Level.WARNING, "Could not remove amp marker " + amp.id(), exception);
+            SharedMapMarkers.mark(view, amp, existing.x(), existing.y(), existing.z(), block.getWorld());
+            tell(player, "That marker could not be removed.");
+            return Toggle.UNCHANGED;
+        }
+        tell(player, "Removed " + amp.name() + " from your map.");
+        return Toggle.CHANGED;
+    }
+
+    private static EquipmentSlot mapHand(Player player) {
+        if (filledMap(player.getInventory().getItemInMainHand())) {
+            return EquipmentSlot.HAND;
+        }
+        if (filledMap(player.getInventory().getItemInOffHand())) {
+            return EquipmentSlot.OFF_HAND;
+        }
+        return null;
+    }
+
+    private static boolean filledMap(ItemStack stack) {
+        return stack != null && stack.getType() == Material.FILLED_MAP;
     }
 
     private void tell(Player player, String message) {
@@ -165,5 +235,11 @@ public final class AmpMapListener implements Listener {
             ids.add(region.getId());
         }
         return ids;
+    }
+
+    private enum Toggle {
+        ABSENT,
+        CHANGED,
+        UNCHANGED
     }
 }

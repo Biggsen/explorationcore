@@ -27,6 +27,7 @@ public final class SharedMapMarkers {
     public enum Outcome {
         ADDED,
         ALREADY,
+        REMOVED,
         UNAVAILABLE
     }
 
@@ -43,6 +44,17 @@ public final class SharedMapMarkers {
             return Outcome.UNAVAILABLE;
         }
         return markSaved(saved, amp.id(), dye, amp.name(), x, y, z, level(world));
+    }
+
+    public static Outcome unmark(MapView view, String id) {
+        if (view == null || id == null || id.isBlank()) {
+            return Outcome.UNAVAILABLE;
+        }
+        Object saved = MapSaved.data(view);
+        if (saved == null) {
+            return Outcome.UNAVAILABLE;
+        }
+        return unmarkSaved(saved, id);
     }
 
     public static Optional<List<CartographyReport.AmpMarker>> read(MapView view) {
@@ -86,6 +98,26 @@ public final class SharedMapMarkers {
         }
     }
 
+    static Outcome unmarkSaved(Object saved, String id) {
+        Map<String, Object> decorations = decorations(saved);
+        if (decorations == null) {
+            return Outcome.UNAVAILABLE;
+        }
+        String key = PREFIX + id;
+        try {
+            Method method = removeDecoration(saved.getClass());
+            if (method == null) {
+                decorations.remove(key);
+            } else {
+                method.setAccessible(true);
+                method.invoke(saved, key);
+            }
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            return Outcome.UNAVAILABLE;
+        }
+        return Outcome.REMOVED;
+    }
+
     static Optional<List<CartographyReport.AmpMarker>> readSaved(Object saved) {
         Map<String, Object> decorations = decorations(saved);
         if (decorations == null) {
@@ -112,6 +144,8 @@ public final class SharedMapMarkers {
             case "heart" -> "GREEN";
             case "nerve" -> "RED";
             case "soul" -> "WHITE";
+            case "village" -> "YELLOW";
+            case "structure" -> "GRAY";
             default -> null;
         };
     }
@@ -176,6 +210,22 @@ public final class SharedMapMarkers {
         Method method = addDecoration(saved.getClass());
         method.setAccessible(true);
         method.invoke(saved, type, level, key, (double) x, (double) z, 180.0, vanillaText(caption));
+    }
+
+    private static Method removeDecoration(Class<?> type) {
+        Class<?> current = type;
+        while (current != null) {
+            for (Method method : current.getDeclaredMethods()) {
+                Class<?>[] parameters = method.getParameterTypes();
+                if (parameters.length == 1
+                        && method.getName().equals("removeDecoration")
+                        && parameters[0] == String.class) {
+                    return method;
+                }
+            }
+            current = current.getSuperclass();
+        }
+        return null;
     }
 
     private static Method addDecoration(Class<?> type) throws NoSuchMethodException {
@@ -270,6 +320,12 @@ public final class SharedMapMarkers {
         }
         if (described.contains("banner_white")) {
             return "soul";
+        }
+        if (described.contains("banner_yellow")) {
+            return "village";
+        }
+        if (described.contains("banner_gray")) {
+            return "structure";
         }
         return described.toLowerCase(Locale.ROOT);
     }

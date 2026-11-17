@@ -13,6 +13,11 @@ public final class AmpMarkerStore {
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """;
 
+    private static final String DELETE = """
+            DELETE FROM map_amp_markers
+            WHERE map_id = ? AND amp_id = ?
+            """;
+
     private static final String FOR_MAP = """
             SELECT amp_id, kind, display_name, x, y, z
             FROM map_amp_markers
@@ -46,6 +51,17 @@ public final class AmpMarkerStore {
                     return false;
                 }
                 throw exception;
+            }
+        }
+    }
+
+    public boolean delete(int mapId, String ampId) throws SQLException {
+        synchronized (lock) {
+            ensureOpen();
+            try (PreparedStatement statement = connection.prepareStatement(DELETE)) {
+                statement.setInt(1, mapId);
+                statement.setString(2, ampId);
+                return statement.executeUpdate() > 0;
             }
         }
     }

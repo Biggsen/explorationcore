@@ -45,7 +45,6 @@ public final class AtlasListener implements Listener {
         if (hand == null || !beginOpen(event.getPlayer(), event.getItem(), hand)) {
             return;
         }
-        trace(event.getPlayer(), "right-click in the world opened the atlas from " + hand);
         event.setUseItemInHand(Event.Result.DENY);
         event.setUseInteractedBlock(Event.Result.DENY);
     }
@@ -60,7 +59,6 @@ public final class AtlasListener implements Listener {
         if (!beginOpen(player, item, hand)) {
             return;
         }
-        trace(player, "right-click on an entity opened the atlas from " + hand);
         event.setCancelled(true);
     }
 
@@ -68,9 +66,6 @@ public final class AtlasListener implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
-        }
-        if (!(event.getView().getTopInventory().getHolder() instanceof AtlasHolder)) {
-            traceClick(event, player);
         }
         if (!event.isCancelled() && insertIntoClosedAtlas(event, player)) {
             return;
@@ -166,61 +161,33 @@ public final class AtlasListener implements Listener {
         }
         ClickType click = event.getClick();
         if (click != ClickType.LEFT && click != ClickType.RIGHT && click != ClickType.CREATIVE) {
-            trace(player, "stopped: that was a " + click + " click");
             return false;
         }
         if (event.getClickedInventory() == null || !inPlayerSlots(event)) {
-            trace(player, "stopped: that slot is not in your inventory");
             return false;
         }
         boolean creative = click == ClickType.CREATIVE;
         ItemStack carried = player.getItemOnCursor();
-        boolean injected = false;
         if (creative && (carried == null || carried.isEmpty())) {
             player.setItemOnCursor(clone(cursor));
-            injected = true;
         } else if (creative && !similar(carried, cursor)) {
             event.setCancelled(true);
-            trace(player, "stopped: holding " + describe(carried) + " while creative sent " + describe(cursor));
-            resync(player, true);
+            resync(player);
             return true;
         }
         event.setCancelled(true);
-        trace(player, "placing one map into atlas " + AtlasItem.id(atlas));
-        boolean stored = place(player, AtlasItem.id(atlas), true, -1, clone(player.getItemOnCursor()), true);
-        if (!stored && injected) {
-            player.setItemOnCursor(ItemStack.empty());
+        ItemStack restoring = clone(player.getItemOnCursor());
+        boolean stored = place(player, AtlasItem.id(atlas), true, -1, clone(player.getItemOnCursor()));
+        if (!stored) {
+            player.setItemOnCursor(restoring == null || restoring.isEmpty() ? ItemStack.empty() : restoring);
         }
-        resync(player, creative);
-        trace(player, "sent your inventory again");
+        resync(player);
         return true;
     }
 
-    private void resync(Player player, boolean againNextTick) {
+    private void resync(Player player) {
         player.updateInventory();
-        if (againNextTick) {
-            later(player, player::updateInventory);
-        }
-    }
-
-    private void traceClick(InventoryClickEvent event, Player player) {
-        ItemStack cursor = event.getCursor();
-        ItemStack current = event.getCurrentItem();
-        if (!mapItem(cursor) && !knowledgeBook(current)) {
-            return;
-        }
-        String clicked = event.getClickedInventory() == null ? "none" : event.getClickedInventory().getType().name();
-        trace(player, "click " + event.getClick()
-                + " " + event.getAction()
-                + " raw " + event.getRawSlot()
-                + " top " + event.getView().getTopInventory().getSize()
-                + " " + event.getView().getType()
-                + " clicked " + clicked
-                + " cancelled " + event.isCancelled()
-                + " own " + (event.getClickedInventory() != null && inPlayerSlots(event))
-                + " | cursor " + describe(cursor)
-                + " | carried " + describe(player.getItemOnCursor())
-                + " | slot " + describe(current));
+        later(player, player::updateInventory);
     }
 
     private static boolean inPlayerSlots(InventoryClickEvent event) {
@@ -388,45 +355,34 @@ public final class AtlasListener implements Listener {
         }
     }
 
-    private void place(Player player, UUID atlasId, boolean fromCursor, int sourceSlot, ItemStack expected) {
-        place(player, atlasId, fromCursor, sourceSlot, expected, false);
-    }
-
-    private boolean place(Player player, UUID atlasId, boolean fromCursor, int sourceSlot, ItemStack expected, boolean trace) {
+    private boolean place(Player player, UUID atlasId, boolean fromCursor, int sourceSlot, ItemStack expected) {
         ItemStack current = fromCursor ? player.getItemOnCursor() : player.getInventory().getItem(sourceSlot);
         if (!same(current, expected) || current == null || current.isEmpty()) {
-            trace(player, trace, "stopped: the map was no longer on the cursor");
             return false;
         }
         Located atlas = find(player, atlasId);
         if (atlas == null) {
             close(player, atlasId);
-            trace(player, trace, "stopped: the atlas was not in your inventory");
             return false;
         }
         if (fromCursor && atlas.cursor) {
-            trace(player, trace, "stopped: the atlas itself is on the cursor");
             return false;
         }
         if (!fromCursor && !atlas.cursor && atlas.slot == sourceSlot) {
-            trace(player, trace, "stopped: that slot is the atlas");
             return false;
         }
         AtlasItem.Stored stored = read(player, atlas.stack);
         if (stored == null) {
-            trace(player, trace, "stopped: the atlas could not be read");
             return false;
         }
         AtlasBoard before = stored.board();
         AtlasClicks.Decision decision = AtlasClicks.place(before, offer(current));
         if (decision.message() != null) {
             tell(player, decision.message());
-            trace(player, trace, "refused: " + decision.message());
             return false;
         }
         int index = AtlasClicks.changedCell(before, decision.board());
         if (index < 0) {
-            trace(player, trace, "stopped: no atlas cell changed");
             return false;
         }
         ItemStack previousSource = current.clone();
@@ -440,7 +396,6 @@ public final class AtlasListener implements Listener {
             setSource(player, fromCursor, sourceSlot, decreased(previousSource));
             put(player, atlas, AtlasItem.write(previousAtlas, next));
             show(player, atlasId, next.maps());
-            trace(player, trace, "stored one map in cell " + index);
             return true;
         } catch (RuntimeException exception) {
             plugin.getLogger().log(Level.WARNING, "Could not store an Exploration Atlas map", exception);
@@ -448,7 +403,6 @@ public final class AtlasListener implements Listener {
             put(player, atlas, previousAtlas);
             show(player, atlasId, stored.maps());
             tell(player, AtlasMessages.FAILED);
-            trace(player, trace, "stopped: the write failed");
             return false;
         }
     }
@@ -555,36 +509,6 @@ public final class AtlasListener implements Listener {
 
     private void tell(Player player, String message) {
         player.sendMessage(NoticeChat.line(plugin.messagePrefix(), message));
-    }
-
-    private void trace(Player player, String message) {
-        trace(player, true, message);
-    }
-
-    private void trace(Player player, boolean enabled, String message) {
-        if (!enabled) {
-            return;
-        }
-        plugin.getLogger().info("[atlas] " + player.getName() + " " + message);
-        tell(player, message);
-    }
-
-    private static boolean knowledgeBook(ItemStack stack) {
-        return stack != null && !stack.isEmpty() && stack.getType() == Material.KNOWLEDGE_BOOK;
-    }
-
-    private static String describe(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return "empty";
-        }
-        String text = stack.getType().name() + " x" + stack.getAmount();
-        if (AtlasItem.isAtlas(stack)) {
-            text = text + " atlas " + AtlasItem.id(stack);
-        }
-        if (stack.getItemMeta() instanceof MapMeta meta && meta.hasMapView() && meta.getMapView() != null) {
-            text = text + " map " + meta.getMapView().getId();
-        }
-        return text;
     }
 
     private void later(Player player, Runnable action) {

@@ -17,7 +17,11 @@ class AmpSelectionTest {
                     "heart_of_monkvos", new LocationIndex.Entry("heart", "Heart of Monkvos", null),
                     "nerve_of_monkvos", new LocationIndex.Entry("nerve", "Nerve of Monkvos", null),
                     "soul_of_auronia", new LocationIndex.Entry("soul", "Soul of Auronia", null),
-                    "cherrybrook", new LocationIndex.Entry("village", "Cherrybrook", null)
+                    "drewbank", new LocationIndex.Entry("village", "Drewbank", null),
+                    "drewbank_village", new LocationIndex.Entry("village", "Drewbank Village", null),
+                    "drowned_cutty", new LocationIndex.Entry("structure", "Drowned Cutty", null),
+                    "lake_auronia", new LocationIndex.Entry("water", "Lake Auronia", null),
+                    "spawn_system", new LocationIndex.Entry("system", "Spawn", null)
             )
     ));
 
@@ -47,9 +51,44 @@ class AmpSelectionTest {
     }
 
     @Test
-    void aSoulIsAnAmpAndAVillageIsNot() {
-        assertEquals("soul", AmpSelection.select(index, "world", List.of("soul_of_auronia")).kind());
-        assertNull(AmpSelection.select(index, "world", List.of("cherrybrook", "warriotos")));
+    void aSoulKeepsItsNameAndAVillageGainsVillage() {
+        assertEquals("Soul of Auronia", AmpSelection.select(index, "world", List.of("soul_of_auronia")).name());
+
+        AmpSelection.Amp village = AmpSelection.select(index, "world", List.of("drewbank", "warriotos"));
+
+        assertEquals("drewbank", village.id());
+        assertEquals("village", village.kind());
+        assertEquals("Drewbank Village", village.name());
+        assertEquals(
+                "Drewbank Village",
+                AmpSelection.select(index, "world", List.of("drewbank_village")).name()
+        );
+    }
+
+    @Test
+    void aStructureKeepsItsName() {
+        AmpSelection.Amp structure = AmpSelection.select(index, "world", List.of("drowned_cutty", "warriotos"));
+
+        assertEquals("drowned_cutty", structure.id());
+        assertEquals("structure", structure.kind());
+        assertEquals("Drowned Cutty", structure.name());
+    }
+
+    @Test
+    void landWaterAndSystemRegionsAreSkipped() {
+        assertNull(AmpSelection.select(index, "world", List.of("warriotos", "lake_auronia", "spawn_system")));
+        assertEquals(
+                "drewbank",
+                AmpSelection.select(index, "world", List.of("warriotos", "lake_auronia", "drewbank")).id()
+        );
+    }
+
+    @Test
+    void aHigherPriorityHeartBeatsTheVillageAroundIt() {
+        AmpSelection.Amp amp = AmpSelection.select(index, "world", List.of("heart_of_monkvos", "drewbank"));
+
+        assertEquals("heart", amp.kind());
+        assertEquals("Heart of Monkvos", amp.name());
     }
 
     @Test

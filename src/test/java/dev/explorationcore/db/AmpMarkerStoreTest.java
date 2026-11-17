@@ -44,6 +44,9 @@ class AmpMarkerStoreTest {
             assertTrue(store.insert(nerve));
             assertEquals(List.of(heart, nerve), store.forMap(12));
             assertEquals(List.of(), store.forMap(99));
+            assertTrue(store.delete(12, heart.ampId()));
+            assertFalse(store.delete(12, heart.ampId()));
+            assertEquals(List.of(nerve), store.forMap(12));
         }
     }
 }
