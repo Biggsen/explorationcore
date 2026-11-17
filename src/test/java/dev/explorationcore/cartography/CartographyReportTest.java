@@ -144,16 +144,16 @@ class CartographyReportTest {
                 1,
                 List.of(),
                 Optional.of(List.of(
-                        new CartographyReport.AmpMarker("nerve_of_monkvos", "nerve", 10, 64, -20),
-                        new CartographyReport.AmpMarker("heart_of_monkvos", "heart", 4, 70, 8)
+                        new CartographyReport.AmpMarker("nerve_of_monkvos", "nerve"),
+                        new CartographyReport.AmpMarker("heart_of_monkvos", "heart")
                 ))
         ));
 
         assertEquals("Valid: Yes", lines.get(13));
         assertEquals("Amp markers: 2", lines.get(14));
         assertEquals("Shared data: yes", lines.get(15));
-        assertEquals("heart_of_monkvos heart 4, 70, 8", lines.get(16));
-        assertEquals("nerve_of_monkvos nerve 10, 64, -20", lines.get(17));
+        assertEquals("heart_of_monkvos heart shared decoration", lines.get(16));
+        assertEquals("nerve_of_monkvos nerve shared decoration", lines.get(17));
     }
 
     @Test

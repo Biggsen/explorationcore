@@ -14,8 +14,9 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Writes one banner record onto the shared map data. Copies that share the map id
- * read the same record. Item decoration components are left alone.
+ * Writes one decoration onto the shared map data. Copies that share the map id
+ * read the same decoration. Banner records are left untouched, because vanilla
+ * deletes a banner whose block is not a banner.
  */
 public final class SharedMapMarkers {
     static final String PREFIX = "ec:";
@@ -62,12 +63,12 @@ public final class SharedMapMarkers {
             int z,
             Object level
     ) {
-        Map<String, Object> banners = banners(saved);
-        if (banners == null) {
+        Map<String, Object> decorations = decorations(saved);
+        if (decorations == null) {
             return Outcome.UNAVAILABLE;
         }
         String key = PREFIX + id;
-        if (banners.containsKey(key)) {
+        if (decorations.containsKey(key)) {
             return Outcome.ALREADY;
         }
         Object banner;
@@ -76,25 +77,22 @@ public final class SharedMapMarkers {
         } catch (ReflectiveOperationException | RuntimeException exception) {
             return Outcome.UNAVAILABLE;
         }
-        banners.put(key, banner);
         try {
             decorate(saved, banner, key, x, z, name, level);
-            dirty(saved);
             return Outcome.ADDED;
         } catch (ReflectiveOperationException | RuntimeException exception) {
-            banners.remove(key);
             removeDecoration(saved, key);
             return Outcome.UNAVAILABLE;
         }
     }
 
     static Optional<List<CartographyReport.AmpMarker>> readSaved(Object saved) {
-        Map<String, Object> banners = banners(saved);
-        if (banners == null) {
+        Map<String, Object> decorations = decorations(saved);
+        if (decorations == null) {
             return Optional.empty();
         }
         List<CartographyReport.AmpMarker> markers = new ArrayList<>();
-        for (Map.Entry<String, Object> entry : banners.entrySet()) {
+        for (Map.Entry<String, Object> entry : decorations.entrySet()) {
             String key = entry.getKey();
             if (key == null || !key.startsWith(PREFIX)) {
                 continue;
@@ -118,19 +116,10 @@ public final class SharedMapMarkers {
         };
     }
 
-    private static String kind(String dye) {
-        return switch (dye) {
-            case "GREEN" -> "heart";
-            case "RED" -> "nerve";
-            case "WHITE" -> "soul";
-            default -> dye.toLowerCase(Locale.ROOT);
-        };
-    }
-
     @SuppressWarnings("unchecked")
-    private static Map<String, Object> banners(Object saved) {
+    private static Map<String, Object> decorations(Object saved) {
         try {
-            Object value = MapSaved.field(saved.getClass(), "bannerMarkers").get(saved);
+            Object value = MapSaved.field(saved.getClass(), "decorations").get(saved);
             if (value instanceof Map<?, ?> map) {
                 return (Map<String, Object>) map;
             }
@@ -208,15 +197,6 @@ public final class SharedMapMarkers {
         throw new NoSuchMethodException("addDecoration");
     }
 
-    private static void dirty(Object saved) throws ReflectiveOperationException {
-        Method method = noArg(saved.getClass(), "setDirty", "markDirty");
-        if (method == null) {
-            throw new NoSuchMethodException("setDirty");
-        }
-        method.setAccessible(true);
-        method.invoke(saved);
-    }
-
     @SuppressWarnings("unchecked")
     private static void removeDecoration(Object saved, String key) {
         try {
@@ -246,40 +226,52 @@ public final class SharedMapMarkers {
         }
     }
 
-    private static CartographyReport.AmpMarker marker(String key, Object banner) throws ReflectiveOperationException {
-        Object pos = call(banner, "pos");
-        if (pos == null) {
-            pos = call(banner, "getPos");
+    private static CartographyReport.AmpMarker marker(String key, Object decoration) throws ReflectiveOperationException {
+        Object type = call(decoration, "type");
+        if (type == null) {
+            type = call(decoration, "getType");
         }
-        if (pos == null) {
-            throw new NoSuchMethodException("pos");
+        if (type == null) {
+            throw new NoSuchMethodException("type");
         }
-        Object color = call(banner, "color");
-        if (color == null) {
-            color = call(banner, "getColor");
-        }
-        if (color == null) {
-            throw new NoSuchMethodException("color");
-        }
-        String dye = color instanceof Enum<?> enumerated ? enumerated.name() : String.valueOf(color);
-        return new CartographyReport.AmpMarker(
-                key.substring(PREFIX.length()),
-                kind(dye),
-                coord(pos, "getX", "x"),
-                coord(pos, "getY", "y"),
-                coord(pos, "getZ", "z")
-        );
+        return new CartographyReport.AmpMarker(key.substring(PREFIX.length()), kindOf(describe(type)));
     }
 
-    private static int coord(Object pos, String getter, String recordName) throws ReflectiveOperationException {
-        Object value = call(pos, getter);
-        if (!(value instanceof Number)) {
-            value = call(pos, recordName);
+    private static String describe(Object type) throws ReflectiveOperationException {
+        Object key = call(type, "unwrapKey");
+        if (key instanceof Optional<?> optional) {
+            key = optional.orElse(null);
         }
-        if (value instanceof Number number) {
-            return number.intValue();
+        if (key != null) {
+            Object location = call(key, "location");
+            if (location == null) {
+                location = call(key, "getLocation");
+            }
+            if (location != null) {
+                Object path = call(location, "getPath");
+                if (path == null) {
+                    path = call(location, "path");
+                }
+                if (path != null) {
+                    return String.valueOf(path);
+                }
+                return String.valueOf(location);
+            }
         }
-        throw new NoSuchMethodException(getter);
+        return String.valueOf(type);
+    }
+
+    private static String kindOf(String described) {
+        if (described.contains("banner_green")) {
+            return "heart";
+        }
+        if (described.contains("banner_red")) {
+            return "nerve";
+        }
+        if (described.contains("banner_white")) {
+            return "soul";
+        }
+        return described.toLowerCase(Locale.ROOT);
     }
 
     private static Object call(Object target, String name) throws ReflectiveOperationException {
@@ -297,21 +289,6 @@ public final class SharedMapMarkers {
             for (Method method : current.getDeclaredMethods()) {
                 if (method.getName().equals(name) && method.getParameterCount() == 0) {
                     return method;
-                }
-            }
-            current = current.getSuperclass();
-        }
-        return null;
-    }
-
-    private static Method noArg(Class<?> type, String... names) {
-        Class<?> current = type;
-        while (current != null) {
-            for (String name : names) {
-                for (Method method : current.getDeclaredMethods()) {
-                    if (method.getName().equals(name) && method.getParameterCount() == 0) {
-                        return method;
-                    }
                 }
             }
             current = current.getSuperclass();

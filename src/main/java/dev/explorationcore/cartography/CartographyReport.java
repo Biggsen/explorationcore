@@ -114,7 +114,7 @@ public final class CartographyReport {
         lines.add("Amp markers: " + found.size());
         lines.add("Shared data: yes");
         for (AmpMarker marker : found) {
-            lines.add(marker.id() + " " + marker.kind() + " " + marker.x() + ", " + marker.y() + ", " + marker.z());
+            lines.add(marker.id() + " " + marker.kind() + " shared decoration");
         }
     }
 
@@ -155,7 +155,7 @@ public final class CartographyReport {
     ) {
     }
 
-    public record AmpMarker(String id, String kind, int x, int y, int z) {
+    public record AmpMarker(String id, String kind) {
     }
 
     public record Sighting(
