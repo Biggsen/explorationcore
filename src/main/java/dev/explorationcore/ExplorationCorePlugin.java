@@ -1,6 +1,7 @@
 package dev.explorationcore;
 
 import dev.explorationcore.atlas.AtlasListener;
+import dev.explorationcore.book.AnvilRenameListener;
 import dev.explorationcore.book.AvailableDiscoveries;
 import dev.explorationcore.book.JournalListener;
 import dev.explorationcore.cartography.AmpMapListener;
@@ -175,6 +176,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
                 new JournalListener(bookExecutor::openJournal, bookExecutor::openGuides),
                 this
         );
+        getServer().getPluginManager().registerEvents(new AnvilRenameListener(), this);
         getServer().getPluginManager().registerEvents(new AtlasListener(this), this);
         getServer().getPluginManager().registerEvents(this, this);
         registerPlaceholders();

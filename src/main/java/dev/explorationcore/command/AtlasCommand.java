@@ -22,17 +22,11 @@ public final class AtlasCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0 || !args[0].equalsIgnoreCase("book")) {
-            sender.sendMessage(Component.text("Use /atlas book."));
-            return true;
-        }
         if (sender instanceof Player player && !player.hasPermission(PERMISSION)) {
             player.sendMessage(Component.text("You do not have permission to use this command."));
             return true;
         }
-        String[] rest = new String[args.length - 1];
-        System.arraycopy(args, 1, rest, 0, rest.length);
-        JournalGift.Decision decision = JournalGift.decide(sender instanceof Player, rest, SELF_ONLY, NAME_THE_PLAYER);
+        JournalGift.Decision decision = JournalGift.decide(sender instanceof Player, args, SELF_ONLY, NAME_THE_PLAYER);
         switch (decision) {
             case JournalGift.Self ignored -> giveTo((Player) sender, AtlasItem.create());
             case JournalGift.Named named -> giveNamed(sender, named.name());
@@ -46,11 +40,8 @@ public final class AtlasCommand implements CommandExecutor, TabCompleter {
         if (sender instanceof Player player && !player.hasPermission(PERMISSION)) {
             return List.of();
         }
-        if (args.length == 1) {
-            return startingWith(List.of("book"), args[0]);
-        }
-        if (args.length == 2 && args[0].equalsIgnoreCase("book") && !(sender instanceof Player)) {
-            return startingWith(onlineNames(), args[1]);
+        if (args.length == 1 && !(sender instanceof Player)) {
+            return startingWith(onlineNames(), args[0]);
         }
         return List.of();
     }

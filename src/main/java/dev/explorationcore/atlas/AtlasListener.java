@@ -75,6 +75,12 @@ public final class AtlasListener implements Listener {
             return;
         }
         UUID atlasId = holder.atlasId();
+        if (event.getClick() == ClickType.CREATIVE) {
+            if (event.getClickedInventory() == top) {
+                event.setCancelled(true);
+            }
+            return;
+        }
         if (event.getClick() == ClickType.DOUBLE_CLICK) {
             event.setCancelled(true);
             return;
@@ -160,34 +166,15 @@ public final class AtlasListener implements Listener {
             return false;
         }
         ClickType click = event.getClick();
-        if (click != ClickType.LEFT && click != ClickType.RIGHT && click != ClickType.CREATIVE) {
+        if (click != ClickType.LEFT && click != ClickType.RIGHT) {
             return false;
         }
         if (event.getClickedInventory() == null || !inPlayerSlots(event)) {
             return false;
         }
-        boolean creative = click == ClickType.CREATIVE;
-        ItemStack carried = player.getItemOnCursor();
-        if (creative && (carried == null || carried.isEmpty())) {
-            player.setItemOnCursor(clone(cursor));
-        } else if (creative && !similar(carried, cursor)) {
-            event.setCancelled(true);
-            resync(player);
-            return true;
-        }
         event.setCancelled(true);
-        ItemStack restoring = clone(player.getItemOnCursor());
-        boolean stored = place(player, AtlasItem.id(atlas), true, -1, clone(player.getItemOnCursor()));
-        if (!stored) {
-            player.setItemOnCursor(restoring == null || restoring.isEmpty() ? ItemStack.empty() : restoring);
-        }
-        resync(player);
+        place(player, AtlasItem.id(atlas), true, -1, clone(cursor));
         return true;
-    }
-
-    private void resync(Player player) {
-        player.updateInventory();
-        later(player, player::updateInventory);
     }
 
     private static boolean inPlayerSlots(InventoryClickEvent event) {
@@ -609,13 +596,6 @@ public final class AtlasListener implements Listener {
 
     private static boolean mapItem(ItemStack stack) {
         return stack != null && (stack.getType() == Material.FILLED_MAP || stack.getType() == Material.MAP);
-    }
-
-    private static boolean similar(ItemStack current, ItemStack expected) {
-        if (current == null || expected == null || current.isEmpty() || expected.isEmpty()) {
-            return false;
-        }
-        return current.isSimilar(expected);
     }
 
     private static boolean same(ItemStack current, ItemStack expected) {

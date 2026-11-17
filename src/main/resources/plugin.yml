@@ -18,7 +18,7 @@ commands:
     permission: explorationcore.exploration
   atlas:
     description: Give an Exploration Atlas
-    usage: /<command> book [player]
+    usage: /<command> [player]
     permission: explorationcore.exploration
   cartographytest:
     description: Temporary cartography map validation
