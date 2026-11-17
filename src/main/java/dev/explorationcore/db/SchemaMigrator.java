@@ -81,6 +81,19 @@ final class SchemaMigrator {
             )
             """;
 
+    private static final String CREATE_AMP_MAP_MARKERS = """
+            CREATE TABLE map_amp_markers (
+                map_id INTEGER NOT NULL,
+                amp_id TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                display_name TEXT NOT NULL,
+                x INTEGER NOT NULL,
+                y INTEGER NOT NULL,
+                z INTEGER NOT NULL,
+                PRIMARY KEY (map_id, amp_id)
+            )
+            """;
+
     private static final String INSERT_MIGRATION = """
             INSERT INTO schema_migrations (version, description, applied_at)
             VALUES (?, ?, ?)
@@ -130,7 +143,8 @@ final class SchemaMigrator {
         return List.of(
                 new DefinedMigration(1, "discoveries ledger", SchemaMigrator::ensureDiscoveries),
                 new DefinedMigration(2, "reward intents", SchemaMigrator::createRewardIntents),
-                new DefinedMigration(3, "milestone grants", SchemaMigrator::createMilestoneGrants)
+                new DefinedMigration(3, "milestone grants", SchemaMigrator::createMilestoneGrants),
+                new DefinedMigration(4, "amp map markers", SchemaMigrator::createAmpMapMarkers)
         );
     }
 
@@ -226,6 +240,10 @@ final class SchemaMigrator {
 
     private static void createMilestoneGrants(Connection connection) throws SQLException {
         execute(connection, CREATE_MILESTONE_GRANTS);
+    }
+
+    private static void createAmpMapMarkers(Connection connection) throws SQLException {
+        execute(connection, CREATE_AMP_MAP_MARKERS);
     }
 
     private static boolean hasColumn(Connection connection, String name) throws SQLException {

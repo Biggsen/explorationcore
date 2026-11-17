@@ -32,7 +32,8 @@ class CartographyReportTest {
                 "Same grid: none",
                 "Valid: Yes",
                 "Amp markers: 0",
-                "Shared data: yes"
+                "Shared data: yes",
+                "Stored markers: 0"
         ), CartographyReport.lines(held(12, 4, 960, -1088, false, false, OptionalInt.of(16122), 1, List.of())));
     }
 
@@ -88,7 +89,8 @@ class CartographyReportTest {
                 OptionalInt.of(16384),
                 1,
                 List.of(),
-                Optional.of(List.of())
+                Optional.of(List.of()),
+                OptionalInt.of(0)
         ));
 
         assertEquals("World: unknown", lines.get(2));
@@ -171,11 +173,13 @@ class CartographyReportTest {
                 OptionalInt.of(16122),
                 1,
                 List.of(),
-                Optional.empty()
+                Optional.empty(),
+                OptionalInt.empty()
         ));
         assertEquals("Valid: Yes", lines.get(13));
         assertEquals("Amp markers: unavailable", lines.get(14));
-        assertEquals(15, lines.size());
+        assertEquals("Stored markers: unavailable", lines.get(15));
+        assertEquals(16, lines.size());
     }
 
     private static String line(CartographyReport.Inspection inspection, String label) {
@@ -227,7 +231,8 @@ class CartographyReportTest {
                 explored,
                 heldCount,
                 others,
-                markers
+                markers,
+                OptionalInt.of(0)
         );
     }
 

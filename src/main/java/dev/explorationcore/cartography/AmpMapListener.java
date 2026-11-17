@@ -1,6 +1,7 @@
 package dev.explorationcore.cartography;
 
 import dev.explorationcore.ExplorationCorePlugin;
+import dev.explorationcore.db.AmpMarkerStore;
 import dev.explorationcore.feedback.NoticeChat;
 import dev.explorationcore.location.LocationIndexLoader;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
@@ -22,18 +23,29 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public final class AmpMapListener implements Listener {
     private final ExplorationCorePlugin plugin;
     private final LocationIndexLoader index;
+    private final AmpMarkerStore store;
+    private final AmpMarkerRestore restore;
 
-    public AmpMapListener(ExplorationCorePlugin plugin, LocationIndexLoader index) {
+    public AmpMapListener(
+            ExplorationCorePlugin plugin,
+            LocationIndexLoader index,
+            AmpMarkerStore store,
+            AmpMarkerRestore restore
+    ) {
         this.plugin = plugin;
         this.index = index;
+        this.store = store;
+        this.restore = restore;
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -82,7 +94,29 @@ public final class AmpMapListener implements Listener {
             tell(player, "This location is outside your map.");
             return;
         }
-        SharedMapMarkers.Outcome outcome = SharedMapMarkers.mark(
+        SharedMapMarkers.Outcome outcome;
+        if (store == null) {
+            tell(player, "That map could not be marked.");
+            return;
+        }
+        restore.ensure(view);
+        boolean inserted;
+        try {
+            inserted = store.insert(new AmpMarkerStore.Marker(
+                    view.getId(),
+                    amp.id(),
+                    amp.kind(),
+                    amp.name(),
+                    block.getX(),
+                    block.getY(),
+                    block.getZ()
+            ));
+        } catch (SQLException exception) {
+            plugin.getLogger().log(Level.WARNING, "Could not store amp marker " + amp.id(), exception);
+            tell(player, "That map could not be marked.");
+            return;
+        }
+        outcome = SharedMapMarkers.mark(
                 view,
                 amp,
                 block.getX(),
@@ -90,12 +124,15 @@ public final class AmpMapListener implements Listener {
                 block.getZ(),
                 block.getWorld()
         );
-        if (outcome == SharedMapMarkers.Outcome.ADDED) {
-            tell(player, "Marked " + amp.name() + " on your map.");
-        } else if (outcome == SharedMapMarkers.Outcome.ALREADY) {
-            tell(player, amp.name() + " is already marked on this map.");
-        } else {
+        if (outcome == SharedMapMarkers.Outcome.UNAVAILABLE) {
+            restore.forget(view.getId());
             tell(player, "That map could not be marked.");
+            return;
+        }
+        if (inserted) {
+            tell(player, "Marked " + amp.name() + " on your map.");
+        } else {
+            tell(player, amp.name() + " is already marked on this map.");
         }
     }
 

@@ -31,6 +31,7 @@ public final class CartographyReport {
         lines.add("Same grid: " + sameGrid(inspection, tile));
         lines.add("Valid: " + yesNo(valid(inspection, tile)));
         appendMarkers(lines, inspection.markers());
+        appendStored(lines, inspection.storedMarkers());
         return List.copyOf(lines);
     }
 
@@ -118,6 +119,14 @@ public final class CartographyReport {
         }
     }
 
+    private static void appendStored(List<String> lines, OptionalInt stored) {
+        if (stored == null || stored.isEmpty()) {
+            lines.add("Stored markers: unavailable");
+            return;
+        }
+        lines.add("Stored markers: " + stored.getAsInt());
+    }
+
     private static String coverage(OptionalInt explored) {
         if (explored.isEmpty()) {
             return "Coverage: unavailable";
@@ -151,7 +160,8 @@ public final class CartographyReport {
             OptionalInt explored,
             int heldCount,
             List<Sighting> others,
-            Optional<List<AmpMarker>> markers
+            Optional<List<AmpMarker>> markers,
+            OptionalInt storedMarkers
     ) {
     }
 

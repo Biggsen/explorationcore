@@ -3,6 +3,8 @@ package dev.explorationcore;
 import dev.explorationcore.book.AvailableDiscoveries;
 import dev.explorationcore.book.JournalListener;
 import dev.explorationcore.cartography.AmpMapListener;
+import dev.explorationcore.cartography.AmpMarkerRestore;
+import dev.explorationcore.cartography.AmpMarkerRestoreListener;
 import dev.explorationcore.cartography.CartographyTestCommand;
 import dev.explorationcore.command.ExplorationBookCommand;
 import dev.explorationcore.command.ExplorationCommand;
@@ -50,6 +52,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
     private Milestones milestones = Milestones.none();
     private DiscoveryCounters counters = DiscoveryCounters.none();
     private DiscoveryRepository repository;
+    private AmpMarkerRestore ampMarkerRestore;
     private final TallyCache tallyCache = new TallyCache();
     private ExplorationLocationExpansion locationExpansion;
     private ExplorationCounterExpansion counterExpansion;
@@ -144,11 +147,16 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
         } else {
             cartographyCommand.setExecutor(new CartographyTestCommand(this));
         }
+        ampMarkerRestore = new AmpMarkerRestore(repository == null ? null : repository.ampMarkers());
+        getServer().getPluginManager().registerEvents(new AmpMarkerRestoreListener(ampMarkerRestore), this);
+        ampMarkerRestore.scanLoaded(getServer());
         if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
             getServer().getPluginManager().registerEvents(
                     new AmpMapListener(
                             this,
-                            new LocationIndexLoader(getDataFolder().toPath().resolve("location").resolve("index.yml"))
+                            new LocationIndexLoader(getDataFolder().toPath().resolve("location").resolve("index.yml")),
+                            repository == null ? null : repository.ampMarkers(),
+                            ampMarkerRestore
                     ),
                     this
             );
@@ -238,6 +246,7 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
         DiscoveryRepository openRepository = repository;
         repository = null;
+        ampMarkerRestore = null;
         if (openRepository == null) {
             return;
         }
@@ -345,6 +354,10 @@ public final class ExplorationCorePlugin extends JavaPlugin implements Listener 
 
     public DiscoveryRepository repository() {
         return repository;
+    }
+
+    public AmpMarkerRestore ampMarkerRestore() {
+        return ampMarkerRestore;
     }
 
     private void registerPlaceholders() {

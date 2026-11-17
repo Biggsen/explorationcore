@@ -75,12 +75,17 @@ class SchemaMigrationTest {
                     List.of("player_uuid", "milestone_id", "status", "achieved_at", "rule_version"),
                     columnNames(connection, "milestone_grants")
             );
+            assertEquals(
+                    List.of("map_id", "amp_id", "kind", "display_name", "x", "y", "z"),
+                    columnNames(connection, "map_amp_markers")
+            );
             assertTrue(indexExists(connection, "idx_reward_intents_status"));
             assertEquals(
                     List.of(
                             new MigrationRow(1, "discoveries ledger"),
                             new MigrationRow(2, "reward intents"),
-                            new MigrationRow(3, "milestone grants")
+                            new MigrationRow(3, "milestone grants"),
+                            new MigrationRow(4, "amp map markers")
                     ),
                     migrationRows(connection)
             );
@@ -126,7 +131,7 @@ class SchemaMigrationTest {
             assertEquals(legacyDiscovery(null), repository.find(PLAYER_UUID, "overworld", "structure", "inner_core"));
             assertEquals(1L, repository.count());
         }
-        assertEquals(List.of(1, 2, 3), versions(database));
+        assertEquals(List.of(1, 2, 3, 4), versions(database));
     }
 
     @Test
@@ -180,7 +185,7 @@ class SchemaMigrationTest {
                      "UPDATE schema_migrations SET applied_at = ?"
              )) {
             statement.setString(1, STAMP);
-            assertEquals(3, statement.executeUpdate());
+            assertEquals(4, statement.executeUpdate());
         }
 
         try (DiscoveryRepository repository = DiscoveryRepository.open(database)) {
@@ -188,8 +193,8 @@ class SchemaMigrationTest {
         }
 
         try (Connection connection = connect(database)) {
-            assertEquals(List.of(1, 2, 3), versions(connection));
-            assertEquals(List.of(STAMP, STAMP, STAMP), appliedAtValues(connection));
+            assertEquals(List.of(1, 2, 3, 4), versions(connection));
+            assertEquals(List.of(STAMP, STAMP, STAMP, STAMP), appliedAtValues(connection));
         }
     }
 
@@ -208,7 +213,7 @@ class SchemaMigrationTest {
 
         SQLException failure = assertThrows(SQLException.class, () -> DiscoveryRepository.open(database));
         assertEquals(
-                "Unsupported schema version 99; this build supports versions 1 through 3",
+                "Unsupported schema version 99; this build supports versions 1 through 4",
                 failure.getMessage()
         );
 
@@ -236,7 +241,7 @@ class SchemaMigrationTest {
 
         SQLException failure = assertThrows(SQLException.class, () -> DiscoveryRepository.open(database));
         assertEquals(
-                "Missing schema version 2; found schema version 3; this build supports versions 1 through 3",
+                "Missing schema version 2; found schema version 3; this build supports versions 1 through 4",
                 failure.getMessage()
         );
 
@@ -255,7 +260,7 @@ class SchemaMigrationTest {
         steps.add(new SchemaMigrator.Migration() {
             @Override
             public int version() {
-                return 4;
+                return 5;
             }
 
             @Override
@@ -274,7 +279,7 @@ class SchemaMigrationTest {
             SQLException failure = assertThrows(SQLException.class, () -> SchemaMigrator.migrate(connection, steps));
             assertEquals("probe failed", failure.getMessage());
             assertFalse(tableExists(connection, "rollback_probe"));
-            assertEquals(List.of(1, 2, 3), versions(connection));
+            assertEquals(List.of(1, 2, 3, 4), versions(connection));
             assertTrue(tableExists(connection, "discoveries"));
             assertTrue(tableExists(connection, "reward_intents"));
             assertTrue(tableExists(connection, "milestone_grants"));

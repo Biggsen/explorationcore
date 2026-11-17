@@ -13,8 +13,10 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -38,7 +40,7 @@ public final class CartographyTestCommand implements CommandExecutor {
         return true;
     }
 
-    private static void inspect(CommandSender sender) {
+    private void inspect(CommandSender sender) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(Component.text("Only a player can inspect a held map."));
             return;
@@ -57,12 +59,24 @@ public final class CartographyTestCommand implements CommandExecutor {
             player.sendMessage(Component.text("That map has no stored data."));
             return;
         }
-        for (String line : CartographyReport.lines(inspection(player, held, view))) {
+        AmpMarkerRestore restore = plugin.ampMarkerRestore();
+        if (restore != null) {
+            restore.ensure(view);
+        }
+        OptionalInt stored = restore == null || !restore.available()
+                ? OptionalInt.empty()
+                : storedCount(restore, view.getId());
+        for (String line : CartographyReport.lines(inspection(player, held, view, stored))) {
             player.sendMessage(Component.text(line));
         }
     }
 
-    private static CartographyReport.Inspection inspection(Player player, ItemStack held, MapView view) {
+    private static CartographyReport.Inspection inspection(
+            Player player,
+            ItemStack held,
+            MapView view,
+            OptionalInt storedMarkers
+    ) {
         World world = view.getWorld();
         String worldName = null;
         UUID worldId = null;
@@ -85,8 +99,18 @@ public final class CartographyTestCommand implements CommandExecutor {
                 StoredMapColors.explored(view),
                 held.getAmount(),
                 others(player),
-                SharedMapMarkers.read(view)
+                SharedMapMarkers.read(view),
+                storedMarkers
         );
+    }
+
+    private OptionalInt storedCount(AmpMarkerRestore restore, int mapId) {
+        try {
+            return OptionalInt.of(restore.storedCount(mapId));
+        } catch (SQLException exception) {
+            plugin.getLogger().log(Level.WARNING, "Could not read stored amp markers for map " + mapId, exception);
+            return OptionalInt.empty();
+        }
     }
 
     private static List<CartographyReport.Sighting> others(Player player) {

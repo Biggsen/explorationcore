@@ -58,9 +58,15 @@ public final class DiscoveryRepository implements DiscoveryStore, AutoCloseable 
 
     private final Connection connection;
     private final Object lock = new Object();
+    private final AmpMarkerStore ampMarkers;
 
     private DiscoveryRepository(Connection connection) {
         this.connection = connection;
+        this.ampMarkers = new AmpMarkerStore(connection, lock);
+    }
+
+    public AmpMarkerStore ampMarkers() {
+        return ampMarkers;
     }
 
     public static DiscoveryRepository open(Path databaseFile) throws SQLException, IOException {
