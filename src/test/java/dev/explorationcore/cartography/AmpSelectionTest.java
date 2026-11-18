@@ -51,14 +51,14 @@ class AmpSelectionTest {
     }
 
     @Test
-    void aSoulKeepsItsNameAndAVillageGainsVillage() {
+    void aSoulAndAVillageKeepTheirStoredNames() {
         assertEquals("Soul of Auronia", AmpSelection.select(index, "world", List.of("soul_of_auronia")).name());
 
         AmpSelection.Amp village = AmpSelection.select(index, "world", List.of("drewbank", "warriotos"));
 
         assertEquals("drewbank", village.id());
         assertEquals("village", village.kind());
-        assertEquals("Drewbank Village", village.name());
+        assertEquals("Drewbank", village.name());
         assertEquals(
                 "Drewbank Village",
                 AmpSelection.select(index, "world", List.of("drewbank_village")).name()

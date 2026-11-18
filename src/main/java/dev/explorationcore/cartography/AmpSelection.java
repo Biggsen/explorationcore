@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Picks the location under a lodestone from WorldGuard region ids, highest priority first.
  * Hearts, nerves, souls, villages, and structures can be marked. Land, water, and system
- * regions are skipped. A village is shown with "Village" after its name.
+ * regions are skipped. The marker uses the name stored for that location.
  */
 public final class AmpSelection {
     private AmpSelection() {
@@ -22,7 +22,7 @@ public final class AmpSelection {
             if (entry == null || !markable(entry.kind()) || entry.name() == null || entry.name().isBlank()) {
                 continue;
             }
-            return new Amp(regionId, entry.kind(), displayName(entry.kind(), entry.name()));
+            return new Amp(regionId, entry.kind(), entry.name());
         }
         return null;
     }
@@ -33,13 +33,6 @@ public final class AmpSelection {
 
     private static boolean markable(String kind) {
         return isAmp(kind) || "village".equals(kind) || "structure".equals(kind);
-    }
-
-    private static String displayName(String kind, String name) {
-        if ("village".equals(kind) && !name.endsWith(" Village")) {
-            return name + " Village";
-        }
-        return name;
     }
 
     public record Amp(String id, String kind, String name) {
